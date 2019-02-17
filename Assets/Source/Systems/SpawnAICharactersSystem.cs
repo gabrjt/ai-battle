@@ -25,10 +25,6 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            // var entities = new NativeArray<Entity>(m_Count, Allocator.Temp);
-
-            // EntityManager.Instantiate(m_Prefab, entities);
-
             var terrain = Terrain.activeTerrain;
 
             for (var i = 0; i < m_Count; i++)
@@ -45,29 +41,13 @@ namespace Game.Systems
                     StartTime = Time.time
                 });
 
-                PostUpdateCommands.SetComponent(entity, new SearchForTarget
+                PostUpdateCommands.SetComponent(entity, new SearchingForTarget
                 {
                     SearchForTargetTime = 1,
                     StartTime = Time.time,
                     Radius = 5
                 });
             }
-
-            /*
-            for (var i = 0; i < entities.Length; i++)
-            {
-                var positionX = m_Random.NextFloat(terrainPositionX, terrainPositionX + terrainWidth);
-                var positionZ = m_Random.NextFloat(terrainPositionZ, terrainPositionZ + terrainLength);
-                var positionY = terrain.SampleHeight(new float3(positionX, 0, positionZ));
-
-                var navMeshAgent = EntityManager.GetComponentObject<NavMeshAgent>(entities[i]);
-                navMeshAgent.Warp(new float3(positionX, positionY, positionZ));
-
-                PostUpdateCommands.SetComponent(entities[i], new Position { Value = new float3(positionX, positionY, positionZ) });
-            }
-            */
-
-            // entities.Dispose();
 
             Enabled = false;
         }

@@ -22,6 +22,7 @@ namespace Game.Systems
 
     public class ReachedDestinationSystem : JobComponentSystem
     {
+        [RequireSubtractiveComponent(typeof(Target))]
         private struct Job : IJobProcessComponentDataWithEntity<Destination, Position>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
@@ -32,7 +33,7 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Position position)
             {
-                if (math.distance(destination.Value, new float3(position.Value.x, 0, position.Value.z)) > 0.01f) return;
+                if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(position.Value.x, 0, position.Value.z)) > 0.01f) return;
 
                 EntityCommandBuffer.RemoveComponent<Destination>(index, entity);
                 EntityCommandBuffer.AddComponent(index, entity, new Idle

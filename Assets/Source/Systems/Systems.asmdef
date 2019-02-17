@@ -1,0 +1,23 @@
+{
+    "name": "Systems",
+    "references": [
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:b92ff8b696eb46a4b90382b319e963fe",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:8a2eafa29b15f444eb6d74f94a930e1d",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:a5baed0c9693541a5bd947d336ec7659",
+        "GUID:8819f35a0fc84499b990e90a4ca1911f",
+        "GUID:70b19af2986048c4888743dd4886b5d1",
+        "GUID:0fca9db57c7d2ae45800ef57ab4a571f"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

@@ -4,7 +4,7 @@ using Unity.Entities;
 namespace Game.Components
 {
     [Serializable]
-    public struct SearchForTarget : IComponentData
+    public struct SearchingForTarget : IComponentData
     {
         public float SearchForTargetTime;
 
@@ -13,5 +13,5 @@ namespace Game.Components
         public float Radius;
     }
 
-    public class SearchForTargetComponent : ComponentDataWrapper<SearchForTarget> { }
+    public class SearchingForTargetComponent : ComponentDataWrapper<SearchingForTarget> { }
 }
