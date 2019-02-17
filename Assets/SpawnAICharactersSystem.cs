@@ -37,10 +37,19 @@ namespace Game.Systems
                 navMeshAgent.Warp(terrain.GetRandomPosition());
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
 
-                PostUpdateCommands.SetComponent(navMeshAgent.GetComponent<GameObjectEntity>().Entity, new Idle
+                var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
+
+                PostUpdateCommands.SetComponent(entity, new Idle
                 {
-                    IdleTime = 1, //m_Random.NextFloat(1, 10),
+                    IdleTime = m_Random.NextFloat(1, 10),
                     StartTime = Time.time
+                });
+
+                PostUpdateCommands.SetComponent(entity, new SearchForTarget
+                {
+                    SearchForTargetTime = 1,
+                    StartTime = Time.time,
+                    Radius = 5
                 });
             }
 
