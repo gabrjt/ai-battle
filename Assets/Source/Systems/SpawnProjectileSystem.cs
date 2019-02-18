@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -20,9 +21,11 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeList<ProjectileSpawnData> m_EntitySpawnList;
+        private EntityArchetype m_Archetype;
 
-        private GameObject m_Prefab;
+        private Entity m_Prefab;
+
+        private NativeList<ProjectileSpawnData> m_EntitySpawnList;
 
         protected override void OnCreateManager()
         {
@@ -34,9 +37,38 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Cooldown>() }
             });
 
-            m_EntitySpawnList = new NativeList<ProjectileSpawnData>(Allocator.Persistent);
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Position>(),
+                ComponentType.ReadOnly<Rotation>(),
+                ComponentType.ReadOnly<Scale>(),
+                ComponentType.ReadOnly<RenderMesh>(),
+                ComponentType.ReadOnly<Speed>(),
+                ComponentType.ReadOnly<Direction>(),
+                ComponentType.ReadOnly<Velocity>(),
+                ComponentType.ReadOnly<Damage>(),
+                ComponentType.ReadOnly<Prefab>());
 
-            Debug.Assert(m_Prefab = Resources.Load<GameObject>("Projectile"));
+            m_Prefab = EntityManager.CreateEntity(m_Archetype);
+
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var mesh = sphere.GetComponent<MeshFilter>().sharedMesh;
+            var material = sphere.GetComponent<MeshRenderer>().sharedMaterial;
+
+            EntityManager.SetComponentData(m_Prefab, new Scale { Value = new float3(0.25f, 0.25f, 0.25f) });
+            EntityManager.SetSharedComponentData(m_Prefab, new RenderMesh
+            {
+                mesh = mesh,
+                material = material,
+                subMesh = 0,
+                layer = 0,
+                castShadows = UnityEngine.Rendering.ShadowCastingMode.On,
+                receiveShadows = true
+            });
+            EntityManager.SetComponentData(m_Prefab, new Speed { Value = 5 });
+            EntityManager.SetComponentData(m_Prefab, new Damage { Value = 10 });
+
+            Object.Destroy(sphere);
+
+            m_EntitySpawnList = new NativeList<ProjectileSpawnData>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
@@ -76,15 +108,21 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            for (var i = 0; i < m_EntitySpawnList.Length; i++)
+            var entitySpawnArray = new NativeArray<Entity>(m_EntitySpawnList.Length, Allocator.TempJob);
+
+            EntityManager.Instantiate(m_Prefab, entitySpawnArray);
+
+            for (var i = 0; i < entitySpawnArray.Length; i++)
             {
                 var spawnData = m_EntitySpawnList[i];
-                var projectileEntity = Object.Instantiate(m_Prefab).GetComponent<GameObjectEntity>().Entity;
-                PostUpdateCommands.SetComponent(projectileEntity, spawnData.Position);
-                PostUpdateCommands.SetComponent(projectileEntity, spawnData.Rotation);
-                PostUpdateCommands.SetComponent(projectileEntity, spawnData.Direction);
-                PostUpdateCommands.SetComponent(projectileEntity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(projectileEntity).Value });
+                var entity = entitySpawnArray[i];
+                EntityManager.SetComponentData(entity, spawnData.Position);
+                EntityManager.SetComponentData(entity, spawnData.Rotation);
+                EntityManager.SetComponentData(entity, spawnData.Direction);
+                EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
             }
+
+            entitySpawnArray.Dispose();
 
             m_EntitySpawnList.Clear();
         }
