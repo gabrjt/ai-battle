@@ -1,5 +1,6 @@
 ﻿using Game.Components;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 
 namespace Game.Systems
@@ -8,10 +9,11 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref Target target, ref Destination destination) =>
+            ForEach((Entity entity, ref Target target, ref Destination destination, ref Position position, ref AttackDistance attackDistance) =>
             {
                 var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
-                destination.Value = targetDestination;
+                var direction = math.normalizesafe(targetDestination - position.Value);
+                destination.Value = targetDestination - direction * attackDistance.Value;
             });
         }
     }

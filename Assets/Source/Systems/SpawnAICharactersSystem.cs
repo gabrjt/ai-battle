@@ -45,7 +45,7 @@ namespace Game.Systems
                 {
                     SearchForTargetTime = 1,
                     StartTime = Time.time,
-                    Radius = 5
+                    Radius = 10
                 });
             }
 
