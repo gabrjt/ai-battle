@@ -9,7 +9,7 @@ namespace Game.Components
         public float Value;
     }
 
-    public class AttackDistanceComponent : ComponentDataWrapper<AttackDistance>
+    public class AttackDistanceComponent : ComponentDataProxy<AttackDistance>
     {
     }
 }

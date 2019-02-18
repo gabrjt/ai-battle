@@ -9,5 +9,5 @@ namespace Game.Components
         public Entity Value;
     }
 
-    public class TargetFoundComponent : ComponentDataWrapper<TargetFound> { }
+    public class TargetFoundComponent : ComponentDataProxy<TargetFound> { }
 }

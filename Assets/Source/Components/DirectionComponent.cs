@@ -10,5 +10,5 @@ namespace Game.Components
         public float3 Value;
     }
 
-    public class DirectionComponent : ComponentDataWrapper<Direction> { }
+    public class DirectionComponent : ComponentDataProxy<Direction> { }
 }

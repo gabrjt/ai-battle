@@ -11,7 +11,7 @@ namespace Game.Components
         public float StartTime;
     }
 
-    public class CooldownComponent : ComponentDataWrapper<Cooldown>
+    public class CooldownComponent : ComponentDataProxy<Cooldown>
     {
     }
 }

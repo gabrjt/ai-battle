@@ -10,5 +10,5 @@ namespace Game.Components
         public float3 Value;
     }
 
-    public class DestinationFoundComponent : ComponentDataWrapper<DestinationFound> { }
+    public class DestinationFoundComponent : ComponentDataProxy<DestinationFound> { }
 }

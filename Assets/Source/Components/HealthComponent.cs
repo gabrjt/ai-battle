@@ -9,5 +9,5 @@ namespace Game.Components
         public float Value;
     }
 
-    public class HealthComponent : ComponentDataWrapper<Health> { }
+    public class HealthComponent : ComponentDataProxy<Health> { }
 }

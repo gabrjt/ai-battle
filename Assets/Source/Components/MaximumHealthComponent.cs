@@ -9,5 +9,5 @@ namespace Game.Components
         public float Value;
     }
 
-    public class MaximumHealthComponent : ComponentDataWrapper<MaximumHealth> { }
+    public class MaximumHealthComponent : ComponentDataProxy<MaximumHealth> { }
 }

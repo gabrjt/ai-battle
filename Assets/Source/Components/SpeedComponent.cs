@@ -9,5 +9,5 @@ namespace Game.Components
         public float Value;
     }
 
-    public class SpeedComponent : ComponentDataWrapper<Speed> { }
+    public class SpeedComponent : ComponentDataProxy<Speed> { }
 }
