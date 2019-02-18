@@ -11,5 +11,5 @@ namespace Game.Components
         public float StartTime;
     }
 
-    public class IdleComponent : ComponentDataProxy<Idle> { }
+    public class IdleProxy : ComponentDataProxy<Idle> { }
 }

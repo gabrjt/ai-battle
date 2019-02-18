@@ -37,7 +37,9 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Cooldown>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Position>(),
+            m_Archetype = EntityManager.CreateArchetype(
+                ComponentType.ReadOnly<Projectile>(),
+                ComponentType.ReadOnly<Position>(),
                 ComponentType.ReadOnly<Rotation>(),
                 ComponentType.ReadOnly<Scale>(),
                 ComponentType.ReadOnly<RenderMesh>(),

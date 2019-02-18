@@ -6,5 +6,5 @@ namespace Game.Components
     [Serializable]
     public struct SearchingForDestination : IComponentData { }
 
-    public class SearchingForDestinationComponent : ComponentDataProxy<SearchingForDestination> { }
+    public class SearchingForDestinationProxy : ComponentDataProxy<SearchingForDestination> { }
 }

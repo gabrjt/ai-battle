@@ -11,7 +11,7 @@ namespace Game.Components
         public float3 Value;
     }
 
-    public class DestinationComponent : ComponentDataProxy<Destination>
+    public class DestinationProxy : ComponentDataProxy<Destination>
     {
         private void OnDrawGizmosSelected()
         {

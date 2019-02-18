@@ -4,10 +4,10 @@ using Unity.Entities;
 namespace Game.Components
 {
     [Serializable]
-    public struct Speed : IComponentData
+    public struct MaximumHealth : IComponentData
     {
         public float Value;
     }
 
-    public class SpeedComponent : ComponentDataProxy<Speed> { }
+    public class MaximumHealthProxy : ComponentDataProxy<MaximumHealth> { }
 }

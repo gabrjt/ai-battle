@@ -5,10 +5,10 @@ using Unity.Mathematics;
 namespace Game.Components
 {
     [Serializable]
-    public struct DestinationFound : IComponentData
+    public struct Velocity : IComponentData
     {
         public float3 Value;
     }
 
-    public class DestinationFoundComponent : ComponentDataProxy<DestinationFound> { }
+    public class VelocityProxy : ComponentDataProxy<Velocity> { }
 }

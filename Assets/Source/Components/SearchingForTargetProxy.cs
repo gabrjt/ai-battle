@@ -13,5 +13,5 @@ namespace Game.Components
         public float Radius;
     }
 
-    public class SearchingForTargetComponent : ComponentDataProxy<SearchingForTarget> { }
+    public class SearchingForTargetProxy : ComponentDataProxy<SearchingForTarget> { }
 }
