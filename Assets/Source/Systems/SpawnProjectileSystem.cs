@@ -30,7 +30,8 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>() }
+                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>() },
+                None = new[] { ComponentType.ReadOnly<Cooldown>() }
             });
 
             m_EntitySpawnList = new NativeList<ProjectileSpawnData>(Allocator.Persistent);
@@ -41,12 +42,14 @@ namespace Game.Systems
         protected override void OnUpdate()
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
+            var entityType = GetArchetypeChunkEntityType();
             var targetType = GetArchetypeChunkComponentType<Target>(true);
             var positionType = GetArchetypeChunkComponentType<Position>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
+                var entityArray = chunk.GetNativeArray(entityType);
                 var targetArray = chunk.GetNativeArray(targetType);
                 var positionArray = chunk.GetNativeArray(positionType);
 
@@ -58,9 +61,15 @@ namespace Game.Systems
 
                     m_EntitySpawnList.Add(new ProjectileSpawnData
                     {
-                        Position = new Position { Value = position.Value + new float3(0, 0.5f, 0.5f) },
+                        Position = new Position { Value = position.Value + new float3(0, 0.35f, 0) },
                         Rotation = new Rotation { Value = quaternion.LookRotation(direction, Vector3.up) },
                         Direction = new Direction { Value = direction }
+                    });
+
+                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Cooldown
+                    {
+                        Value = 1,
+                        StartTime = Time.time
                     });
                 }
             }

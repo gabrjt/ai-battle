@@ -6,21 +6,19 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class CalculateIdleTimeSystem : JobComponentSystem
+    public class CooldownSystem : JobComponentSystem
     {
-        [RequireSubtractiveComponent(typeof(Target))]
-        private struct Job : IJobProcessComponentDataWithEntity<Idle>
+        public struct Job : IJobProcessComponentDataWithEntity<Cooldown>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Idle idle)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Cooldown cooldown)
             {
-                if (idle.StartTime + idle.IdleTime > Time) return;
+                if (cooldown.StartTime + cooldown.Value > Time) return;
 
-                EntityCommandBuffer.RemoveComponent<Idle>(index, entity);
-                EntityCommandBuffer.AddComponent(index, entity, new SearchingForDestination());
+                EntityCommandBuffer.RemoveComponent<Cooldown>(index, entity);
             }
         }
 

@@ -2,7 +2,7 @@
 using UnityEngine;
 using MRandom = Unity.Mathematics.Random;
 
-namespace Game
+namespace Game.Extensions
 {
     public static class TerrainExtensions
     {
