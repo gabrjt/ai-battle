@@ -47,6 +47,10 @@ namespace Game.Systems
                     StartTime = Time.time,
                     Radius = 10
                 });
+
+                var maximumHealth = m_Random.NextInt(20, 100);
+                PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
+                PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
             }
 
             Enabled = false;
