@@ -5,7 +5,6 @@ using Unity.Entities;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(EndFrameBarrier))]
-    // [UpdateAfter(typeof(PostLateUpdate))]
     public class CleanupEventsSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
