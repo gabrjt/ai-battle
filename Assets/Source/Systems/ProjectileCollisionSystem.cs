@@ -20,6 +20,8 @@ namespace Game.Systems
             public float Radius;
         }
 
+        private EntityArchetype m_Archetype;
+
         private NativeList<SpherecastCommandData> m_SphereCastCommandDataList;
 
         private NativeArray<SpherecastCommand> m_CommandArray;
@@ -31,6 +33,8 @@ namespace Game.Systems
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Damaged>());
 
             m_SphereCastCommandDataList = new NativeList<SpherecastCommandData>(Allocator.Persistent);
 
@@ -67,11 +71,19 @@ namespace Game.Systems
 
                 if (!result.collider) continue;
 
-                // TODO: create damage event
+                var entity = m_SphereCastCommandDataList[i].Entity;
 
-                // TODO: create collided event
+                var damage = EntityManager.GetComponentData<Damage>(entity).Value;
+                var target = result.collider.GetComponent<GameObjectEntity>().Entity;
 
-                EntityManager.DestroyEntity(m_SphereCastCommandDataList[i].Entity);
+                var damaged = EntityManager.CreateEntity(m_Archetype);
+                EntityManager.SetComponentData(damaged, new Damaged
+                {
+                    Value = damage,
+                    Target = target
+                });
+
+                EntityManager.AddComponentData(entity, new Collided());
             }
 
             m_CommandArray.Dispose();

@@ -20,6 +20,12 @@ namespace Game.Systems
                 }, new EntityArchetypeQuery
                 {
                     All = new[] { ComponentType.ReadOnly<TargetFound>() }
+                }, new EntityArchetypeQuery
+                {
+                    All = new[] { ComponentType.ReadOnly<Damaged>() }
+                }, new EntityArchetypeQuery
+                {
+                    All = new[] { ComponentType.ReadOnly<Collided>() }
                 });
         }
 
@@ -29,15 +35,16 @@ namespace Game.Systems
             var entityType = GetArchetypeChunkEntityType();
             var destinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true);
             var targetFoundType = GetArchetypeChunkComponentType<TargetFound>(true);
+            var damagedType = GetArchetypeChunkComponentType<Damaged>(true);
+            var collidedType = GetArchetypeChunkComponentType<Collided>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
+                var entityArray = chunk.GetNativeArray(entityType);
 
                 if (chunk.Has(targetFoundType))
                 {
-                    var entityArray = chunk.GetNativeArray(entityType);
-
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         PostUpdateCommands.RemoveComponent<TargetFound>(entityArray[entityIndex]);
@@ -45,11 +52,23 @@ namespace Game.Systems
                 }
                 else if (chunk.Has(destinationFoundType))
                 {
-                    var entityArray = chunk.GetNativeArray(entityType);
-
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         PostUpdateCommands.RemoveComponent<DestinationFound>(entityArray[entityIndex]);
+                    }
+                }
+                else if (chunk.Has(damagedType))
+                {
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
+                    }
+                }
+                else if (chunk.Has(collidedType))
+                {
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
                     }
                 }
             }
