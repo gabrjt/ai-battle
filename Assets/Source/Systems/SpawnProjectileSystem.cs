@@ -118,6 +118,8 @@ namespace Game.Systems
             {
                 var spawnData = m_EntitySpawnList[i];
                 var entity = entitySpawnArray[i];
+
+                EntityManager.SetComponentData(entity, new Projectile { Radius = 0.25f });
                 EntityManager.SetComponentData(entity, spawnData.Position);
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);
