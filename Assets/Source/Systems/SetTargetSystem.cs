@@ -11,11 +11,6 @@ namespace Game.Systems
             {
                 var entity = targetFound.This;
                 PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Value });
-
-                if (EntityManager.HasComponent<Idle>(entity))
-                {
-                    PostUpdateCommands.RemoveComponent<Idle>(entity);
-                }
             });
         }
     }

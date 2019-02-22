@@ -6,12 +6,14 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class CalculateIdleTimeSystem : JobComponentSystem
+    public class IdleSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Target))]
         private struct Job : IJobProcessComponentDataWithEntity<Idle>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+
+            public EntityArchetype Archetype;
 
             public float Time;
 
@@ -19,19 +21,31 @@ namespace Game.Systems
             {
                 if (idle.StartTime + idle.IdleTime > Time) return;
 
-                EntityCommandBuffer.RemoveComponent<Idle>(index, entity);
+                var idleTimeExpired = EntityCommandBuffer.CreateEntity(index, Archetype);
+                EntityCommandBuffer.SetComponent(index, idleTimeExpired, new IdleTimeExpired { This = entity });
+
                 EntityCommandBuffer.AddComponent(index, entity, new SearchingForDestination());
             }
         }
 
+        private EntityArchetype m_Archetype;
+
         [Inject]
         private EndFrameBarrier m_EndFrameBarrier;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<IdleTimeExpired>());
+        }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             return new Job
             {
                 EntityCommandBuffer = m_EndFrameBarrier.CreateCommandBuffer().ToConcurrent(),
+                Archetype = m_Archetype,
                 Time = Time.time
             }.Schedule(this, inputDeps);
         }
