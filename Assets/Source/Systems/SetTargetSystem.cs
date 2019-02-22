@@ -7,8 +7,9 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref TargetFound targetFound) =>
+            ForEach((ref TargetFound targetFound) =>
             {
+                var entity = targetFound.This;
                 PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Value });
 
                 if (EntityManager.HasComponent<Idle>(entity))

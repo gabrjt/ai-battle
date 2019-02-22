@@ -11,6 +11,8 @@ namespace Game.Systems
     {
         private ComponentGroup m_Group;
 
+        private EntityArchetype m_Archetype;
+
         private LayerMask m_LayerMask;
 
         private MRandom m_Random;
@@ -25,6 +27,8 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
                 None = new[] { ComponentType.ReadOnly<Target>() }
             });
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<TargetFound>());
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
 
@@ -45,7 +49,13 @@ namespace Game.Systems
                     }
                     else
                     {
-                        PostUpdateCommands.AddComponent(entity, new TargetFound { Value = targetArray[m_Random.NextInt(0, targetArray.Length)].GetComponent<GameObjectEntity>().Entity });
+                        var targetFound = PostUpdateCommands.CreateEntity(m_Archetype);
+                        PostUpdateCommands.SetComponent(targetFound, new TargetFound
+                        {
+                            This = entity,
+                            Value = targetArray[m_Random.NextInt(0, targetArray.Length)].GetComponent<GameObjectEntity>().Entity
+                        });
+
                         PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
                     }
                 }

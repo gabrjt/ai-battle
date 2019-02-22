@@ -11,6 +11,8 @@ namespace Game.Systems
     {
         private ComponentGroup m_Group;
 
+        private EntityArchetype m_Archetype;
+
         [Inject]
         private SpawnAICharactersSystem m_SpawnAICharactersSystem;
 
@@ -23,6 +25,8 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<SearchingForDestination>() },
                 None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
             });
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationFound>());
         }
 
         protected override void OnUpdate()
@@ -43,7 +47,13 @@ namespace Game.Systems
 
                     if (NavMesh.SamplePosition(terrain.GetRandomPosition(), out var hit, 1, NavMesh.AllAreas))
                     {
-                        PostUpdateCommands.AddComponent(entity, new DestinationFound { Value = hit.position });
+                        var destinationFound = PostUpdateCommands.CreateEntity(m_Archetype);
+                        PostUpdateCommands.SetComponent(destinationFound, new DestinationFound
+                        {
+                            This = entity,
+                            Value = hit.position
+                        });
+
                         PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }

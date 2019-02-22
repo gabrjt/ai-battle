@@ -6,6 +6,8 @@ namespace Game.Components
     [Serializable]
     public struct TargetFound : IComponentData
     {
+        public Entity This;
+
         public Entity Value;
     }
 

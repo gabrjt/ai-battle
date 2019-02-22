@@ -7,6 +7,8 @@ namespace Game.Components
     [Serializable]
     public struct DestinationFound : IComponentData
     {
+        public Entity This;
+
         public float3 Value;
     }
 

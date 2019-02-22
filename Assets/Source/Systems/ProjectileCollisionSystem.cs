@@ -20,7 +20,9 @@ namespace Game.Systems
             public float Radius;
         }
 
-        private EntityArchetype m_Archetype;
+        private EntityArchetype m_DamagedArchetype;
+
+        private EntityArchetype m_CollidedArchetype;
 
         private NativeList<SpherecastCommandData> m_SphereCastCommandDataList;
 
@@ -34,7 +36,8 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Damaged>());
+            m_DamagedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Damaged>());
+            m_CollidedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Collided>());
 
             m_SphereCastCommandDataList = new NativeList<SpherecastCommandData>(Allocator.Persistent);
 
@@ -60,7 +63,7 @@ namespace Game.Systems
             for (var i = 0; i < m_SphereCastCommandDataList.Length; i++)
             {
                 var sphereCastCommand = m_SphereCastCommandDataList[i];
-                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Radius, 1 << m_LayerMask);
+                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Radius * 1.25f, 1 << m_LayerMask);
             }
 
             SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1).Complete();
@@ -76,14 +79,19 @@ namespace Game.Systems
                 var damage = EntityManager.GetComponentData<Damage>(entity).Value;
                 var target = result.collider.GetComponent<GameObjectEntity>().Entity;
 
-                var damaged = EntityManager.CreateEntity(m_Archetype);
+                var damaged = EntityManager.CreateEntity(m_DamagedArchetype);
                 EntityManager.SetComponentData(damaged, new Damaged
                 {
                     Value = damage,
                     Target = target
                 });
 
-                EntityManager.AddComponentData(entity, new Collided());
+                var collided = EntityManager.CreateEntity(m_CollidedArchetype);
+                EntityManager.SetComponentData(collided, new Collided
+                {
+                    This = entity,
+                    Value = target
+                });
             }
 
             m_CommandArray.Dispose();

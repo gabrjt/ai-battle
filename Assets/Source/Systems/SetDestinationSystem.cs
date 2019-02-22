@@ -15,6 +15,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
+                All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
             });
         }
@@ -32,35 +33,31 @@ namespace Game.Systems
 
                 if (chunk.Has(targetFoundType))
                 {
-                    var entityArray = chunk.GetNativeArray(entityType);
                     var targetFoundArray = chunk.GetNativeArray(targetFoundType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = entityArray[entityIndex];
-                        var target = targetFoundArray[entityIndex].Value;
-                        var destination = EntityManager.GetComponentData<Position>(target).Value;
+                        var targetFound = targetFoundArray[entityIndex];
+                        var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
 
-                        if (EntityManager.HasComponent<Destination>(entity))
+                        if (EntityManager.HasComponent<Destination>(targetFound.This))
                         {
-                            PostUpdateCommands.SetComponent(entity, new Destination { Value = destination });
+                            PostUpdateCommands.SetComponent(targetFound.This, new Destination { Value = destination });
                         }
                         else
                         {
-                            PostUpdateCommands.AddComponent(entity, new Destination { Value = destination });
+                            PostUpdateCommands.AddComponent(targetFound.This, new Destination { Value = destination });
                         }
                     }
                 }
                 else if (chunk.Has(destinationFoundType))
                 {
-                    var entityArray = chunk.GetNativeArray(entityType);
                     var destinationFoundArray = chunk.GetNativeArray(destinationFoundType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = entityArray[entityIndex];
-                        var destination = destinationFoundArray[entityIndex].Value;
-                        PostUpdateCommands.AddComponent(entity, new Destination { Value = destination });
+                        var destinationFound = destinationFoundArray[entityIndex];
+                        PostUpdateCommands.AddComponent(destinationFound.This, new Destination { Value = destinationFound.Value });
                     }
                 }
             }
