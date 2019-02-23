@@ -90,6 +90,9 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var target = targetArray[entityIndex];
+
+                    if (!EntityManager.Exists(target.Value)) continue;
+
                     var position = positionArray[entityIndex];
                     var direction = math.normalizesafe(EntityManager.GetComponentData<Position>(target.Value).Value - position.Value);
 

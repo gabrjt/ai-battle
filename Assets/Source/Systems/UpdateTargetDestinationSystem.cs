@@ -11,9 +11,12 @@ namespace Game.Systems
         {
             ForEach((Entity entity, ref Target target, ref Destination destination, ref Position position, ref AttackDistance attackDistance) =>
             {
-                var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
-                var direction = math.normalizesafe(targetDestination - position.Value);
-                destination.Value = targetDestination - direction * attackDistance.Value;
+                if (EntityManager.Exists(target.Value))
+                {
+                    var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
+                    var direction = math.normalizesafe(targetDestination - position.Value);
+                    destination.Value = targetDestination - direction * attackDistance.Value;
+                }
             });
         }
     }

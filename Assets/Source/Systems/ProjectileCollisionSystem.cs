@@ -83,6 +83,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(damaged, new Damaged
                 {
                     Value = damage,
+                    Source = entity,
                     Target = target
                 });
 

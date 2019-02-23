@@ -4,6 +4,7 @@ using UnityEngine.AI;
 
 namespace Game.Systems
 {
+    // TODO: nav mesh agent optimization; move to target destination
     public class MoveToDestinationSystem : ComponentSystem
     {
         protected override void OnUpdate()

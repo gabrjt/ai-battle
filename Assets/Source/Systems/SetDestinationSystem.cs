@@ -38,6 +38,9 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var targetFound = targetFoundArray[entityIndex];
+
+                        if (!EntityManager.Exists(targetFound.Value)) continue;
+
                         var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
 
                         if (EntityManager.HasComponent<Destination>(targetFound.This))
