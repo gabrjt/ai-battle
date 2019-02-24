@@ -11,7 +11,7 @@ namespace Game.Systems
         {
             ForEach((Entity entity, ref Target target, ref Destination destination, ref Position position, ref AttackDistance attackDistance) =>
             {
-                if (EntityManager.Exists(target.Value))
+                if (EntityManager.Exists(target.Value) && EntityManager.HasComponent<Position>(target.Value))
                 {
                     var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
                     var direction = math.normalizesafe(targetDestination - position.Value);

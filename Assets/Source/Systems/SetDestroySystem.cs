@@ -8,6 +8,8 @@ namespace Game.Systems
     {
         private ComponentGroup m_Group;
 
+        private EntityArchetype m_Archetype;
+
         private NativeList<Entity> m_SetDestroyList;
 
         protected override void OnCreateManager()
@@ -23,6 +25,8 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
             });
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Destroyed>());
 
             m_SetDestroyList = new NativeList<Entity>(Allocator.Persistent);
         }
@@ -51,6 +55,11 @@ namespace Game.Systems
                         m_SetDestroyList.Add(entity);
 
                         PostUpdateCommands.AddComponent(entity, new Destroy());
+
+                        /*
+                        var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
+                        PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
+                        */
                     }
                 }
 
@@ -67,6 +76,11 @@ namespace Game.Systems
                         m_SetDestroyList.Add(entity);
 
                         PostUpdateCommands.AddComponent(entity, new Destroy());
+
+                        /*
+                        var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
+                        PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
+                        */
                     }
                 }
             }
