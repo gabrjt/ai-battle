@@ -49,6 +49,7 @@ namespace Game.Systems
                 ComponentType.ReadOnly<Direction>(),
                 ComponentType.ReadOnly<Velocity>(),
                 ComponentType.ReadOnly<Damage>(),
+                ComponentType.ReadOnly<MaximumDistance>(),
                 ComponentType.ReadOnly<Prefab>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
@@ -126,7 +127,8 @@ namespace Game.Systems
                 var spawnData = m_EntitySpawnList[i];
                 var entity = entitySpawnArray[i];
 
-                EntityManager.SetComponentData(entity, new Projectile {
+                EntityManager.SetComponentData(entity, new Projectile
+                {
                     Owner = spawnData.Owner,
                     Radius = 0.25f
                 });
@@ -134,6 +136,11 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);
                 EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
+                EntityManager.SetComponentData(entity, new MaximumDistance
+                {
+                    Origin = spawnData.Position.Value,
+                    Value = 100
+                });
             }
 
             entitySpawnArray.Dispose();
