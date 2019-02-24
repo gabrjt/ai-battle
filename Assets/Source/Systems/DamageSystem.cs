@@ -32,12 +32,12 @@ namespace Game.Systems
 
                     if (targetHealth.Value <= 0)
                     {
-                        if (EntityManager.Exists(damaged.Source))
+                        if (EntityManager.Exists(damaged.This))
                         {
                             var killed = PostUpdateCommands.CreateEntity(m_Archetype);
                             PostUpdateCommands.SetComponent(killed, new Killed
                             {
-                                This = damaged.Source,
+                                This = damaged.This,
                                 Target = damaged.Target
                             });
                         }

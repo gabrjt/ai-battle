@@ -20,6 +20,8 @@ namespace Game.Systems
 
             public float3 Direction;
 
+            public float Distance;
+
             public float Radius;
         }
 
@@ -49,7 +51,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref Projectile projectile, ref Direction direction, ref Position position) =>
+            ForEach((Entity entity, ref Projectile projectile, ref Direction direction, ref Position position, ref Speed speed) =>
             {
                 m_SphereCastCommandDataList.Add(new SpherecastCommandData
                 {
@@ -57,6 +59,7 @@ namespace Game.Systems
                     Owner = projectile.Owner,
                     Origin = position.Value,
                     Direction = direction.Value,
+                    Distance = speed.Value * Time.deltaTime,
                     Radius = projectile.Radius
                 });
             });
@@ -67,7 +70,7 @@ namespace Game.Systems
             for (var i = 0; i < m_SphereCastCommandDataList.Length; i++)
             {
                 var sphereCastCommand = m_SphereCastCommandDataList[i];
-                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Radius * 1.25f, 1 << m_LayerMask);
+                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Distance, 1 << m_LayerMask);
             }
 
             SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1).Complete();
@@ -88,7 +91,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(damaged, new Damaged
                 {
                     Value = damage,
-                    Source = owner,
+                    This = owner,
                     Target = target
                 });
 

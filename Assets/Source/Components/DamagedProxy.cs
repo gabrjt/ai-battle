@@ -8,7 +8,7 @@ namespace Game.Components
     {
         public float Value;
 
-        public Entity Source;
+        public Entity This;
 
         public Entity Target;
     }

@@ -68,7 +68,7 @@ namespace Game.Systems
                 castShadows = UnityEngine.Rendering.ShadowCastingMode.On,
                 receiveShadows = true
             });
-            EntityManager.SetComponentData(m_Prefab, new Speed { Value = 5 });
+            EntityManager.SetComponentData(m_Prefab, new Speed { Value = 25 });
             EntityManager.SetComponentData(m_Prefab, new Damage { Value = 10 });
 
             Object.Destroy(sphere);

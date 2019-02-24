@@ -4,21 +4,9 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
 namespace Game.Systems
 {
-    public class DestinationReachedDebugSystem : ComponentSystem
-    {
-        protected override void OnUpdate()
-        {
-            ForEach((ref Position position, ref Destination destination) =>
-            {
-                Debug.DrawLine(position.Value, destination.Value);
-            });
-        }
-    }
-
     public class DestinationReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Target))]
@@ -34,14 +22,6 @@ namespace Game.Systems
 
                 var destinationReached = EntityCommandBuffer.CreateEntity(index, Archetype);
                 EntityCommandBuffer.SetComponent(index, destinationReached, new DestinationReached { This = entity });
-                /*
-                EntityCommandBuffer.RemoveComponent<Destination>(index, entity);
-                EntityCommandBuffer.AddComponent(index, entity, new Idle
-                {
-                    StartTime = Time,
-                    IdleTime = Random.NextFloat(1, 10)
-                });
-                */
             }
         }
 
