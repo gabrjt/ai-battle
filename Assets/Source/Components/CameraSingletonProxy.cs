@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Game.Components
 {
     [Serializable]
-    public struct CanvasSingleton : IComponentData
+    public struct CameraSingleton : IComponentData
     {
         [HideInInspector]
         public Entity Owner;
     }
 
-    public class CanvasSingletonProxy : ComponentDataProxy<CanvasSingleton> { }
+    public class CameraSingletonProxy : ComponentDataProxy<CameraSingleton> { }
 }
