@@ -4,11 +4,11 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    public class RemoveIdleSystem : ComponentSystem
+    public class RemoveSearchingForDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_RemoveIdleList;
+        private NativeList<Entity> m_RemoveSearchingForDestinationList;
 
         protected override void OnCreateManager()
         {
@@ -16,14 +16,13 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Idle>() },
-                Any = new[] { ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<IdleTimeExpired>() }
+                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<DestinationFound>() }
             });
 
-            m_RemoveIdleList = new NativeList<Entity>(Allocator.Persistent);
+            m_RemoveSearchingForDestinationList = new NativeList<Entity>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
@@ -31,7 +30,7 @@ namespace Game.Systems
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var characterType = GetArchetypeChunkComponentType<Character>(true);
-            var idleTimeExpiredType = GetArchetypeChunkComponentType<IdleTimeExpired>(true);
+            var destinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
@@ -45,43 +44,43 @@ namespace Game.Systems
                     {
                         var entity = entityArray[entityIndex];
 
-                        if (m_RemoveIdleList.Contains(entity)) continue;
+                        if (m_RemoveSearchingForDestinationList.Contains(entity)) continue;
 
-                        m_RemoveIdleList.Add(entity);
+                        m_RemoveSearchingForDestinationList.Add(entity);
 
-                        PostUpdateCommands.RemoveComponent<Idle>(entity);
+                        PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }
 
-                if (chunk.Has(idleTimeExpiredType))
+                if (chunk.Has(destinationFoundType))
                 {
-                    var idleTimeExpiredArray = chunk.GetNativeArray(idleTimeExpiredType);
+                    var destinationFoundArray = chunk.GetNativeArray(destinationFoundType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = idleTimeExpiredArray[entityIndex].This;
+                        var entity = destinationFoundArray[entityIndex].This;
 
-                        if (m_RemoveIdleList.Contains(entity)) continue;
+                        if (m_RemoveSearchingForDestinationList.Contains(entity)) continue;
 
-                        m_RemoveIdleList.Add(entity);
+                        m_RemoveSearchingForDestinationList.Add(entity);
 
-                        PostUpdateCommands.RemoveComponent<Idle>(entity);
+                        PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }
             }
 
             chunkArray.Dispose();
 
-            m_RemoveIdleList.Clear();
+            m_RemoveSearchingForDestinationList.Clear();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_RemoveIdleList.IsCreated)
+            if (m_RemoveSearchingForDestinationList.IsCreated)
             {
-                m_RemoveIdleList.Dispose();
+                m_RemoveSearchingForDestinationList.Dispose();
             }
         }
     }

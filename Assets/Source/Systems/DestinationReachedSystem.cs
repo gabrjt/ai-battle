@@ -5,11 +5,10 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    public class ReachedDestinationDebugSystem : ComponentSystem
+    public class DestinationReachedDebugSystem : ComponentSystem
     {
         protected override void OnUpdate()
         {
@@ -20,31 +19,33 @@ namespace Game.Systems
         }
     }
 
-    public class ReachedDestinationSystem : JobComponentSystem
+    public class DestinationReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Target))]
         private struct Job : IJobProcessComponentDataWithEntity<Destination, Position>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
-            public MRandom Random;
-
-            public float Time;
+            public EntityArchetype Archetype;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Position position)
             {
                 if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(position.Value.x, 0, position.Value.z)) > 0.01f) return;
 
+                var destinationReached = EntityCommandBuffer.CreateEntity(index, Archetype);
+                EntityCommandBuffer.SetComponent(index, destinationReached, new DestinationReached { This = entity });
+                /*
                 EntityCommandBuffer.RemoveComponent<Destination>(index, entity);
                 EntityCommandBuffer.AddComponent(index, entity, new Idle
                 {
                     StartTime = Time,
                     IdleTime = Random.NextFloat(1, 10)
                 });
+                */
             }
         }
 
-        private MRandom m_Random;
+        private EntityArchetype m_Archetype;
 
         [Inject]
         private EndFrameBarrier m_EndFrameBarrier;
@@ -53,7 +54,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -61,8 +62,7 @@ namespace Game.Systems
             return new Job
             {
                 EntityCommandBuffer = m_EndFrameBarrier.CreateCommandBuffer().ToConcurrent(),
-                Random = m_Random,
-                Time = Time.time
+                Archetype = m_Archetype
             }.Schedule(this, inputDeps);
         }
     }

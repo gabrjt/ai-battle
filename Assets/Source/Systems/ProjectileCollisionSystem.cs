@@ -13,6 +13,8 @@ namespace Game.Systems
         {
             public Entity Entity;
 
+            public Entity Owner;
+
             public float3 Origin;
 
             public float3 Direction;
@@ -51,6 +53,7 @@ namespace Game.Systems
                 m_SphereCastCommandDataList.Add(new SpherecastCommandData
                 {
                     Entity = entity,
+                    Owner = projectile.Owner,
                     Origin = position.Value,
                     Direction = direction.Value,
                     Radius = projectile.Radius
@@ -75,6 +78,7 @@ namespace Game.Systems
                 if (!result.collider) continue;
 
                 var entity = m_SphereCastCommandDataList[i].Entity;
+                var owner = m_SphereCastCommandDataList[i].Owner;
 
                 var damage = EntityManager.GetComponentData<Damage>(entity).Value;
                 var target = result.collider.GetComponent<GameObjectEntity>().Entity;
@@ -83,7 +87,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(damaged, new Damaged
                 {
                     Value = damage,
-                    Source = entity,
+                    Source = owner,
                     Target = target
                 });
 

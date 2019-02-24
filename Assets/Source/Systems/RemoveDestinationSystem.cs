@@ -7,9 +7,9 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
-            ForEach((ref Killed killed) =>
+            ForEach((ref DestinationReached destinationReached) =>
             {
-                PostUpdateCommands.RemoveComponent<Destination>(killed.This);
+                PostUpdateCommands.RemoveComponent<Destination>(destinationReached.This);
             });
         }
     }

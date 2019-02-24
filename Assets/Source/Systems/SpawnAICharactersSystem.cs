@@ -11,7 +11,7 @@ namespace Game.Systems
     {
         private GameObject m_Prefab;
 
-        internal int m_Count = 500;
+        internal int m_Count = 1;
 
         private MRandom m_Random;
 
@@ -35,19 +35,6 @@ namespace Game.Systems
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
-
-                PostUpdateCommands.SetComponent(entity, new Idle
-                {
-                    IdleTime = m_Random.NextFloat(1, 10),
-                    StartTime = Time.time
-                });
-
-                PostUpdateCommands.SetComponent(entity, new SearchingForTarget
-                {
-                    SearchForTargetTime = 1,
-                    StartTime = Time.time,
-                    Radius = 10
-                });
 
                 var maximumHealth = m_Random.NextInt(20, 100);
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });

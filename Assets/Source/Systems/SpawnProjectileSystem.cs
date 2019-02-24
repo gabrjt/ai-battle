@@ -12,6 +12,8 @@ namespace Game.Systems
     {
         private struct ProjectileSpawnData
         {
+            public Entity Owner;
+
             public Position Position;
 
             public Rotation Rotation;
@@ -89,6 +91,7 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
+                    var entity = entityArray[entityIndex];
                     var target = targetArray[entityIndex];
 
                     if (!EntityManager.Exists(target.Value)) continue;
@@ -98,12 +101,13 @@ namespace Game.Systems
 
                     m_EntitySpawnList.Add(new ProjectileSpawnData
                     {
+                        Owner = entity,
                         Position = new Position { Value = position.Value + new float3(0, 0.35f, 0) },
                         Rotation = new Rotation { Value = quaternion.LookRotation(direction, Vector3.up) },
                         Direction = new Direction { Value = direction }
                     });
 
-                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Cooldown
+                    PostUpdateCommands.AddComponent(entity, new Cooldown
                     {
                         Value = 1,
                         StartTime = Time.time
@@ -122,7 +126,10 @@ namespace Game.Systems
                 var spawnData = m_EntitySpawnList[i];
                 var entity = entitySpawnArray[i];
 
-                EntityManager.SetComponentData(entity, new Projectile { Radius = 0.25f });
+                EntityManager.SetComponentData(entity, new Projectile {
+                    Owner = spawnData.Owner,
+                    Radius = 0.25f
+                });
                 EntityManager.SetComponentData(entity, spawnData.Position);
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);

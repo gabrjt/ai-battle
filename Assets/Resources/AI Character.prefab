@@ -18,10 +18,9 @@ GameObject:
   - component: {fileID: 929359968516524180}
   - component: {fileID: 1495871035072027000}
   - component: {fileID: 1182901328948830164}
+  - component: {fileID: 1713629401345089297}
   - component: {fileID: 7319146098835964539}
   - component: {fileID: 7380945007043472711}
-  - component: {fileID: 3477306344753700315}
-  - component: {fileID: 8874781846557408230}
   - component: {fileID: 2423319228555502933}
   m_Layer: 9
   m_Name: AI Character
@@ -198,6 +197,19 @@ MonoBehaviour:
     layer: 0
     castShadows: 1
     receiveShadows: 1
+--- !u!114 &1713629401345089297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256406060113545493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 6170d6dd910dbd342af4e06845da42e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &7319146098835964539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,39 +240,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value: 100
---- !u!114 &3477306344753700315
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256406060113545493}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: c5672660cb1122c4a8c12b7ae2d9c860, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    IdleTime: 0
-    StartTime: 0
---- !u!114 &8874781846557408230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256406060113545493}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 7b02e2dd329d79745baca7624c167a16, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SerializedData:
-    SearchForTargetTime: 0
-    StartTime: 0
-    Radius: 0
 --- !u!114 &2423319228555502933
 MonoBehaviour:
   m_ObjectHideFlags: 0

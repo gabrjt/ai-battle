@@ -9,6 +9,8 @@ namespace Game.Systems
     {
         private ComponentGroup m_Group;
 
+        private NativeList<Entity> m_SetDestinationList;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -16,8 +18,11 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
-                Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
+                Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() },
+                None = new[] { ComponentType.ReadOnly<Idle>() }
             });
+
+            m_SetDestinationList = new NativeList<Entity>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
@@ -39,33 +44,59 @@ namespace Game.Systems
                     {
                         var targetFound = targetFoundArray[entityIndex];
 
-                        if (!EntityManager.Exists(targetFound.Value)) continue;
+                        var entity = targetFound.This;
+
+                        if (m_SetDestinationList.Contains(entity)) continue;
+
+                        m_SetDestinationList.Add(entity);
+
+                        // if (!EntityManager.Exists(targetFound.Value)) continue;
 
                         var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
 
-                        if (EntityManager.HasComponent<Destination>(targetFound.This))
+                        if (EntityManager.HasComponent<Destination>(entity))
                         {
-                            PostUpdateCommands.SetComponent(targetFound.This, new Destination { Value = destination });
+                            PostUpdateCommands.SetComponent(entity, new Destination { Value = destination });
                         }
                         else
                         {
-                            PostUpdateCommands.AddComponent(targetFound.This, new Destination { Value = destination });
+                            PostUpdateCommands.AddComponent(entity, new Destination { Value = destination });
                         }
                     }
                 }
-                else if (chunk.Has(destinationFoundType))
+
+                if (chunk.Has(destinationFoundType))
                 {
                     var destinationFoundArray = chunk.GetNativeArray(destinationFoundType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var destinationFound = destinationFoundArray[entityIndex];
-                        PostUpdateCommands.AddComponent(destinationFound.This, new Destination { Value = destinationFound.Value });
+
+                        var entity = destinationFound.This;
+
+                        if (m_SetDestinationList.Contains(entity)) continue;
+
+                        m_SetDestinationList.Add(entity);
+
+                        PostUpdateCommands.AddComponent(entity, new Destination { Value = destinationFound.Value });
                     }
                 }
             }
 
             chunkArray.Dispose();
+
+            m_SetDestinationList.Clear();
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            if (m_SetDestinationList.IsCreated)
+            {
+                m_SetDestinationList.Dispose();
+            }
         }
     }
 }

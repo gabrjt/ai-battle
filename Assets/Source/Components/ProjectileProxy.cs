@@ -6,6 +6,8 @@ namespace Game.Components
     [Serializable]
     public struct Projectile : IComponentData
     {
+        public Entity Owner;
+
         public float Radius;
     }
 

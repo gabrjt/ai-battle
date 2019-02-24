@@ -55,8 +55,6 @@ namespace Game.Systems
                             This = entity,
                             Value = targetArray[m_Random.NextInt(0, targetArray.Length)].GetComponent<GameObjectEntity>().Entity
                         });
-
-                        PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
                     }
                 }
             }, m_Group);

@@ -8,7 +8,7 @@ namespace Game.Systems
 {
     public class IdleSystem : JobComponentSystem
     {
-        [RequireSubtractiveComponent(typeof(Target))]
+        [RequireSubtractiveComponent(typeof(SearchingForDestination), typeof(Destination), typeof(Target))]
         private struct Job : IJobProcessComponentDataWithEntity<Idle>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
@@ -23,8 +23,6 @@ namespace Game.Systems
 
                 var idleTimeExpired = EntityCommandBuffer.CreateEntity(index, Archetype);
                 EntityCommandBuffer.SetComponent(index, idleTimeExpired, new IdleTimeExpired { This = entity });
-
-                EntityCommandBuffer.AddComponent(index, entity, new SearchingForDestination());
             }
         }
 

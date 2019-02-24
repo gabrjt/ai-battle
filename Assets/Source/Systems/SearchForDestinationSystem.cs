@@ -54,7 +54,7 @@ namespace Game.Systems
                             Value = hit.position
                         });
 
-                        PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
+                        // PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }
             }

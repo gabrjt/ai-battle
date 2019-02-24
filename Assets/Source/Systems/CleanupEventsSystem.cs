@@ -1,10 +1,8 @@
 ﻿using Game.Components;
 using Unity.Entities;
-using UnityEngine.Experimental.PlayerLoop;
 
 namespace Game.Systems
 {
-    //[UpdateAfter(typeof(PostLateUpdate))]
     [UpdateAfter(typeof(EndFrameBarrier))]
     public class CleanupEventsSystem : ComponentSystem
     {
