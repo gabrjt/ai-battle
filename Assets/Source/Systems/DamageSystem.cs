@@ -3,7 +3,6 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    //[UpdateAfter(typeof(ProjectileCollisionSystem))]
     public class DamageSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

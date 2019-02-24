@@ -9,7 +9,11 @@ namespace Game.Systems
         {
             ForEach((ref Collided collided) =>
             {
-                PostUpdateCommands.AddComponent(collided.This, new Destroy());
+                var entity = collided.This;
+                if (!EntityManager.HasComponent<Destroy>(entity))
+                {
+                    PostUpdateCommands.AddComponent(entity, new Destroy());
+                }
             });
         }
     }
