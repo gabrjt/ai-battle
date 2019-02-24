@@ -6,8 +6,6 @@ namespace Game.Behaviours
     {
         private void OnTriggerEnter(Collider other)
         {
-            // TODO: create damage entity
-
             Destroy(gameObject);
         }
     }

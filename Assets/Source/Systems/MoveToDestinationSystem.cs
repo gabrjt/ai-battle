@@ -4,14 +4,19 @@ using UnityEngine.AI;
 
 namespace Game.Systems
 {
-    // TODO: nav mesh agent optimization; move to target destination
     public class MoveToDestinationSystem : ComponentSystem
     {
         protected override void OnUpdate()
         {
             ForEach((NavMeshAgent navMeshAgent, ref Destination destination) =>
             {
-                navMeshAgent.SetDestination(destination.Value);
+                if (!navMeshAgent.pathPending ||
+                    navMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
+                    navMeshAgent.pathStatus == NavMeshPathStatus.PathPartial ||
+                    destination.IsDirty)
+                {
+                    navMeshAgent.SetDestination(destination.Value);
+                }
             });
         }
     }

@@ -53,8 +53,6 @@ namespace Game.Systems
                             This = entity,
                             Value = hit.position
                         });
-
-                        // PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }
             }

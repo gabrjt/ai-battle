@@ -51,14 +51,22 @@ namespace Game.Systems
                         m_SetDestinationList.Add(entity);
 
                         var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
-
                         if (EntityManager.HasComponent<Destination>(entity))
                         {
-                            PostUpdateCommands.SetComponent(entity, new Destination { Value = destination });
+                            var lastDestination = EntityManager.GetComponentData<Destination>(entity);
+                            PostUpdateCommands.SetComponent(entity, new Destination
+                            {
+                                Value = destination,
+                                LastValue = lastDestination.Value
+                            });
                         }
                         else
                         {
-                            PostUpdateCommands.AddComponent(entity, new Destination { Value = destination });
+                            PostUpdateCommands.AddComponent(entity, new Destination
+                            {
+                                Value = destination,
+                                LastValue = destination
+                            });
                         }
                     }
                 }
@@ -77,7 +85,11 @@ namespace Game.Systems
 
                         m_SetDestinationList.Add(entity);
 
-                        PostUpdateCommands.AddComponent(entity, new Destination { Value = destinationFound.Value });
+                        PostUpdateCommands.AddComponent(entity, new Destination
+                        {
+                            Value = destinationFound.Value,
+                            LastValue = destinationFound.Value
+                        });
                     }
                 }
             }

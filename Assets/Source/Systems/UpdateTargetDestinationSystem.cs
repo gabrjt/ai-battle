@@ -15,6 +15,7 @@ namespace Game.Systems
                 {
                     var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
                     var direction = math.normalizesafe(targetDestination - position.Value);
+                    destination.LastValue = destination.Value;
                     destination.Value = targetDestination - direction * attackDistance.Value;
                 }
             });
