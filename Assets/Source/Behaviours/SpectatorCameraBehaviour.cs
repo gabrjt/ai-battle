@@ -67,10 +67,13 @@ public class SpectatorCameraBehaviour : MonoBehaviour
         {
             FindRandomTarget();
         }
-        else
-        {
-            transform.position = m_Target.position;
-            transform.rotation = math.mul(math.normalize(transform.rotation), quaternion.AxisAngle(math.up(), m_RotationSpeed * Time.deltaTime));
-        }
+    }
+
+    private void LateUpdate()
+    {
+        if (!m_Target) return;
+
+        transform.position = m_Target.position;
+        transform.rotation = math.mul(math.normalize(transform.rotation), quaternion.AxisAngle(math.up(), m_RotationSpeed * Time.deltaTime));
     }
 }
