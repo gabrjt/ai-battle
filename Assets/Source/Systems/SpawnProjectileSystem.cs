@@ -25,6 +25,8 @@ namespace Game.Systems
 
         private EntityArchetype m_Archetype;
 
+        private EntityArchetype m_AttackedArchetype;
+
         private Entity m_Prefab;
 
         private NativeList<ProjectileSpawnData> m_EntitySpawnList;
@@ -51,6 +53,8 @@ namespace Game.Systems
                 ComponentType.ReadOnly<Damage>(),
                 ComponentType.ReadOnly<MaximumDistance>(),
                 ComponentType.ReadOnly<Prefab>());
+
+            m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
 
@@ -113,6 +117,9 @@ namespace Game.Systems
                         Value = 1,
                         StartTime = Time.time
                     });
+
+                    var attacked = PostUpdateCommands.CreateEntity(m_AttackedArchetype);
+                    PostUpdateCommands.SetComponent(attacked, new Attacked { This = entity });
                 }
             }
 

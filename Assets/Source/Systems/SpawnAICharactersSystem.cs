@@ -17,7 +17,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        internal int m_Count = 100;
+        internal int m_Count = 10;
 
         private MRandom m_Random;
 
@@ -55,6 +55,8 @@ namespace Game.Systems
                     Owner = entity,
                     Offset = new float3(0, -1, 0)
                 });
+
+                PostUpdateCommands.AddComponent(entity, new ViewReference { Value = view });
                 /*
                 var attach = PostUpdateCommands.CreateEntity(m_Archetype);
                 PostUpdateCommands.SetComponent(attach, new Attach
