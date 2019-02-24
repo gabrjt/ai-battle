@@ -11,7 +11,7 @@ namespace Game.Systems
     {
         private GameObject m_Prefab;
 
-        internal int m_Count = 1;
+        internal int m_Count = 2;
 
         private MRandom m_Random;
 

@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [UpdateBefore(typeof(DamageSystem))]
     public class ProjectileCollisionSystem : ComponentSystem
     {
         private struct SpherecastCommandData

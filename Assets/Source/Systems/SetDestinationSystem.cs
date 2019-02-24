@@ -46,11 +46,9 @@ namespace Game.Systems
 
                         var entity = targetFound.This;
 
-                        if (m_SetDestinationList.Contains(entity)) continue;
+                        if (!EntityManager.Exists(targetFound.Value) || m_SetDestinationList.Contains(entity)) continue;
 
                         m_SetDestinationList.Add(entity);
-
-                        // if (!EntityManager.Exists(targetFound.Value)) continue;
 
                         var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
 

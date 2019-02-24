@@ -3,6 +3,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateAfter(typeof(EndFrameBarrier))]
     public class DestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;

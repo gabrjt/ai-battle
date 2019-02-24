@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using System.Linq;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using MRandom = Unity.Mathematics.Random;
@@ -41,7 +42,12 @@ namespace Game.Systems
             {
                 if (searchForTarget.StartTime + searchForTarget.SearchForTargetTime <= Time.time)
                 {
-                    var targetArray = Physics.OverlapSphere(position.Value, searchForTarget.Radius, 1 << m_LayerMask).Where(t => t.GetComponent<GameObjectEntity>().Entity != entity).ToArray();
+                    var positionValue = position.Value;
+
+                    var targetArray = Physics.OverlapSphere(position.Value, searchForTarget.Radius, 1 << m_LayerMask)
+                        .Where(collider => collider.GetComponent<GameObjectEntity>().Entity != entity)
+                        .OrderBy(collider => math.distance(collider.transform.position, positionValue))
+                        .ToArray();
 
                     if (targetArray.Length == 0)
                     {
@@ -49,12 +55,19 @@ namespace Game.Systems
                     }
                     else
                     {
-                        var targetFound = PostUpdateCommands.CreateEntity(m_Archetype);
-                        PostUpdateCommands.SetComponent(targetFound, new TargetFound
+                        foreach (var target in targetArray)
                         {
-                            This = entity,
-                            Value = targetArray[m_Random.NextInt(0, targetArray.Length)].GetComponent<GameObjectEntity>().Entity
-                        });
+                            var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
+
+                            if (EntityManager.HasComponent<Dead>(targetEntity)) continue;
+
+                            var targetFound = PostUpdateCommands.CreateEntity(m_Archetype);
+                            PostUpdateCommands.SetComponent(targetFound, new TargetFound
+                            {
+                                This = entity,
+                                Value = targetEntity
+                            });
+                        }
                     }
                 }
             }, m_Group);
