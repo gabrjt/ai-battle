@@ -22,7 +22,6 @@ GameObject:
   - component: {fileID: 7319146098835964539}
   - component: {fileID: 7380945007043472711}
   - component: {fileID: 2423319228555502933}
-  - component: {fileID: 2708685345289665796}
   m_Layer: 9
   m_Name: AI Character
   m_TagString: Untagged
@@ -54,7 +53,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 3.5
+  m_Speed: 10
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -256,16 +255,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value: 5
---- !u!114 &2708685345289665796
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256406060113545493}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 9f6617540babbdd4f9ed982458af31a3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

@@ -67,6 +67,8 @@ namespace Game.Systems
                                 This = entity,
                                 Value = targetEntity
                             });
+
+                            break;
                         }
                     }
                 }

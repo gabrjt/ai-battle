@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace Game.Systems
     {
         private ComponentGroup m_Group;
 
+        private List<GameObject> m_GameObjectList;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -18,6 +21,8 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Destroy>() }
             });
+
+            m_GameObjectList = new List<GameObject>();
         }
 
         protected override void OnUpdate()
@@ -36,8 +41,7 @@ namespace Game.Systems
 
                     if (EntityManager.HasComponent<Transform>(entity))
                     {
-                        var transform = EntityManager.GetComponentObject<Transform>(entity);
-                        Object.Destroy(transform.gameObject);
+                        m_GameObjectList.Add(EntityManager.GetComponentObject<Transform>(entity).gameObject);
                     }
                     else
                     {
@@ -48,7 +52,12 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            // EntityManager.DestroyEntity(m_Group);
+            foreach (var gameObject in m_GameObjectList)
+            {
+                Object.Destroy(gameObject);
+            }
+
+            m_GameObjectList.Clear();
         }
     }
 }
