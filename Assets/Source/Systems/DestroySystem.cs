@@ -43,7 +43,7 @@ namespace Game.Systems
                     {
                         m_GameObjectList.Add(EntityManager.GetComponentObject<Transform>(entity).gameObject);
                     }
-                    else
+                    else if (!EntityManager.HasComponent<RectTransform>(entity))
                     {
                         PostUpdateCommands.DestroyEntity(entity);
                     }

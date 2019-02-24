@@ -40,7 +40,7 @@ namespace Game.Systems
 
                     if (EntityManager.HasComponent<RectTransform>(entity))
                     {
-                        m_GameObjectList.Add(EntityManager.GetComponentObject<RectTransform>(entity).transform.parent.gameObject);
+                        m_GameObjectList.Add(EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject);
                     }
                     else
                     {
