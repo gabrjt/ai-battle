@@ -50,6 +50,7 @@ namespace Game.Systems
 
                         m_RemoveTargetList.Add(entity);
 
+                        UnityEngine.Debug.Assert(EntityManager.HasComponent<Target>(entity));
                         PostUpdateCommands.RemoveComponent<Target>(entity);
                     }
                 }
@@ -62,10 +63,11 @@ namespace Game.Systems
                     {
                         var entity = killedArray[entityIndex].This;
 
-                        if (m_RemoveTargetList.Contains(entity)) continue;
+                        if (!EntityManager.HasComponent<Target>(entity) || m_RemoveTargetList.Contains(entity)) continue;
 
                         m_RemoveTargetList.Add(entity);
 
+                        UnityEngine.Debug.Assert(EntityManager.HasComponent<Target>(entity));
                         PostUpdateCommands.RemoveComponent<Target>(entity);
                     }
                 }
