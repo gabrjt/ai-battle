@@ -39,7 +39,7 @@ namespace Game.Systems
                 {
                     var entity = chunk.GetNativeArray(entityType)[0];
                     var canvasSingleton = chunk.GetNativeArray(canvasSingletonType)[0];
-                    canvasSingleton.Initialized = true;
+                    canvasSingleton.Owner = entity;
 
                     PostUpdateCommands.AddComponent(entity, new Initialized());
                     PostUpdateCommands.SetComponent(entity, canvasSingleton);

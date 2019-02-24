@@ -7,8 +7,7 @@ namespace Game.Components
     [Serializable]
     public struct CanvasSingleton : IComponentData
     {
-        [HideInInspector]
-        public @bool Initialized;
+        public Entity Owner;
     }
 
     public class CanvasSingletonProxy : ComponentDataProxy<CanvasSingleton> { }
