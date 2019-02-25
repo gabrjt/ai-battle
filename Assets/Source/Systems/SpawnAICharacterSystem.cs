@@ -44,9 +44,13 @@ namespace Game.Systems
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
 
-                var maximumHealth = m_Random.NextInt(20, 100);
+                var maximumHealth = m_Random.NextInt(100, 501);
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
+
+                PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = m_Random.NextInt(1, 6) });
+
+                PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = m_Random.NextInt(1, 6) });
 
                 var viewIndex = m_Random.NextInt(0, 3);
 

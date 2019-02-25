@@ -38,7 +38,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>() },
+                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>(), ComponentType.ReadOnly<AttackSpeed>() },
                 None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attack>() }
             });
 
@@ -90,6 +90,7 @@ namespace Game.Systems
             var targetType = GetArchetypeChunkComponentType<Target>(true);
             var positionType = GetArchetypeChunkComponentType<Position>(true);
             var attackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true);
+            var attackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
@@ -98,6 +99,7 @@ namespace Game.Systems
                 var targetArray = chunk.GetNativeArray(targetType);
                 var positionArray = chunk.GetNativeArray(positionType);
                 var attackDistanceArray = chunk.GetNativeArray(attackDistanceType);
+                var attackSpeedArray = chunk.GetNativeArray(attackSpeedType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
@@ -129,15 +131,17 @@ namespace Game.Systems
                         }
                     });
 
+                    var duration = 1.333f / attackSpeedArray[entityIndex].Value;
+
                     PostUpdateCommands.AddComponent(entity, new Attack
                     {
-                        Value = 1.333f,
+                        Value = duration,
                         StartTime = Time.time
                     });
 
                     PostUpdateCommands.AddComponent(entity, new Cooldown
                     {
-                        Value = 1.333f,
+                        Value = duration,
                         StartTime = Time.time
                     });
 

@@ -23,7 +23,9 @@ namespace Game.Systems
         {
             ForEach((ref ViewReference viewReference) =>
             {
-                EntityManager.GetComponentObject<Animator>(viewReference.Value).Play("Idle");
+                var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
+                animator.speed = 1;
+                animator.Play("Idle");
             }, m_Group);
         }
     }

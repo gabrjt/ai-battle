@@ -26,6 +26,7 @@ namespace Game.Systems
             ForEach((ref ViewReference viewReference, ref Position position, ref Target target, ref AttackDistance attackDistance) =>
             {
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
+                animator.speed = 1;
                 if (EntityManager.HasComponent<Position>(target.Value))
                 {
                     if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Maximum)
