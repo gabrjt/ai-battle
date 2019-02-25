@@ -10,7 +10,7 @@ PrefabInstance:
     - target: {fileID: 1256406060113545493, guid: d9847cb3b4d955e4aab8456750ae373c,
         type: 3}
       propertyPath: m_Name
-      value: AI Character View
+      value: AI Character
       objectReference: {fileID: 0}
     - target: {fileID: 2675713467512130517, guid: d9847cb3b4d955e4aab8456750ae373c,
         type: 3}
@@ -80,7 +80,7 @@ PrefabInstance:
     - target: {fileID: 447843237919680306, guid: d9847cb3b4d955e4aab8456750ae373c,
         type: 3}
       propertyPath: m_SerializedData.Value
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1182901328948830164, guid: d9847cb3b4d955e4aab8456750ae373c, type: 3}

@@ -17,7 +17,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() },
-                None = new[] { ComponentType.ReadOnly<Idle>() }
+                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Attack>() }
             });
         }
 
@@ -41,7 +41,7 @@ namespace Game.Systems
                 {
                     animator.Play("Idle");
                 }
-            });
+            }, m_Group);
         }
     }
 }

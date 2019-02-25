@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateBefore(typeof(DamageSystem))]
-    public class ProjectileCollisionSystem : ComponentSystem
+    public class AttackCollisionSystem : ComponentSystem
     {
         private struct SpherecastCommandData
         {
@@ -51,16 +51,16 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref Projectile projectile, ref Direction direction, ref Position position, ref Speed speed) =>
+            ForEach((Entity entity, ref AttackInstance AttackInstance, ref Direction direction, ref Position position, ref Speed speed) =>
             {
                 m_SphereCastCommandDataList.Add(new SpherecastCommandData
                 {
                     Entity = entity,
-                    Owner = projectile.Owner,
+                    Owner = AttackInstance.Owner,
                     Origin = position.Value,
                     Direction = direction.Value,
                     Distance = speed.Value * Time.deltaTime,
-                    Radius = projectile.Radius
+                    Radius = AttackInstance.Radius
                 });
             });
 

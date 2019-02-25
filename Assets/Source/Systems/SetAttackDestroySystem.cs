@@ -4,7 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    public class SetProjectileDestroySystem : ComponentSystem
+    public class SetAttackDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;
 

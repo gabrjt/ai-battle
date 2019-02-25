@@ -4,12 +4,12 @@ using Unity.Entities;
 namespace Game.Components
 {
     [Serializable]
-    public struct Projectile : IComponentData
+    public struct AttackInstance : IComponentData
     {
         public Entity Owner;
 
         public float Radius;
     }
 
-    public class ProjectileProxy : ComponentDataProxy<Projectile> { }
+    public class AttackInstanceProxy : ComponentDataProxy<AttackInstance> { }
 }

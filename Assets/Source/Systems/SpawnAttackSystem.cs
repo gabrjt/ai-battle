@@ -2,15 +2,14 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
 namespace Game.Systems
 {
-    public class SpawnProjectileSystem : ComponentSystem
+    public class SpawnAttackSystem : ComponentSystem
     {
-        private struct ProjectileSpawnData
+        private struct AttackInstanceSpawnData
         {
             public Entity Owner;
 
@@ -19,6 +18,8 @@ namespace Game.Systems
             public Rotation Rotation;
 
             public Direction Direction;
+
+            public MaximumDistance MaximumDistance;
         }
 
         private ComponentGroup m_Group;
@@ -29,7 +30,7 @@ namespace Game.Systems
 
         private Entity m_Prefab;
 
-        private NativeList<ProjectileSpawnData> m_EntitySpawnList;
+        private NativeList<AttackInstanceSpawnData> m_EntitySpawnList;
 
         protected override void OnCreateManager()
         {
@@ -38,15 +39,15 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>() },
-                None = new[] { ComponentType.ReadOnly<Cooldown>() }
+                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attack>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(
-                ComponentType.ReadOnly<Projectile>(),
+                ComponentType.ReadOnly<AttackInstance>(),
                 ComponentType.ReadOnly<Position>(),
                 ComponentType.ReadOnly<Rotation>(),
                 ComponentType.ReadOnly<Scale>(),
-                ComponentType.ReadOnly<RenderMesh>(),
+                // ComponentType.ReadOnly<RenderMesh>(),
                 ComponentType.ReadOnly<Speed>(),
                 ComponentType.ReadOnly<Direction>(),
                 ComponentType.ReadOnly<Velocity>(),
@@ -63,6 +64,7 @@ namespace Game.Systems
             var material = sphere.GetComponent<MeshRenderer>().sharedMaterial;
 
             EntityManager.SetComponentData(m_Prefab, new Scale { Value = new float3(0.25f, 0.25f, 0.25f) });
+            /*
             EntityManager.SetSharedComponentData(m_Prefab, new RenderMesh
             {
                 mesh = mesh,
@@ -72,12 +74,13 @@ namespace Game.Systems
                 castShadows = UnityEngine.Rendering.ShadowCastingMode.On,
                 receiveShadows = true
             });
+            */
             EntityManager.SetComponentData(m_Prefab, new Speed { Value = 25 });
             EntityManager.SetComponentData(m_Prefab, new Damage { Value = 10 });
 
             Object.Destroy(sphere);
 
-            m_EntitySpawnList = new NativeList<ProjectileSpawnData>(Allocator.Persistent);
+            m_EntitySpawnList = new NativeList<AttackInstanceSpawnData>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
@@ -105,22 +108,36 @@ namespace Game.Systems
 
                     var position = positionArray[entityIndex].Value;
                     var targetPosition = EntityManager.GetComponentData<Position>(target.Value).Value;
+                    var attackDistance = attackDistanceArray[entityIndex];
 
-                    if (math.distance(position, targetPosition) > attackDistanceArray[entityIndex].Maximum) continue;
+                    if (math.distance(position, targetPosition) > attackDistance.Maximum) continue;
 
                     var direction = math.normalizesafe(targetPosition - position);
 
-                    m_EntitySpawnList.Add(new ProjectileSpawnData
+                    var origin = position + new float3(0, 0.35f, 0);
+
+                    m_EntitySpawnList.Add(new AttackInstanceSpawnData
                     {
                         Owner = entity,
-                        Position = new Position { Value = position + new float3(0, 0.35f, 0) },
+                        Position = new Position { Value = origin },
                         Rotation = new Rotation { Value = quaternion.LookRotation(direction, math.up()) },
-                        Direction = new Direction { Value = direction }
+                        Direction = new Direction { Value = direction },
+                        MaximumDistance = new MaximumDistance
+                        {
+                            Origin = position,
+                            Value = attackDistance.Maximum
+                        }
+                    });
+
+                    PostUpdateCommands.AddComponent(entity, new Attack
+                    {
+                        Value = 1.333f,
+                        StartTime = Time.time
                     });
 
                     PostUpdateCommands.AddComponent(entity, new Cooldown
                     {
-                        Value = 1,
+                        Value = 1.333f,
                         StartTime = Time.time
                     });
 
@@ -140,7 +157,7 @@ namespace Game.Systems
                 var spawnData = m_EntitySpawnList[i];
                 var entity = entitySpawnArray[i];
 
-                EntityManager.SetComponentData(entity, new Projectile
+                EntityManager.SetComponentData(entity, new AttackInstance
                 {
                     Owner = spawnData.Owner,
                     Radius = 0.25f
@@ -148,12 +165,8 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, spawnData.Position);
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);
+                EntityManager.SetComponentData(entity, spawnData.MaximumDistance);
                 EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
-                EntityManager.SetComponentData(entity, new MaximumDistance
-                {
-                    Origin = spawnData.Position.Value,
-                    Value = 10
-                });
             }
 
             entitySpawnArray.Dispose();
