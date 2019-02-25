@@ -40,6 +40,7 @@ namespace Game.Systems
                 var navMeshAgent = Object.Instantiate(m_Prefab).GetComponent<NavMeshAgent>();
                 navMeshAgent.Warp(terrain.GetRandomPosition());
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
+                // navMeshAgent.updateRotation = false;
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
 

@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 7380945007043472711}
   - component: {fileID: 2423319228555502933}
   - component: {fileID: 447843237919680306}
+  - component: {fileID: 4637523201098844125}
   m_Layer: 9
   m_Name: AI Character
   m_TagString: Untagged
@@ -272,3 +273,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value: 1
+--- !u!114 &4637523201098844125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256406060113545493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 5dbf2417f56c8114e82848d4cd90d66d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    Value: 30

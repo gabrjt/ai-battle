@@ -21,7 +21,7 @@ namespace Game.Systems
                 var transform = rectTransform.parent;
                 if (EntityManager.HasComponent<Position>(healthBar.Owner))
                 {
-                    transform.position = camera.WorldToScreenPoint(EntityManager.GetComponentData<Position>(healthBar.Owner).Value + (float3)Vector3.up);
+                    transform.position = camera.WorldToScreenPoint(EntityManager.GetComponentData<Position>(healthBar.Owner).Value + math.up());
                 }
             });
         }

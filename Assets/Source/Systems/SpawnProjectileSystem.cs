@@ -114,7 +114,7 @@ namespace Game.Systems
                     {
                         Owner = entity,
                         Position = new Position { Value = position + new float3(0, 0.35f, 0) },
-                        Rotation = new Rotation { Value = quaternion.LookRotation(direction, Vector3.up) },
+                        Rotation = new Rotation { Value = quaternion.LookRotation(direction, math.up()) },
                         Direction = new Direction { Value = direction }
                     });
 
