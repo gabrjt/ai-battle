@@ -56,14 +56,11 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Destroy());
 
-                        /*
                         var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
                         PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
-                        */
                     }
                 }
-
-                if (chunk.Has(killedType))
+                else if (chunk.Has(killedType))
                 {
                     var killedArray = chunk.GetNativeArray(killedType);
 
@@ -77,10 +74,8 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Destroy());
 
-                        /*
                         var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
                         PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
-                        */
                     }
                 }
             }

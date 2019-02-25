@@ -50,12 +50,10 @@ namespace Game.Systems
 
                         m_RemoveTargetList.Add(entity);
 
-                        UnityEngine.Debug.Assert(EntityManager.HasComponent<Target>(entity));
                         PostUpdateCommands.RemoveComponent<Target>(entity);
                     }
                 }
-
-                if (chunk.Has(killedType))
+                else if (chunk.Has(killedType))
                 {
                     var killedArray = chunk.GetNativeArray(killedType);
 
@@ -67,7 +65,6 @@ namespace Game.Systems
 
                         m_RemoveTargetList.Add(entity);
 
-                        UnityEngine.Debug.Assert(EntityManager.HasComponent<Target>(entity));
                         PostUpdateCommands.RemoveComponent<Target>(entity);
                     }
                 }

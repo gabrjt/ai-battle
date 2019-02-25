@@ -51,8 +51,7 @@ namespace Game.Systems
                         PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
                     }
                 }
-
-                if (chunk.Has(destinationFoundType))
+                else if (chunk.Has(destinationFoundType))
                 {
                     var destinationFoundArray = chunk.GetNativeArray(destinationFoundType);
 

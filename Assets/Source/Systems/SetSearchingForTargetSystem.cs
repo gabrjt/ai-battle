@@ -2,15 +2,12 @@
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
     public class SetSearchingForTargetSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
-
-        private MRandom m_Random;
 
         protected override void OnCreateManager()
         {
@@ -22,8 +19,6 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
                 None = new[] { ComponentType.ReadOnly<SearchingForTarget>(), ComponentType.ReadOnly<Target>() }
             });
-
-            m_Random = new MRandom((uint)System.Environment.TickCount);
         }
 
         protected override void OnUpdate()

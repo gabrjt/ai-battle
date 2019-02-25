@@ -52,8 +52,7 @@ namespace Game.Systems
                         PostUpdateCommands.RemoveComponent<Idle>(entity);
                     }
                 }
-
-                if (chunk.Has(idleTimeExpiredType))
+                else if (chunk.Has(idleTimeExpiredType))
                 {
                     var idleTimeExpiredArray = chunk.GetNativeArray(idleTimeExpiredType);
 

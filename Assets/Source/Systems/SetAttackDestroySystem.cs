@@ -48,8 +48,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Destroy());
                     }
                 }
-
-                if (chunk.Has(maximumDistanceReachedType))
+                else if (chunk.Has(maximumDistanceReachedType))
                 {
                     var maximumDistanceArray = chunk.GetNativeArray(maximumDistanceReachedType);
 

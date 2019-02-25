@@ -49,8 +49,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Value });
                     }
                 }
-
-                if (chunk.Has(damagedType))
+                else if (chunk.Has(damagedType))
                 {
                     var damagedArray = chunk.GetNativeArray(damagedType);
 

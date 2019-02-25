@@ -70,8 +70,7 @@ namespace Game.Systems
                         }
                     }
                 }
-
-                if (chunk.Has(destinationFoundType))
+                else if (chunk.Has(destinationFoundType))
                 {
                     var destinationFoundArray = chunk.GetNativeArray(destinationFoundType);
 

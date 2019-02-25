@@ -55,8 +55,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Dead());
                     }
                 }
-
-                if (chunk.Has(killedType))
+                else if (chunk.Has(killedType))
                 {
                     var killedArray = chunk.GetNativeArray(killedType);
 

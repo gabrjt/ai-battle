@@ -62,8 +62,7 @@ namespace Game.Systems
                         });
                     }
                 }
-
-                if (chunk.Has(destinationReachedType))
+                else if (chunk.Has(destinationReachedType))
                 {
                     var destinationReachedArray = chunk.GetNativeArray(destinationReachedType);
 
