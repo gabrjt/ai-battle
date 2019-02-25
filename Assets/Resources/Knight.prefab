@@ -265,6 +265,29 @@ PrefabInstance:
       propertyPath: m_Name
       value: Knight
       objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
+      propertyPath: m_Avatar
+      value: 
+      objectReference: {fileID: 9000000, guid: ba24e610e0a338545b447ff44a3cf1cc, type: 3}
+    - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: b88e58f8d7092e34199ff76a36eb4055, type: 2}
     - target: {fileID: 413006, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -309,19 +332,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
-      propertyPath: m_Avatar
-      value: 
-      objectReference: {fileID: 9000000, guid: ba24e610e0a338545b447ff44a3cf1cc, type: 3}
-    - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
-      propertyPath: m_Controller
-      value: 
-      objectReference: {fileID: 9100000, guid: b88e58f8d7092e34199ff76a36eb4055, type: 2}
-    - target: {fileID: 129450, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
+    - target: {fileID: 169780, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 169780, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
+    - target: {fileID: 129450, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}

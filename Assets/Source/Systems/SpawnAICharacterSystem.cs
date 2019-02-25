@@ -60,6 +60,9 @@ namespace Game.Systems
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
 
+                PostUpdateCommands.SetComponent(entity, new Position { Value = navMeshAgent.transform.position });
+                PostUpdateCommands.SetComponent(entity, new Rotation { Value = navMeshAgent.transform.rotation });
+
                 var maximumHealth = m_Random.NextInt(100, 301);
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });

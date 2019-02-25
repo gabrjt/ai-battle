@@ -21,10 +21,6 @@ namespace Game.Systems
             public Entity Owner;
 
             public ViewType ViewType;
-
-            public float3 Position;
-
-            public quaternion Rotation;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -66,8 +62,6 @@ namespace Game.Systems
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
-            var positionType = GetArchetypeChunkComponentType<Position>(true);
-            var rotationType = GetArchetypeChunkComponentType<Rotation>(true);
             var knightType = GetArchetypeChunkComponentType<Knight>(true);
             var orcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true);
             var skeletonType = GetArchetypeChunkComponentType<Skeleton>(true);
@@ -79,9 +73,6 @@ namespace Game.Systems
 
                 if (!chunk.Has(initializedType))
                 {
-                    var positionArray = chunk.GetNativeArray(positionType);
-                    var rotationArray = chunk.GetNativeArray(rotationType);
-
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
@@ -94,8 +85,6 @@ namespace Game.Systems
                             {
                                 Owner = entity,
                                 ViewType = ViewType.Knight,
-                                Position = positionArray[entityIndex].Value,
-                                Rotation = rotationArray[entityIndex].Value
                             });
                         }
                         else if (chunk.Has(orcWolfRiderType))
@@ -104,8 +93,6 @@ namespace Game.Systems
                             {
                                 Owner = entity,
                                 ViewType = ViewType.OrcWolfRider,
-                                Position = positionArray[entityIndex].Value,
-                                Rotation = rotationArray[entityIndex].Value
                             });
                         }
                         else if (chunk.Has(skeletonType))
@@ -114,8 +101,6 @@ namespace Game.Systems
                             {
                                 Owner = entity,
                                 ViewType = ViewType.Skeleton,
-                                Position = positionArray[entityIndex].Value,
-                                Rotation = rotationArray[entityIndex].Value
                             });
                         }
                     }
@@ -136,20 +121,25 @@ namespace Game.Systems
             {
                 var spawnData = m_SpawnList[i];
 
+                var owner = spawnData.Owner;
+
+                var position = EntityManager.GetComponentData<Position>(owner).Value;
+                var rotation = EntityManager.GetComponentData<Rotation>(owner).Value;
+
                 GameObject view;
 
                 switch (spawnData.ViewType)
                 {
                     case ViewType.Knight:
-                        view = Object.Instantiate(m_KnightPrefab, spawnData.Position, spawnData.Rotation);
+                        view = Object.Instantiate(m_KnightPrefab, position, rotation);
                         break;
 
                     case ViewType.OrcWolfRider:
-                        view = Object.Instantiate(m_OrvWolfRiderPrefab, spawnData.Position, spawnData.Rotation);
+                        view = Object.Instantiate(m_OrvWolfRiderPrefab, position, rotation);
                         break;
 
                     case ViewType.Skeleton:
-                        view = Object.Instantiate(m_SkeletonPrefab, spawnData.Position, spawnData.Rotation);
+                        view = Object.Instantiate(m_SkeletonPrefab, position, rotation);
                         break;
 
                     default:
@@ -157,13 +147,14 @@ namespace Game.Systems
                 }
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
-                var owner = spawnData.Owner;
 
                 EntityManager.SetComponentData(entity, new View
                 {
                     Owner = owner,
                     Offset = new float3(0, -1, 0)
                 });
+                EntityManager.SetComponentData(entity, new Position { Value = position });
+                EntityManager.SetComponentData(entity, new Rotation { Value = rotation });
 
                 EntityManager.AddComponentData(owner, new ViewReference { Value = entity });
             }
