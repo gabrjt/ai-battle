@@ -1,6 +1,8 @@
 ﻿using Game.Components;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Game.Systems
@@ -10,6 +12,8 @@ namespace Game.Systems
         private struct SpawnData
         {
             public Entity Owner;
+
+            public float3 Position;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -26,12 +30,12 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>() },
-                None = new[] { ComponentType.ReadOnly<Initialized>() }
+                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>(), ComponentType.ReadOnly<Position>() },
+                None = new[] { ComponentType.ReadOnly<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>() }
+                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>(), ComponentType.ReadOnly<Position>() }
             });
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));
@@ -44,6 +48,8 @@ namespace Game.Systems
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
+            var positionType = GetArchetypeChunkComponentType<Position>(true);
+
             for (int chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
@@ -51,11 +57,13 @@ namespace Game.Systems
 
                 if (!chunk.Has(initializedType))
                 {
+                    var positionArray = chunk.GetNativeArray(positionType);
+
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
                         PostUpdateCommands.AddComponent(entity, new Initialized());
-                        m_SpawnList.Add(new SpawnData { Owner = entity });
+                        m_SpawnList.Add(new SpawnData { Owner = entity, Position = positionArray[entityIndex].Value });
                     }
                 }
                 else
@@ -71,17 +79,23 @@ namespace Game.Systems
             chunkArray.Dispose();
 
             var canvas = GetSingleton<CanvasSingleton>();
-            var transform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
+            var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
+            var canvasTransform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
 
             for (int i = 0; i < m_SpawnList.Length; i++)
             {
-                var healthBar = Object.Instantiate(m_Prefab, transform);
+                var spawnData = m_SpawnList[i];
+
+                var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
 
                 EntityManager.SetComponentData(healthBar.GetComponentInChildren<GameObjectEntity>().Entity, new HealthBar
                 {
-                    Owner = m_SpawnList[i].Owner,
+                    Owner = spawnData.Owner,
                     Visible = true
                 });
+
+                var transform = healthBar.GetComponent<RectTransform>();
+                transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
             }
 
             m_SpawnList.Clear();

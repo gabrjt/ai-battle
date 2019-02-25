@@ -2,6 +2,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Game.Systems
@@ -20,6 +21,10 @@ namespace Game.Systems
             public Entity Owner;
 
             public ViewType ViewType;
+
+            public float3 Position;
+
+            public quaternion Rotation;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -40,13 +45,13 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>() },
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Rotation>() },
                 Any = new[] { ComponentType.ReadOnly<Knight>(), ComponentType.ReadOnly<OrcWolfRider>(), ComponentType.ReadOnly<Skeleton>() },
-                None = new[] { ComponentType.ReadOnly<Initialized>() }
+                None = new[] { ComponentType.ReadOnly<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Character>() }
+                None = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Rotation>() }
             });
 
             Debug.Assert(m_KnightPrefab = Resources.Load<GameObject>("Knight"));
@@ -61,6 +66,8 @@ namespace Game.Systems
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
+            var positionType = GetArchetypeChunkComponentType<Position>(true);
+            var rotationType = GetArchetypeChunkComponentType<Rotation>(true);
             var knightType = GetArchetypeChunkComponentType<Knight>(true);
             var orcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true);
             var skeletonType = GetArchetypeChunkComponentType<Skeleton>(true);
@@ -72,22 +79,44 @@ namespace Game.Systems
 
                 if (!chunk.Has(initializedType))
                 {
+                    var positionArray = chunk.GetNativeArray(positionType);
+                    var rotationArray = chunk.GetNativeArray(rotationType);
+
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
+
                         PostUpdateCommands.AddComponent(entity, new Initialized());
 
                         if (chunk.Has(knightType))
                         {
-                            m_SpawnList.Add(new SpawnData { Owner = entity, ViewType = ViewType.Knight });
+                            m_SpawnList.Add(new SpawnData
+                            {
+                                Owner = entity,
+                                ViewType = ViewType.Knight,
+                                Position = positionArray[entityIndex].Value,
+                                Rotation = rotationArray[entityIndex].Value
+                            });
                         }
                         else if (chunk.Has(orcWolfRiderType))
                         {
-                            m_SpawnList.Add(new SpawnData { Owner = entity, ViewType = ViewType.OrcWolfRider });
+                            m_SpawnList.Add(new SpawnData
+                            {
+                                Owner = entity,
+                                ViewType = ViewType.OrcWolfRider,
+                                Position = positionArray[entityIndex].Value,
+                                Rotation = rotationArray[entityIndex].Value
+                            });
                         }
                         else if (chunk.Has(skeletonType))
                         {
-                            m_SpawnList.Add(new SpawnData { Owner = entity, ViewType = ViewType.Skeleton });
+                            m_SpawnList.Add(new SpawnData
+                            {
+                                Owner = entity,
+                                ViewType = ViewType.Skeleton,
+                                Position = positionArray[entityIndex].Value,
+                                Rotation = rotationArray[entityIndex].Value
+                            });
                         }
                     }
                 }
@@ -105,20 +134,22 @@ namespace Game.Systems
 
             for (int i = 0; i < m_SpawnList.Length; i++)
             {
+                var spawnData = m_SpawnList[i];
+
                 GameObject view;
 
-                switch (m_SpawnList[i].ViewType)
+                switch (spawnData.ViewType)
                 {
                     case ViewType.Knight:
-                        view = Object.Instantiate(m_KnightPrefab);
+                        view = Object.Instantiate(m_KnightPrefab, spawnData.Position, spawnData.Rotation);
                         break;
 
                     case ViewType.OrcWolfRider:
-                        view = Object.Instantiate(m_OrvWolfRiderPrefab);
+                        view = Object.Instantiate(m_OrvWolfRiderPrefab, spawnData.Position, spawnData.Rotation);
                         break;
 
                     case ViewType.Skeleton:
-                        view = Object.Instantiate(m_SkeletonPrefab);
+                        view = Object.Instantiate(m_SkeletonPrefab, spawnData.Position, spawnData.Rotation);
                         break;
 
                     default:
@@ -126,7 +157,7 @@ namespace Game.Systems
                 }
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
-                var owner = m_SpawnList[i].Owner;
+                var owner = spawnData.Owner;
 
                 EntityManager.SetComponentData(entity, new View
                 {

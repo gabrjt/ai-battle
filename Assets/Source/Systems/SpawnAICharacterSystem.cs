@@ -8,21 +8,29 @@ using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [AlwaysUpdateSystem]
     public class SpawnAICharacterSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
         private EntityArchetype m_Archetype;
 
         private GameObject m_Prefab;
 
         private GameObject m_ViewPrefab;
 
-        internal int m_Count = 2000;
+        private int m_TotalCount = 1000;
 
         private MRandom m_Random;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>() }
+            });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Attach>());
 
@@ -37,8 +45,13 @@ namespace Game.Systems
         protected override void OnUpdate()
         {
             var terrain = Terrain.activeTerrain;
+            var count = m_Group.CalculateLength();
+            SpawnAICharacters(terrain, count);
+        }
 
-            for (var i = 0; i < m_Count; i++)
+        private void SpawnAICharacters(Terrain terrain, int count)
+        {
+            for (var i = count; i < m_TotalCount; i++)
             {
                 var navMeshAgent = Object.Instantiate(m_Prefab).GetComponent<NavMeshAgent>();
                 navMeshAgent.Warp(terrain.GetRandomPosition());
@@ -75,8 +88,6 @@ namespace Game.Systems
                         break;
                 }
             }
-
-            Enabled = false;
         }
     }
 }
