@@ -77,6 +77,11 @@ PrefabInstance:
       propertyPath: m_SerializedData.mesh
       value: 
       objectReference: {fileID: 4300000, guid: d021512d6de402148a36d287d6cde611, type: 3}
+    - target: {fileID: 447843237919680306, guid: d9847cb3b4d955e4aab8456750ae373c,
+        type: 3}
+      propertyPath: m_SerializedData.Value
+      value: 5
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1182901328948830164, guid: d9847cb3b4d955e4aab8456750ae373c, type: 3}
     - {fileID: 826286796694092013, guid: d9847cb3b4d955e4aab8456750ae373c, type: 3}

@@ -106,7 +106,7 @@ namespace Game.Systems
                     var position = positionArray[entityIndex].Value;
                     var targetPosition = EntityManager.GetComponentData<Position>(target.Value).Value;
 
-                    if (math.distance(position, targetPosition) > attackDistanceArray[entityIndex].Value + 1) continue;
+                    if (math.distance(position, targetPosition) > attackDistanceArray[entityIndex].Maximum) continue;
 
                     var direction = math.normalizesafe(targetPosition - position);
 

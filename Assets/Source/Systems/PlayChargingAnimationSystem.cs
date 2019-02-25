@@ -28,7 +28,7 @@ namespace Game.Systems
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
                 if (EntityManager.HasComponent<Position>(target.Value))
                 {
-                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Value + 1)
+                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Maximum)
                     {
                         animator.Play("Idle");
                     }
