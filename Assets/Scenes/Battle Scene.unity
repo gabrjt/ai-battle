@@ -410,17 +410,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 35517830524462116, guid: ef368e4093157c44a85d7de2f6e233ef,
-        type: 3}
-      propertyPath: m_NavMeshData
-      value: 
-      objectReference: {fileID: 23800000, guid: 99b3daee49182ef4f807803f6ad3eff5,
-        type: 2}
-    - target: {fileID: 35517830524462116, guid: ef368e4093157c44a85d7de2f6e233ef,
-        type: 3}
-      propertyPath: m_UseGeometry
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef368e4093157c44a85d7de2f6e233ef, type: 3}
 --- !u!1001 &8235848907315729379
@@ -464,6 +453,46 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823758, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 48
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823756, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_havePropertiesChanged
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8235848907031823756, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_isInputParsingRequired
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
