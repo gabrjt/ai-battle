@@ -8,33 +8,38 @@ namespace Game.Systems
 {
     public class PlayChargingAnimationSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() },
+                None = new[] { ComponentType.ReadOnly<Idle>() }
+            });
+        }
+
         protected override void OnUpdate()
         {
-            ForEach((Animator animator, ref View view) =>
+            ForEach((ref ViewReference viewReference, ref Position position, ref Target target, ref AttackDistance attackDistance) =>
             {
-                var owner = view.Owner;
-                if (EntityManager.HasComponent<Destination>(owner) && !EntityManager.HasComponent<Idle>(owner) && EntityManager.HasComponent<Target>(owner))
+                var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
+                if (EntityManager.HasComponent<Position>(target.Value))
                 {
-                    var target = EntityManager.GetComponentData<Target>(owner).Value;
-
-                    if (EntityManager.HasComponent<Position>(target))
-                    {
-                        var position = EntityManager.GetComponentData<Position>(owner).Value;
-                        var targetPosition = EntityManager.GetComponentData<Position>(target).Value;
-
-                        if (math.distance(position, targetPosition) <= EntityManager.GetComponentData<AttackDistance>(owner).Value + 1)
-                        {
-                            animator.Play("Idle");
-                        }
-                        else
-                        {
-                            animator.Play("Charging");
-                        }
-                    }
-                    else
+                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Value + 1)
                     {
                         animator.Play("Idle");
                     }
+                    else
+                    {
+                        animator.Play("Charging");
+                    }
+                }
+                else
+                {
+                    animator.Play("Idle");
                 }
             });
         }

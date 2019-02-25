@@ -6,16 +6,25 @@ namespace Game.Systems
 {
     public class PlayWalkingAnimationSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Destination>() },
+                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Target>() }
+            });
+        }
+
         protected override void OnUpdate()
         {
-            ForEach((Animator animator, ref View view) =>
+            ForEach((ref ViewReference viewReference) =>
             {
-                var owner = view.Owner;
-                if (EntityManager.HasComponent<Destination>(owner) && !EntityManager.HasComponent<Idle>(owner) && !EntityManager.HasComponent<Target>(owner))
-                {
-                    animator.Play("Walking");
-                }
-            });
+                EntityManager.GetComponentObject<Animator>(viewReference.Value).Play("Walking");
+            }, m_Group);
         }
     }
 }

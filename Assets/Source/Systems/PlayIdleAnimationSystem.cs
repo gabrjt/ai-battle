@@ -6,16 +6,25 @@ namespace Game.Systems
 {
     public class PlayIdleAnimationSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Idle>() },
+                None = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+            });
+        }
+
         protected override void OnUpdate()
         {
-            ForEach((Animator animator, ref View view) =>
+            ForEach((ref ViewReference viewReference) =>
             {
-                var owner = view.Owner;
-                if (EntityManager.HasComponent<Idle>(owner) && !EntityManager.HasComponent<Destination>(owner) && !EntityManager.HasComponent<Target>(owner))
-                {
-                    animator.Play("Idle");
-                }
-            });
+                EntityManager.GetComponentObject<Animator>(viewReference.Value).Play("Idle");
+            }, m_Group);
         }
     }
 }
