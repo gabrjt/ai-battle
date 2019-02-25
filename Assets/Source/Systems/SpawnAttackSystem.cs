@@ -4,6 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -20,6 +21,8 @@ namespace Game.Systems
             public Direction Direction;
 
             public MaximumDistance MaximumDistance;
+
+            public Speed Speed;
         }
 
         private ComponentGroup m_Group;
@@ -31,6 +34,8 @@ namespace Game.Systems
         private Entity m_Prefab;
 
         private NativeList<AttackInstanceSpawnData> m_EntitySpawnList;
+
+        private MRandom m_Random;
 
         protected override void OnCreateManager()
         {
@@ -75,12 +80,12 @@ namespace Game.Systems
                 receiveShadows = true
             });
             */
-            EntityManager.SetComponentData(m_Prefab, new Speed { Value = 25 });
-            EntityManager.SetComponentData(m_Prefab, new Damage { Value = 10 });
 
             Object.Destroy(sphere);
 
             m_EntitySpawnList = new NativeList<AttackInstanceSpawnData>(Allocator.Persistent);
+
+            m_Random = new MRandom((uint)System.Environment.TickCount);
         }
 
         protected override void OnUpdate()
@@ -111,6 +116,7 @@ namespace Game.Systems
                     var position = positionArray[entityIndex].Value;
                     var targetPosition = EntityManager.GetComponentData<Position>(target.Value).Value;
                     var attackDistance = attackDistanceArray[entityIndex];
+                    var attackSpeed = attackSpeedArray[entityIndex].Value;
 
                     if (math.distance(position, targetPosition) > attackDistance.Maximum) continue;
 
@@ -128,10 +134,11 @@ namespace Game.Systems
                         {
                             Origin = position,
                             Value = attackDistance.Maximum
-                        }
+                        },
+                        Speed = new Speed { Value = attackSpeed * 5 }
                     });
 
-                    var duration = 1.333f / attackSpeedArray[entityIndex].Value;
+                    var duration = 1.333f / attackSpeed;
 
                     PostUpdateCommands.AddComponent(entity, new Attack
                     {
@@ -170,6 +177,8 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);
                 EntityManager.SetComponentData(entity, spawnData.MaximumDistance);
+                EntityManager.SetComponentData(entity, spawnData.Speed);
+                EntityManager.SetComponentData(entity, new Damage { Value = m_Random.NextInt(10, 31) });
                 EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
             }
 
