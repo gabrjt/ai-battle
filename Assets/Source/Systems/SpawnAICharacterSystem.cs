@@ -29,6 +29,9 @@ namespace Game.Systems
             m_Random = new MRandom((uint)System.Environment.TickCount);
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
+
+            Application.targetFrameRate = 0;
+            QualitySettings.vSyncCount = 0;
         }
 
         protected override void OnUpdate()
