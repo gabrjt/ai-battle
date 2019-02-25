@@ -48,13 +48,24 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
 
-                if (i % 2 == 0)
+                var viewIndex = m_Random.NextInt(0, 3);
+
+                switch (viewIndex)
                 {
-                    PostUpdateCommands.AddComponent(entity, new Knight());
-                }
-                else
-                {
-                    PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                    case 0:
+                        PostUpdateCommands.AddComponent(entity, new Knight());
+                        break;
+
+                    case 1:
+                        PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                        break;
+
+                    case 2:
+                        PostUpdateCommands.AddComponent(entity, new Skeleton());
+                        break;
+
+                    default:
+                        break;
                 }
             }
 

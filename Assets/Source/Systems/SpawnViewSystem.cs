@@ -11,7 +11,8 @@ namespace Game.Systems
         private enum ViewType
         {
             Knight,
-            OrcWolfRider
+            OrcWolfRider,
+            Skeleton
         }
 
         private struct SpawnData
@@ -25,9 +26,11 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
+        private GameObject m_KnightPrefab;
+
         private GameObject m_OrvWolfRiderPrefab;
 
-        private GameObject m_KnightPrefab;
+        private GameObject m_SkeletonPrefab;
 
         private NativeList<SpawnData> m_SpawnList;
 
@@ -38,7 +41,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                Any = new[] { ComponentType.ReadOnly<Knight>(), ComponentType.ReadOnly<OrcWolfRider>() },
+                Any = new[] { ComponentType.ReadOnly<Knight>(), ComponentType.ReadOnly<OrcWolfRider>(), ComponentType.ReadOnly<Skeleton>() },
                 None = new[] { ComponentType.ReadOnly<Initialized>() }
             }, new EntityArchetypeQuery
             {
@@ -48,6 +51,7 @@ namespace Game.Systems
 
             Debug.Assert(m_KnightPrefab = Resources.Load<GameObject>("Knight"));
             Debug.Assert(m_OrvWolfRiderPrefab = Resources.Load<GameObject>("Orc Wolf Rider"));
+            Debug.Assert(m_SkeletonPrefab = Resources.Load<GameObject>("Skeleton"));
 
             m_SpawnList = new NativeList<SpawnData>(Allocator.Persistent);
         }
@@ -59,6 +63,8 @@ namespace Game.Systems
             var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
             var knightType = GetArchetypeChunkComponentType<Knight>(true);
             var orcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true);
+            var skeletonType = GetArchetypeChunkComponentType<Skeleton>(true);
+
             for (int chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
@@ -78,6 +84,10 @@ namespace Game.Systems
                         else if (chunk.Has(orcWolfRiderType))
                         {
                             m_SpawnList.Add(new SpawnData { Owner = entity, ViewType = ViewType.OrcWolfRider });
+                        }
+                        else if (chunk.Has(skeletonType))
+                        {
+                            m_SpawnList.Add(new SpawnData { Owner = entity, ViewType = ViewType.Skeleton });
                         }
                     }
                 }
@@ -105,6 +115,10 @@ namespace Game.Systems
 
                     case ViewType.OrcWolfRider:
                         view = Object.Instantiate(m_OrvWolfRiderPrefab);
+                        break;
+
+                    case ViewType.Skeleton:
+                        view = Object.Instantiate(m_SkeletonPrefab);
                         break;
 
                     default:
