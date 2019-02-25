@@ -19,7 +19,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        private int m_TotalCount = 1000;
+        private int m_TotalCount = 50;
 
         private MRandom m_Random;
 
@@ -37,9 +37,6 @@ namespace Game.Systems
             m_Random = new MRandom((uint)System.Environment.TickCount);
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
-
-            Application.targetFrameRate = 0;
-            QualitySettings.vSyncCount = 0;
         }
 
         protected override void OnUpdate()
