@@ -28,7 +28,7 @@ namespace Game.Systems
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
 
-            Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character View"));
+            Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
         }
 
         protected override void OnUpdate()
