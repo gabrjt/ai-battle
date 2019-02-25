@@ -1,17 +1,22 @@
 ﻿using Game.Components;
 using Game.Extensions;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.AI;
 using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    public class SpawnAICharactersSystem : ComponentSystem
+    public class SpawnAICharacterSystem : ComponentSystem
     {
+        private EntityArchetype m_Archetype;
+
         private GameObject m_Prefab;
 
-        internal int m_Count = 1000;
+        private GameObject m_ViewPrefab;
+
+        internal int m_Count = 100;
 
         private MRandom m_Random;
 
@@ -19,9 +24,11 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Attach>());
+
             m_Random = new MRandom((uint)System.Environment.TickCount);
 
-            Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
+            Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character View"));
         }
 
         protected override void OnUpdate()

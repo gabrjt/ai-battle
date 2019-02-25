@@ -192,7 +192,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+    mesh: {fileID: 4300000, guid: d021512d6de402148a36d287d6cde611, type: 3}
     material: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
     subMesh: 0
     layer: 0
@@ -255,7 +255,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    Value: 5
+    Minimum: 6
+    Maximum: 8
 --- !u!114 &447843237919680306
 MonoBehaviour:
   m_ObjectHideFlags: 0

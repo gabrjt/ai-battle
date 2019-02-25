@@ -25,6 +25,8 @@ namespace Game.Systems
 
         private EntityArchetype m_Archetype;
 
+        private EntityArchetype m_AttackedArchetype;
+
         private Entity m_Prefab;
 
         private NativeList<ProjectileSpawnData> m_EntitySpawnList;
@@ -35,7 +37,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>() },
+                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>() },
                 None = new[] { ComponentType.ReadOnly<Cooldown>() }
             });
 
@@ -51,6 +53,8 @@ namespace Game.Systems
                 ComponentType.ReadOnly<Damage>(),
                 ComponentType.ReadOnly<MaximumDistance>(),
                 ComponentType.ReadOnly<Prefab>());
+
+            m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
 
@@ -82,6 +86,7 @@ namespace Game.Systems
             var entityType = GetArchetypeChunkEntityType();
             var targetType = GetArchetypeChunkComponentType<Target>(true);
             var positionType = GetArchetypeChunkComponentType<Position>(true);
+            var attackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
@@ -89,21 +94,26 @@ namespace Game.Systems
                 var entityArray = chunk.GetNativeArray(entityType);
                 var targetArray = chunk.GetNativeArray(targetType);
                 var positionArray = chunk.GetNativeArray(positionType);
+                var attackDistanceArray = chunk.GetNativeArray(attackDistanceType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
                     var target = targetArray[entityIndex];
 
-                    if (!EntityManager.Exists(target.Value)) continue;
+                    if (!EntityManager.HasComponent<Position>(target.Value) || !EntityManager.Exists(target.Value)) continue;
 
-                    var position = positionArray[entityIndex];
-                    var direction = math.normalizesafe(EntityManager.GetComponentData<Position>(target.Value).Value - position.Value);
+                    var position = positionArray[entityIndex].Value;
+                    var targetPosition = EntityManager.GetComponentData<Position>(target.Value).Value;
+
+                    if (math.distance(position, targetPosition) > attackDistanceArray[entityIndex].Maximum) continue;
+
+                    var direction = math.normalizesafe(targetPosition - position);
 
                     m_EntitySpawnList.Add(new ProjectileSpawnData
                     {
                         Owner = entity,
-                        Position = new Position { Value = position.Value + new float3(0, 0.35f, 0) },
+                        Position = new Position { Value = position + new float3(0, 0.35f, 0) },
                         Rotation = new Rotation { Value = quaternion.LookRotation(direction, Vector3.up) },
                         Direction = new Direction { Value = direction }
                     });
@@ -113,6 +123,9 @@ namespace Game.Systems
                         Value = 1,
                         StartTime = Time.time
                     });
+
+                    var attacked = PostUpdateCommands.CreateEntity(m_AttackedArchetype);
+                    PostUpdateCommands.SetComponent(attacked, new Attacked { This = entity });
                 }
             }
 
@@ -139,7 +152,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, new MaximumDistance
                 {
                     Origin = spawnData.Position.Value,
-                    Value = 100
+                    Value = 10
                 });
             }
 
