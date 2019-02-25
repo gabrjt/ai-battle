@@ -12,10 +12,7 @@ namespace Game.Systems
         {
             ForEach((ref View view, ref Position position) =>
             {
-                // if (EntityManager.HasComponent<Position>(view.Owner))
-                {
-                    position.Value = EntityManager.GetComponentData<Position>(view.Owner).Value + view.Offset;
-                }
+                position.Value = EntityManager.GetComponentData<Position>(view.Owner).Value + view.Offset;
             });
         }
     }

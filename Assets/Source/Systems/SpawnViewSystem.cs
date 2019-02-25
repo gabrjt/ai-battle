@@ -1,11 +1,12 @@
 ﻿using Game.Components;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Game.Systems
 {
-    public class SpawnHealthBarsSystem : ComponentSystem
+    public class SpawnViewSystem : ComponentSystem
     {
         private struct SpawnData
         {
@@ -26,15 +27,15 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>() },
+                All = new[] { ComponentType.ReadOnly<Character>() },
                 None = new[] { ComponentType.ReadOnly<Initialized>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>() }
+                None = new[] { ComponentType.ReadOnly<Character>() }
             });
 
-            m_Prefab = Resources.Load<GameObject>("Health Bar");
+            Debug.Assert(m_Prefab = Resources.Load<GameObject>("Orc Wolf Rider"));
 
             m_SpawnList = new NativeList<SpawnData>(Allocator.Persistent);
         }
@@ -70,18 +71,19 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            var canvas = GetSingleton<CanvasSingleton>();
-            var transform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
-
             for (int i = 0; i < m_SpawnList.Length; i++)
             {
-                var healthBar = Object.Instantiate(m_Prefab, transform);
+                var view = Object.Instantiate(m_Prefab);
+                var entity = view.GetComponent<GameObjectEntity>().Entity;
+                var owner = m_SpawnList[i].Owner;
 
-                EntityManager.SetComponentData(healthBar.GetComponentInChildren<GameObjectEntity>().Entity, new HealthBar
+                EntityManager.SetComponentData(entity, new View
                 {
-                    Owner = m_SpawnList[i].Owner,
-                    Visible = true
+                    Owner = owner,
+                    Offset = new float3(0, -1, 0)
                 });
+
+                EntityManager.AddComponentData(owner, new ViewReference { Value = entity });
             }
 
             m_SpawnList.Clear();

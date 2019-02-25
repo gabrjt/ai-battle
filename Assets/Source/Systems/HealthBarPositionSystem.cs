@@ -12,7 +12,10 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
+            if (!HasSingleton<CameraSingleton>()) return;
+
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
+
             ForEach((RectTransform rectTransform, ref HealthBar healthBar) =>
             {
                 var transform = rectTransform.parent;

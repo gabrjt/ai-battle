@@ -14,7 +14,7 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
 
         [Inject]
-        private SpawnAICharactersSystem m_SpawnAICharactersSystem;
+        private SpawnAICharacterSystem m_SpawnAICharactersSystem;
 
         protected override void OnCreateManager()
         {
