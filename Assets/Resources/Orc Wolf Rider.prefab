@@ -1007,6 +1007,7 @@ GameObject:
   - component: {fileID: 1113068133071631845}
   - component: {fileID: 8429577650837392919}
   - component: {fileID: 1886798353830453379}
+  - component: {fileID: 2234129494868116802}
   m_Layer: 0
   m_Name: Orc Wolf Rider
   m_TagString: Untagged
@@ -1149,6 +1150,19 @@ MonoBehaviour:
       x: 0
       y: -1
       z: 0
+--- !u!114 &2234129494868116802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 07d7808e0b50f044e9439f3f5dffd521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &153408
 GameObject:
   m_ObjectHideFlags: 0

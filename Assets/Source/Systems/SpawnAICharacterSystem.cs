@@ -47,6 +47,15 @@ namespace Game.Systems
                 var maximumHealth = m_Random.NextInt(20, 100);
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
+
+                if (i % 2 == 0)
+                {
+                    PostUpdateCommands.AddComponent(entity, new Knight());
+                }
+                else
+                {
+                    PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                }
             }
 
             Enabled = false;
