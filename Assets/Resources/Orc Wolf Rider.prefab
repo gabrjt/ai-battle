@@ -1262,7 +1262,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value:
-      m_Value: 0
+      m_Value: 255
 --- !u!114 &562201064417474969
 MonoBehaviour:
   m_ObjectHideFlags: 0

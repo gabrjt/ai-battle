@@ -182,9 +182,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d05590b0258602944b16a10909f16e94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_SerializedData:
-    IsVisible:
-      m_Value: 0
 --- !u!114 &9051803676405767881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,7 +228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value:
-      m_Value: 0
+      m_Value: 255
 --- !u!114 &4505001176322794890
 MonoBehaviour:
   m_ObjectHideFlags: 0

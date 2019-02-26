@@ -5,6 +5,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    [UpdateBefore(typeof(OwnerRotationSystem))]
     public class RotateTowardsTargetSystem : ComponentSystem
     {
         protected override void OnUpdate()
