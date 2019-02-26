@@ -19,7 +19,7 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() },
-                None = new[] { ComponentType.ReadOnly<Idle>() }
+                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_SetDestinationList = new NativeList<Entity>(Allocator.Persistent);
@@ -46,11 +46,11 @@ namespace Game.Systems
 
                         var entity = targetFound.This;
 
-                        if (!EntityManager.Exists(targetFound.Value) || m_SetDestinationList.Contains(entity)) continue;
+                        if (!EntityManager.Exists(targetFound.Other) || m_SetDestinationList.Contains(entity)) continue;
 
                         m_SetDestinationList.Add(entity);
 
-                        var destination = EntityManager.GetComponentData<Position>(targetFound.Value).Value;
+                        var destination = EntityManager.GetComponentData<Position>(targetFound.Other).Value;
                         if (EntityManager.HasComponent<Destination>(entity))
                         {
                             var lastDestination = EntityManager.GetComponentData<Destination>(entity);

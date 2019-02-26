@@ -92,7 +92,11 @@ namespace Game.Systems
 
                 var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
 
-                EntityManager.SetComponentData(healthBar.GetComponentInChildren<GameObjectEntity>().Entity, new HealthBar
+                var entity = healthBar.GetComponentInChildren<GameObjectEntity>().Entity;
+
+                healthBar.name = $"Health Bar {entity.Index}";
+
+                EntityManager.SetComponentData(entity, new HealthBar
                 {
                     Owner = spawnData.Owner,
                     Visible = true

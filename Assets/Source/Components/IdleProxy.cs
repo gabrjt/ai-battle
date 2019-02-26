@@ -6,7 +6,7 @@ namespace Game.Components
     [Serializable]
     public struct Idle : IComponentData
     {
-        public float IdleTime;
+        public float Duration;
 
         public float StartTime;
     }

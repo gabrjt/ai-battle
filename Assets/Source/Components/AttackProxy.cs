@@ -6,7 +6,7 @@ namespace Game.Components
     [Serializable]
     public struct Attack : IComponentData
     {
-        public float Value;
+        public float Duration;
 
         public float StartTime;
     }

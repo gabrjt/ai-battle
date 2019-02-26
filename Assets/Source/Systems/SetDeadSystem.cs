@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Game.Systems
 {
@@ -21,7 +22,7 @@ namespace Game.Systems
             },
             new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
+                All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Killed>() }
             });
 
             m_SetDeadList = new NativeList<Entity>(Allocator.Persistent);
@@ -52,7 +53,11 @@ namespace Game.Systems
 
                         m_SetDeadList.Add(entity);
 
-                        PostUpdateCommands.AddComponent(entity, new Dead());
+                        PostUpdateCommands.AddComponent(entity, new Dead
+                        {
+                            Duration = 5,
+                            StartTime = Time.time
+                        });
                     }
                 }
                 else if (chunk.Has(killedType))
@@ -61,13 +66,17 @@ namespace Game.Systems
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = killedArray[entityIndex].Target;
+                        var entity = killedArray[entityIndex].Other;
 
-                        if (m_SetDeadList.Contains(entity)) continue;
+                        if (EntityManager.HasComponent<Dead>(entity) || m_SetDeadList.Contains(entity)) continue;
 
                         m_SetDeadList.Add(entity);
 
-                        PostUpdateCommands.AddComponent(entity, new Dead());
+                        PostUpdateCommands.AddComponent(entity, new Dead
+                        {
+                            Duration = 5,
+                            StartTime = Time.time
+                        });
                     }
                 }
             }

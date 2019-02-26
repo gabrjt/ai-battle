@@ -92,14 +92,14 @@ namespace Game.Systems
                 {
                     Value = damage,
                     This = owner,
-                    Target = target
+                    Other = target
                 });
 
                 var collided = EntityManager.CreateEntity(m_CollidedArchetype);
                 EntityManager.SetComponentData(collided, new Collided
                 {
                     This = entity,
-                    Value = target
+                    Other = target
                 });
             }
 

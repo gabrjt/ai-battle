@@ -6,10 +6,9 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class IdleSystem : JobComponentSystem
+    public class DeadSystem : JobComponentSystem
     {
-        [RequireSubtractiveComponent(typeof(SearchingForDestination), typeof(Destination), typeof(Target))]
-        private struct Job : IJobProcessComponentDataWithEntity<Idle>
+        private struct Job : IJobProcessComponentDataWithEntity<Dead>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
@@ -17,12 +16,12 @@ namespace Game.Systems
 
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Idle idle)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead)
             {
-                if (idle.StartTime + idle.Duration > Time) return;
+                if (dead.StartTime + dead.Duration > Time) return;
 
-                var idleTimeExpired = EntityCommandBuffer.CreateEntity(index, Archetype);
-                EntityCommandBuffer.SetComponent(index, idleTimeExpired, new IdleTimeExpired { This = entity });
+                var died = EntityCommandBuffer.CreateEntity(index, Archetype);
+                EntityCommandBuffer.SetComponent(index, died, new Died { This = entity });
             }
         }
 
@@ -35,7 +34,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<IdleTimeExpired>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Died>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

@@ -44,7 +44,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>(), ComponentType.ReadOnly<AttackSpeed>() },
-                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attack>() }
+                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attack>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(
@@ -145,13 +145,13 @@ namespace Game.Systems
 
                     PostUpdateCommands.AddComponent(entity, new Attack
                     {
-                        Value = duration,
+                        Duration = duration,
                         StartTime = Time.time
                     });
 
                     PostUpdateCommands.AddComponent(entity, new Cooldown
                     {
-                        Value = duration,
+                        Duration = duration,
                         StartTime = Time.time
                     });
 

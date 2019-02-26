@@ -57,6 +57,8 @@ namespace Game.Systems
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
 
+                navMeshAgent.name = $"Character AI {entity.Index}";
+
                 PostUpdateCommands.SetComponent(entity, new Position { Value = navMeshAgent.transform.position });
                 PostUpdateCommands.SetComponent(entity, new Rotation { Value = navMeshAgent.transform.rotation });
 

@@ -6,7 +6,7 @@ namespace Game.Components
     [Serializable]
     public struct Cooldown : IComponentData
     {
-        public float Value;
+        public float Duration;
 
         public float StartTime;
     }

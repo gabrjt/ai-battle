@@ -25,9 +25,9 @@ namespace Game.Systems
         {
             ForEach((ref Damaged damaged) =>
             {
-                if (EntityManager.Exists(damaged.Target))
+                if (EntityManager.Exists(damaged.Other))
                 {
-                    var targetHealth = EntityManager.GetComponentData<Health>(damaged.Target);
+                    var targetHealth = EntityManager.GetComponentData<Health>(damaged.Other);
                     targetHealth.Value -= damaged.Value;
 
                     if (targetHealth.Value <= 0)
@@ -38,12 +38,12 @@ namespace Game.Systems
                             PostUpdateCommands.SetComponent(killed, new Killed
                             {
                                 This = damaged.This,
-                                Target = damaged.Target
+                                Other = damaged.Other
                             });
                         }
                     }
 
-                    PostUpdateCommands.SetComponent(damaged.Target, targetHealth);
+                    PostUpdateCommands.SetComponent(damaged.Other, targetHealth);
                 }
             });
         }

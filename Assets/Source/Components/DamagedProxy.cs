@@ -10,7 +10,7 @@ namespace Game.Components
 
         public Entity This;
 
-        public Entity Target;
+        public Entity Other;
     }
 
     public class DamagedProxy : ComponentDataProxy<Damaged> { }

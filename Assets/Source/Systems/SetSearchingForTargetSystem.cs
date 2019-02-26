@@ -17,7 +17,7 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.ReadOnly<SearchingForTarget>(), ComponentType.ReadOnly<Target>() }
+                None = new[] { ComponentType.ReadOnly<SearchingForTarget>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
         }
 
@@ -36,7 +36,7 @@ namespace Game.Systems
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new SearchingForTarget
                     {
                         Radius = 10,
-                        SearchForTargetTime = 1,
+                        Interval = 1,
                         StartTime = Time.time
                     });
                 }

@@ -16,7 +16,7 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Cooldown cooldown)
             {
-                if (cooldown.StartTime + cooldown.Value > Time) return;
+                if (cooldown.StartTime + cooldown.Duration > Time) return;
 
                 EntityCommandBuffer.RemoveComponent<Cooldown>(index, entity);
             }

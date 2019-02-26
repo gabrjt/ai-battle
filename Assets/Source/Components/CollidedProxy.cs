@@ -8,7 +8,7 @@ namespace Game.Components
     {
         public Entity This;
 
-        public Entity Value;
+        public Entity Other;
     }
 
     public class CollidedProxy : ComponentDataProxy<Collided> { }

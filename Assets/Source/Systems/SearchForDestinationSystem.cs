@@ -23,7 +23,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<SearchingForDestination>() },
-                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationFound>());

@@ -17,7 +17,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
-                Any = new[] { ComponentType.ReadOnly<TargetFound>(), ComponentType.ReadOnly<Damaged>() }
+                Any = new[] { ComponentType.ReadOnly<TargetFound>(), ComponentType.ReadOnly<Damaged>() },
             });
 
             m_SetTargetList = new NativeList<Entity>(Allocator.Persistent);
@@ -46,7 +46,7 @@ namespace Game.Systems
 
                         m_SetTargetList.Add(entity);
 
-                        PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Value });
+                        PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Other });
                     }
                 }
                 else if (chunk.Has(damagedType))
@@ -56,7 +56,7 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var damaged = damagedArray[entityIndex];
-                        var entity = damaged.Target;
+                        var entity = damaged.Other;
 
                         if (EntityManager.HasComponent<Target>(entity) || m_SetTargetList.Contains(entity)) continue;
 

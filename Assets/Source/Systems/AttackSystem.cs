@@ -16,7 +16,7 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Attack attack)
             {
-                if (attack.StartTime + attack.Value > Time) return;
+                if (attack.StartTime + attack.Duration > Time) return;
 
                 EntityCommandBuffer.RemoveComponent<Attack>(index, entity);
             }

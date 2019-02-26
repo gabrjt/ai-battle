@@ -26,7 +26,7 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.Create<SearchingForTarget>() },
                 Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.ReadOnly<Target>() }
+                None = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<TargetFound>());
@@ -40,7 +40,7 @@ namespace Game.Systems
         {
             ForEach((Entity entity, ref SearchingForTarget searchForTarget, ref Position position) =>
             {
-                if (searchForTarget.StartTime + searchForTarget.SearchForTargetTime <= Time.time)
+                if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
                 {
                     var positionValue = position.Value;
 
@@ -65,7 +65,7 @@ namespace Game.Systems
                             PostUpdateCommands.SetComponent(targetFound, new TargetFound
                             {
                                 This = entity,
-                                Value = targetEntity
+                                Other = targetEntity
                             });
 
                             break;

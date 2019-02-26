@@ -10,89 +10,42 @@ namespace Game.Systems
 
         private EntityArchetype m_Archetype;
 
-        private NativeList<Entity> m_SetDestroyList;
-
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Dead>() },
-                None = new[] { ComponentType.ReadOnly<Destroy>() }
-            },
-            new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
+                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Destroyed>());
-
-            m_SetDestroyList = new NativeList<Entity>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
-            var deadType = GetArchetypeChunkComponentType<Dead>(true);
-            var killedType = GetArchetypeChunkComponentType<Killed>(true);
+            var diedType = GetArchetypeChunkComponentType<Died>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(deadType))
+                var diedArray = chunk.GetNativeArray(diedType);
+
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    var entityArray = chunk.GetNativeArray(entityType);
+                    var entity = diedArray[entityIndex].This;
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
+                    PostUpdateCommands.AddComponent(entity, new Destroy());
 
-                        if (m_SetDestroyList.Contains(entity)) continue;
-
-                        m_SetDestroyList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Destroy());
-
-                        var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
-                        PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
-                    }
-                }
-                else if (chunk.Has(killedType))
-                {
-                    var killedArray = chunk.GetNativeArray(killedType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = killedArray[entityIndex].Target;
-
-                        if (m_SetDestroyList.Contains(entity)) continue;
-
-                        m_SetDestroyList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Destroy());
-
-                        var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
-                        PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
-                    }
+                    var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
+                    PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
                 }
             }
 
             chunkArray.Dispose();
-
-            m_SetDestroyList.Clear();
-        }
-
-        protected override void OnDestroyManager()
-        {
-            base.OnDestroyManager();
-
-            if (m_SetDestroyList.IsCreated)
-            {
-                m_SetDestroyList.Dispose();
-            }
         }
     }
 }

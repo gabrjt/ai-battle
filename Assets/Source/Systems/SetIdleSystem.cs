@@ -21,7 +21,14 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+                None = new[]
+                {
+                    ComponentType.ReadOnly<Idle>(),
+                    ComponentType.ReadOnly<SearchingForDestination>(),
+                    ComponentType.ReadOnly<Destination>(),
+                    ComponentType.ReadOnly<Target>(),
+                    ComponentType.ReadOnly<Dead>()
+                }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationReached>() }
@@ -57,7 +64,7 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Idle
                         {
-                            IdleTime = m_Random.NextFloat(1, 10),
+                            Duration = m_Random.NextFloat(1, 10),
                             StartTime = Time.time
                         });
                     }
@@ -76,7 +83,7 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Idle
                         {
-                            IdleTime = m_Random.NextFloat(1, 10),
+                            Duration = m_Random.NextFloat(1, 10),
                             StartTime = Time.time
                         });
                     }

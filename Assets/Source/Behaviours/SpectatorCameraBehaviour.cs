@@ -63,7 +63,7 @@ public class SpectatorCameraBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (!m_Target || m_EntityManager.HasComponent<Dead>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space))
+        if (!m_Target || m_EntityManager.HasComponent<Destroy>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space))
         {
             FindRandomTarget();
         }

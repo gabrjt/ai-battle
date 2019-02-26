@@ -152,6 +152,8 @@ namespace Game.Systems
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
 
+                view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
+
                 EntityManager.SetComponentData(entity, new View
                 {
                     Owner = owner,

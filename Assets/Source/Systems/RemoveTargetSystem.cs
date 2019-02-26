@@ -17,6 +17,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>() },
+                Any = new[] { ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
@@ -29,6 +30,7 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
+            var deadType = GetArchetypeChunkComponentType<Dead>(true);
             var targetType = GetArchetypeChunkComponentType<Target>(true);
             var killedType = GetArchetypeChunkComponentType<Killed>(true);
 
@@ -36,7 +38,7 @@ namespace Game.Systems
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(targetType))
+                if (chunk.Has(targetType) || chunk.Has(deadType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
                     var targetArray = chunk.GetNativeArray(targetType);
@@ -46,7 +48,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex].Value;
 
-                        if (EntityManager.Exists(target) || m_RemoveTargetList.Contains(entity) && !EntityManager.HasComponent<Dead>(target)) continue;
+                        if (!EntityManager.HasComponent<Dead>(entity) && (EntityManager.Exists(target) || m_RemoveTargetList.Contains(entity) && !EntityManager.HasComponent<Dead>(target))) continue;
 
                         m_RemoveTargetList.Add(entity);
 

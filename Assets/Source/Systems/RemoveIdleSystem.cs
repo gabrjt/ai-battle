@@ -17,7 +17,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Idle>() },
-                Any = new[] { ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+                Any = new[] { ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<IdleTimeExpired>() }
