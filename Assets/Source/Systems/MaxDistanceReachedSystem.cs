@@ -7,21 +7,21 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    public class MaximumDistanceReachedSystem : JobComponentSystem
+    public class MaxDistanceReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Destroy))]
-        private struct Job : IJobProcessComponentDataWithEntity<Position, MaximumDistance>
+        private struct Job : IJobProcessComponentDataWithEntity<Position, MaxDistance>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
             public EntityArchetype Archetype;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaximumDistance maximumDistance)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaxDistance MaxDistance)
             {
-                if (math.distance(position.Value, maximumDistance.Origin) < maximumDistance.Value) return;
+                if (math.distance(position.Value, MaxDistance.Origin) < MaxDistance.Value) return;
 
-                var maximumDistanceReached = EntityCommandBuffer.CreateEntity(index, Archetype);
-                EntityCommandBuffer.SetComponent(index, maximumDistanceReached, new MaximumDistanceReached
+                var MaxDistanceReached = EntityCommandBuffer.CreateEntity(index, Archetype);
+                EntityCommandBuffer.SetComponent(index, MaxDistanceReached, new MaxDistanceReached
                 {
                     This = entity
                 });
@@ -37,7 +37,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<MaximumDistanceReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<MaxDistanceReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

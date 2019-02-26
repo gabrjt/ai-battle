@@ -3,11 +3,25 @@ using System.Collections;
 using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
+
+#if UNITY_EDITOR
+
+using UnityEditor;
+
+#endif
+
 using UnityEngine;
 using MRandom = Unity.Mathematics.Random;
 
 public class SpectatorCameraBehaviour : MonoBehaviour
 {
+    [SerializeField]
+    private Camera m_Camera;
+
+    private LayerMask m_LayerMask;
+
+    private int m_Layer;
+
     [SerializeField]
     private float m_RotationSpeed;
 
@@ -25,6 +39,10 @@ public class SpectatorCameraBehaviour : MonoBehaviour
         m_Random = new MRandom((uint)System.Environment.TickCount);
 
         m_EntityManager = World.Active.GetExistingManager<EntityManager>();
+
+        m_LayerMask = LayerMask.NameToLayer("Entity");
+
+        m_Layer = 1 << m_LayerMask;
 
         StartCoroutine(FindRandomTargetRoutine());
     }
@@ -63,9 +81,21 @@ public class SpectatorCameraBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (!m_Target || m_EntityManager.HasComponent<Destroy>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space))
+        if (!m_Target || m_EntityManager.HasComponent<Destroy>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1))
         {
             FindRandomTarget();
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!Physics.Raycast(m_Camera.ScreenPointToRay(Input.mousePosition), out var hit, Mathf.Infinity, m_Layer)) return;
+
+            m_Target = hit.collider.transform;
+            m_TargetEntity = hit.collider.GetComponent<GameObjectEntity>().Entity;
+
+#if UNITY_EDITOR
+            EditorGUIUtility.PingObject(m_Target.gameObject);
+#endif
         }
     }
 

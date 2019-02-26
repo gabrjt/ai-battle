@@ -37,6 +37,8 @@ namespace Game.Systems
 
         private LayerMask m_LayerMask;
 
+        private int m_Layer;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -47,6 +49,7 @@ namespace Game.Systems
             m_SphereCastCommandDataList = new NativeList<SpherecastCommandData>(Allocator.Persistent);
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
+            m_Layer = 1 << m_LayerMask;
         }
 
         protected override void OnUpdate()
@@ -70,7 +73,7 @@ namespace Game.Systems
             for (var i = 0; i < m_SphereCastCommandDataList.Length; i++)
             {
                 var sphereCastCommand = m_SphereCastCommandDataList[i];
-                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Distance, 1 << m_LayerMask);
+                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Distance, m_Layer);
             }
 
             SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1).Complete();

@@ -3,6 +3,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateBefore(typeof(ClampHealthSystem))]
     public class DamageSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

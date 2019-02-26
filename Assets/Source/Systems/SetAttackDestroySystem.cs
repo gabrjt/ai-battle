@@ -17,7 +17,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
-                Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaximumDistanceReached>() }
+                Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaxDistanceReached>() }
             });
 
             m_SetDestroyList = new NativeList<Entity>(Allocator.Persistent);
@@ -27,7 +27,7 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var collidedType = GetArchetypeChunkComponentType<Collided>(true);
-            var maximumDistanceReachedType = GetArchetypeChunkComponentType<MaximumDistanceReached>(true);
+            var MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
@@ -48,13 +48,13 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Destroy());
                     }
                 }
-                else if (chunk.Has(maximumDistanceReachedType))
+                else if (chunk.Has(MaxDistanceReachedType))
                 {
-                    var maximumDistanceArray = chunk.GetNativeArray(maximumDistanceReachedType);
+                    var MaxDistanceArray = chunk.GetNativeArray(MaxDistanceReachedType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = maximumDistanceArray[entityIndex].This;
+                        var entity = MaxDistanceArray[entityIndex].This;
 
                         if (m_SetDestroyList.Contains(entity)) continue;
 

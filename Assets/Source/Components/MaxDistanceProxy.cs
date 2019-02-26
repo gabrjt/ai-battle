@@ -5,12 +5,12 @@ using Unity.Mathematics;
 namespace Game.Components
 {
     [Serializable]
-    public struct MaximumDistance : IComponentData
+    public struct MaxDistance : IComponentData
     {
         public float3 Origin;
 
         public float Value;
     }
 
-    public class MaximumDistanceProxy : ComponentDataProxy<MaximumDistance> { }
+    public class MaxDistanceProxy : ComponentDataProxy<MaxDistance> { }
 }

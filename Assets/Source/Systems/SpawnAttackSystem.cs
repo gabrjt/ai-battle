@@ -20,7 +20,7 @@ namespace Game.Systems
 
             public Direction Direction;
 
-            public MaximumDistance MaximumDistance;
+            public MaxDistance MaxDistance;
 
             public Speed Speed;
 
@@ -67,7 +67,7 @@ namespace Game.Systems
                 ComponentType.ReadOnly<Direction>(),
                 ComponentType.ReadOnly<Velocity>(),
                 ComponentType.ReadOnly<Damage>(),
-                ComponentType.ReadOnly<MaximumDistance>(),
+                ComponentType.ReadOnly<MaxDistance>(),
                 ComponentType.ReadOnly<Prefab>());
 
             m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
@@ -135,7 +135,7 @@ namespace Game.Systems
                     var attackDistance = attackDistanceArray[entityIndex];
                     var attackSpeed = attackSpeedArray[entityIndex].Value;
 
-                    if (math.distance(position, targetPosition) > attackDistance.Maximum) continue;
+                    if (math.distance(position, targetPosition) > attackDistance.Max) continue;
 
                     var direction = math.normalizesafe(targetPosition - position);
 
@@ -147,10 +147,10 @@ namespace Game.Systems
                         Position = new Position { Value = origin },
                         Rotation = new Rotation { Value = quaternion.LookRotation(direction, math.up()) },
                         Direction = new Direction { Value = direction },
-                        MaximumDistance = new MaximumDistance
+                        MaxDistance = new MaxDistance
                         {
                             Origin = position,
-                            Value = attackDistance.Maximum
+                            Value = attackDistance.Max
                         },
                         Speed = new Speed { Value = attackSpeed * 5 },
                         Damage = new Damage { Value = attackArray[entityIndex].Value }
@@ -194,7 +194,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, spawnData.Position);
                 EntityManager.SetComponentData(entity, spawnData.Rotation);
                 EntityManager.SetComponentData(entity, spawnData.Direction);
-                EntityManager.SetComponentData(entity, spawnData.MaximumDistance);
+                EntityManager.SetComponentData(entity, spawnData.MaxDistance);
                 EntityManager.SetComponentData(entity, spawnData.Speed);
                 EntityManager.SetComponentData(entity, spawnData.Damage);
                 EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });

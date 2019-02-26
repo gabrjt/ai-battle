@@ -16,11 +16,11 @@ namespace Game.Systems
                     var targetDestination = EntityManager.GetComponentData<Position>(target.Value).Value;
                     var distance = math.distance(position.Value, targetDestination);
 
-                    if (distance < attackDistance.Minimum || distance > attackDistance.Maximum)
+                    if (distance < attackDistance.Min || distance > attackDistance.Max)
                     {
                         var direction = math.normalizesafe(targetDestination - position.Value);
                         destination.LastValue = destination.Value;
-                        destination.Value = targetDestination - direction * attackDistance.Minimum;
+                        destination.Value = targetDestination - direction * attackDistance.Min;
                     }
                 }
             });

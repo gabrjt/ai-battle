@@ -19,7 +19,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        private int m_TotalCount = 50;
+        private int m_TotalCount = 1000;
 
         private MRandom m_Random;
 
@@ -53,24 +53,25 @@ namespace Game.Systems
                 var navMeshAgent = Object.Instantiate(m_Prefab).GetComponent<NavMeshAgent>();
                 navMeshAgent.Warp(terrain.GetRandomPosition());
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
-                // navMeshAgent.updateRotation = false;
 
                 var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
 
                 navMeshAgent.name = $"Character AI {entity.Index}";
 
+                PostUpdateCommands.SetComponent(entity, new HomePosition { Value = navMeshAgent.transform.position });
+
                 PostUpdateCommands.SetComponent(entity, new Position { Value = navMeshAgent.transform.position });
                 PostUpdateCommands.SetComponent(entity, new Rotation { Value = navMeshAgent.transform.rotation });
 
-                var maximumHealth = m_Random.NextInt(100, 301);
-                PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
-                PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
+                var MaxHealth = m_Random.NextInt(100, 301);
+                PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = MaxHealth });
+                PostUpdateCommands.SetComponent(entity, new Health { Value = MaxHealth });
 
                 PostUpdateCommands.SetComponent(entity, new Attack { Value = m_Random.NextInt(10, 31) });
 
-                PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = m_Random.NextInt(1, 4) });
+                PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = m_Random.NextFloat(1, 4) });
 
-                PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = m_Random.NextInt(1, 6) });
+                PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = m_Random.NextFloat(1, 6) });
 
                 var viewIndex = m_Random.NextInt(0, 3);
 

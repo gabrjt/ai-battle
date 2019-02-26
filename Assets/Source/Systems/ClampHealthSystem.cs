@@ -3,43 +3,24 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(HealthRegenerationSystem))]
-    [UpdateAfter(typeof(DamageSystem))]
     public class ClampHealthSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ClampMaximumHealthJob : IJobProcessComponentData<Health, MaximumHealth>
+        private struct Job : IJobProcessComponentData<Health, MaxHealth>
         {
-            public void Execute(ref Health health, [ReadOnly] ref MaximumHealth maximumHealth)
+            public void Execute(ref Health health, [ReadOnly] ref MaxHealth maxHealth)
             {
-                if (health.Value > maximumHealth.Value)
-                {
-                    health.Value = maximumHealth.Value;
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct ClampMinimumHealthJob : IJobProcessComponentData<Health>
-        {
-            public void Execute(ref Health health)
-            {
-                if (health.Value < 0)
-                {
-                    health.Value = 0;
-                }
+                health.Value = math.clamp(health.Value, 0, maxHealth.Value);
             }
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var clampMaximumHealthHandle = new ClampMaximumHealthJob { }.Schedule(this, inputDeps);
-            var clampMinimumHealthHandle = new ClampMinimumHealthJob { }.Schedule(this, clampMaximumHealthHandle);
-
-            return clampMinimumHealthHandle;
+            return new Job { }.Schedule(this, inputDeps);
         }
     }
 }

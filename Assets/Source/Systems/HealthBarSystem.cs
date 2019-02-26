@@ -10,7 +10,7 @@ namespace Game.Systems
         {
             ForEach((Image image, ref HealthBar healthBar) =>
             {
-                image.fillAmount = EntityManager.GetComponentData<Health>(healthBar.Owner).Value / EntityManager.GetComponentData<MaximumHealth>(healthBar.Owner).Value;
+                image.fillAmount = EntityManager.GetComponentData<Health>(healthBar.Owner).Value / EntityManager.GetComponentData<MaxHealth>(healthBar.Owner).Value;
             });
         }
     }

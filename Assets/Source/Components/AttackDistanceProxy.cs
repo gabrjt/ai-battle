@@ -6,9 +6,9 @@ namespace Game.Components
     [Serializable]
     public struct AttackDistance : IComponentData
     {
-        public float Minimum;
+        public float Min;
 
-        public float Maximum;
+        public float Max;
     }
 
     public class AttackDistanceProxy : ComponentDataProxy<AttackDistance>

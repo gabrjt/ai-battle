@@ -29,7 +29,7 @@ namespace Game.Systems
                 animator.speed = 1;
                 if (EntityManager.HasComponent<Position>(target.Value))
                 {
-                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Maximum)
+                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Max)
                     {
                         animator.Play("Idle");
                     }

@@ -156,5 +156,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d857f2fbede55d74b9cef3bd8c4c9bcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Camera: {fileID: 6477010448696358298}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 512
   m_RotationSpeed: 0.25
   m_Target: {fileID: 0}

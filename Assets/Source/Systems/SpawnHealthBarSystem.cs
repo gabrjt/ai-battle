@@ -30,12 +30,12 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>(), ComponentType.ReadOnly<Position>() },
+                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() },
                 None = new[] { ComponentType.ReadOnly<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaximumHealth>(), ComponentType.ReadOnly<Position>() }
+                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() }
             });
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));

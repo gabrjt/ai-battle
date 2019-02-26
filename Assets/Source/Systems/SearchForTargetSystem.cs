@@ -16,6 +16,8 @@ namespace Game.Systems
 
         private LayerMask m_LayerMask;
 
+        private int m_Layer;
+
         private MRandom m_Random;
 
         protected override void OnCreateManager()
@@ -32,6 +34,7 @@ namespace Game.Systems
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<TargetFound>());
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
+            m_Layer = 1 << m_LayerMask;
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
         }
@@ -44,7 +47,7 @@ namespace Game.Systems
                 {
                     var positionValue = position.Value;
 
-                    var targetArray = Physics.OverlapSphere(position.Value, searchForTarget.Radius, 1 << m_LayerMask)
+                    var targetArray = Physics.OverlapSphere(position.Value, searchForTarget.Radius, m_Layer)
                         .Where(collider => collider.GetComponent<GameObjectEntity>().Entity != entity)
                         .OrderBy(collider => math.distance(collider.transform.position, positionValue))
                         .ToArray();
