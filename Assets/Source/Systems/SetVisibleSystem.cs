@@ -18,6 +18,7 @@ namespace Game.Systems
 
             public void Execute(ref Visible visible, [ReadOnly] ref OwnerPosition ownerPosition, [ReadOnly] ref SqrMaxDistanceFromCamera sqrMaxDistanceFromCamera)
             {
+                visible.LastValue = visible.Value;
                 visible.Value = math.distancesq(CameraPosition, ownerPosition.Value) < math.lengthsq(sqrMaxDistanceFromCamera.Value);
             }
         }

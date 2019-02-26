@@ -27,6 +27,8 @@ namespace Game.Systems
 
             ForEach((Entity entity, ref Visible visible, ref Owner owner, ref OwnerPosition ownerPosition) =>
             {
+                if (visible.LastValue == visible.Value) return;
+
                 var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
 
                 var images = gameObject.GetComponentsInChildren<Image>();

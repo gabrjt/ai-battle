@@ -26,6 +26,8 @@ namespace Game.Systems
 
             ForEach((Entity entity, ref Visible visible, ref Owner owner, ref OwnerPosition ownerPosition) =>
             {
+                if (visible.LastValue == visible.Value) return;
+
                 var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
 
                 var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
