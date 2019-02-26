@@ -96,12 +96,6 @@ namespace Game.Systems
 
                 healthBar.name = $"Health Bar {entity.Index}";
 
-                EntityManager.SetComponentData(entity, new HealthBar
-                {
-                    IsVisible = false,
-                    MaxSqrDistanceFromCamera = 25
-                });
-
                 EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
                 EntityManager.SetComponentData(entity, new OwnerPosition
                 {

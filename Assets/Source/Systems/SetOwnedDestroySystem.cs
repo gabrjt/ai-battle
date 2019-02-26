@@ -3,7 +3,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    public class SetViewDestroyedSystem : ComponentSystem
+    public class SetOwnedDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;
 
@@ -13,14 +13,14 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<View>() },
+                All = new[] { ComponentType.ReadOnly<Owner>() },
                 None = new[] { ComponentType.ReadOnly<Destroy>() }
             });
         }
 
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref View view, ref Owner owner) =>
+            ForEach((Entity entity, ref Owner owner) =>
             {
                 if (EntityManager.HasComponent<Destroy>(owner.Value))
                 {

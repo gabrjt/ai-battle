@@ -1,7 +1,6 @@
 ﻿using Game.Components;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -153,12 +152,6 @@ namespace Game.Systems
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
 
                 view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
-
-                EntityManager.SetComponentData(entity, new View
-                {
-                    IsVisible = false,
-                    MaxSqrDistanceFromCamera = 10 * 10
-                });
 
                 EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
                 EntityManager.SetComponentData(entity, new OwnerPosition { Value = position });

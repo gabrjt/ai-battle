@@ -9,9 +9,16 @@ namespace Game.Systems
     [UpdateAfter(typeof(PostLateUpdate))]
     public class HealthBarPositionSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<RectTransform>(), ComponentType.ReadOnly<OwnerPosition>() }
+            });
 
             RequireSingletonForUpdate<CameraSingleton>();
         }
@@ -22,11 +29,11 @@ namespace Game.Systems
 
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
 
-            ForEach((RectTransform rectTransform, ref HealthBar healthBar, ref OwnerPosition ownerPosition) =>
+            ForEach((RectTransform rectTransform, ref OwnerPosition ownerPosition) =>
             {
                 var transform = rectTransform.parent;
                 transform.position = camera.WorldToScreenPoint(ownerPosition.Value + math.up());
-            });
+            }, m_Group);
         }
     }
 }

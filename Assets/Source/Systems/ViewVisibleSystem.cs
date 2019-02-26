@@ -1,15 +1,21 @@
 ﻿using Game.Components;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Game.Systems
 {
     public class ViewVisibleSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<View>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.ReadOnly<Visible>() }
+            });
 
             RequireSingletonForUpdate<CameraSingleton>();
         }
@@ -18,17 +24,16 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return; // TODO: use RequireSingletonForUpdate.
 
-            ForEach((Entity entity, ref View view, ref Owner owner, ref OwnerPosition ownerPosition) =>
+            ForEach((Entity entity, ref Visible visible, ref Owner owner, ref OwnerPosition ownerPosition) =>
             {
                 var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
-                var isVisible = view.IsVisible;
 
                 var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
                 foreach (var meshRenderer in meshRenderers)
                 {
-                    meshRenderer.enabled = isVisible;
+                    meshRenderer.enabled = visible.Value;
                 }
-            });
+            }, m_Group);
         }
     }
 }

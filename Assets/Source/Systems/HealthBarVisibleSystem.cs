@@ -7,9 +7,16 @@ namespace Game.Systems
 {
     public class HealthBarVisibleSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.ReadOnly<Visible>() }
+            });
 
             RequireSingletonForUpdate<CameraSingleton>();
         }
@@ -18,17 +25,16 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return; // TODO: use RequireSingletonForUpdate.
 
-            ForEach((Entity entity, ref HealthBar healthBar, ref Owner owner, ref OwnerPosition ownerPosition) =>
+            ForEach((Entity entity, ref Visible visible, ref Owner owner, ref OwnerPosition ownerPosition) =>
             {
                 var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
-                var isVisible = healthBar.IsVisible;
 
                 var images = gameObject.GetComponentsInChildren<Image>();
                 foreach (var image in images)
                 {
-                    image.enabled = isVisible;
+                    image.enabled = visible.Value;
                 }
-            });
+            }, m_Group);
         }
     }
 }

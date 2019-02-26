@@ -11,6 +11,7 @@ namespace Game.Systems
     public class HealthRegenerationSystem : JobComponentSystem
     {
         [BurstCompile]
+        [RequireSubtractiveComponent(typeof(Dead))]
         private struct Job : IJobProcessComponentData<Health, HealthRegeneration>
         {
             public float DeltaTime;
