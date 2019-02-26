@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Game.Systems
 {
-    public class HealthBarVisibleSystem : ComponentSystem
+    public class ViewVisibleSystem : ComponentSystem
     {
         protected override void OnCreateManager()
         {
@@ -18,15 +18,15 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return; // TODO: use RequireSingletonForUpdate.
 
-            ForEach((Entity entity, ref HealthBar healthBar, ref Owner owner, ref OwnerPosition ownerPosition) =>
+            ForEach((Entity entity, ref View view, ref Owner owner, ref OwnerPosition ownerPosition) =>
             {
-                var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
-                var isVisible = healthBar.IsVisible;
+                var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
+                var isVisible = view.IsVisible;
 
-                var images = gameObject.GetComponentsInChildren<Image>();
-                foreach (var image in images)
+                var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+                foreach (var meshRenderer in meshRenderers)
                 {
-                    image.enabled = isVisible;
+                    meshRenderer.enabled = isVisible;
                 }
             });
         }

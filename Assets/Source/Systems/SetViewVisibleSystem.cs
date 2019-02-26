@@ -8,16 +8,16 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(SetCameraSingletonSystem))]
-    public class SetHealthBarVisibleSystem : JobComponentSystem
+    public class SetViewVisibleSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentData<HealthBar, OwnerPosition>
+        private struct Job : IJobProcessComponentData<View, OwnerPosition>
         {
             public float3 CameraPosition;
 
-            public void Execute(ref HealthBar healthBar, ref OwnerPosition healthBarOwnerPosition)
+            public void Execute(ref View view, ref OwnerPosition ownerPosition)
             {
-                healthBar.IsVisible = math.distancesq(CameraPosition, healthBarOwnerPosition.Value) < math.lengthsq(healthBar.MaxSqrDistanceFromCamera);
+                view.IsVisible = math.distancesq(CameraPosition, ownerPosition.Value) < math.lengthsq(view.MaxSqrDistanceFromCamera);
             }
         }
 

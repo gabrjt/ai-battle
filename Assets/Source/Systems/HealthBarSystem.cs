@@ -8,9 +8,9 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
-            ForEach((Image image, ref HealthBar healthBar) =>
+            ForEach((Image image, ref HealthBar healthBar, ref Owner owner) =>
             {
-                image.fillAmount = EntityManager.GetComponentData<Health>(healthBar.Owner).Value / EntityManager.GetComponentData<MaxHealth>(healthBar.Owner).Value;
+                image.fillAmount = EntityManager.GetComponentData<Health>(owner.Value).Value / EntityManager.GetComponentData<MaxHealth>(owner.Value).Value;
             });
         }
     }

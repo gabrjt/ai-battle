@@ -98,12 +98,12 @@ namespace Game.Systems
 
                 EntityManager.SetComponentData(entity, new HealthBar
                 {
-                    Owner = spawnData.Owner,
                     IsVisible = false,
                     MaxSqrDistanceFromCamera = 25
                 });
 
-                EntityManager.SetComponentData(entity, new HealthBarOwnerPosition
+                EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
+                EntityManager.SetComponentData(entity, new OwnerPosition
                 {
                     Value = spawnData.Position
                 });

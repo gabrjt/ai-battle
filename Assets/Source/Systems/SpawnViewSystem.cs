@@ -156,9 +156,13 @@ namespace Game.Systems
 
                 EntityManager.SetComponentData(entity, new View
                 {
-                    Owner = owner,
-                    Offset = new float3(0, -1, 0)
+                    IsVisible = false,
+                    MaxSqrDistanceFromCamera = 10 * 10
                 });
+
+                EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
+                EntityManager.SetComponentData(entity, new OwnerPosition { Value = position });
+
                 EntityManager.SetComponentData(entity, new Position { Value = position });
                 EntityManager.SetComponentData(entity, new Rotation { Value = rotation });
 

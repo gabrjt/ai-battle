@@ -20,9 +20,9 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref View view) =>
+            ForEach((Entity entity, ref View view, ref Owner owner) =>
             {
-                if (EntityManager.HasComponent<Destroy>(view.Owner))
+                if (EntityManager.HasComponent<Destroy>(owner.Value))
                 {
                     PostUpdateCommands.AddComponent(entity, new Destroy());
                 }

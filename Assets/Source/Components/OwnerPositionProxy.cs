@@ -5,10 +5,10 @@ using Unity.Mathematics;
 namespace Game.Components
 {
     [Serializable]
-    public struct HealthBarOwnerPosition : IComponentData
+    public struct OwnerPosition : IComponentData
     {
         public float3 Value;
     }
 
-    public class HealthBarOwnerPositionProxy : ComponentDataProxy<HealthBarOwnerPosition> { }
+    public class OwnerPositionProxy : ComponentDataProxy<OwnerPosition> { }
 }

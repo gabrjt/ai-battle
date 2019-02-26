@@ -6,13 +6,13 @@ using UnityEngine.Experimental.PlayerLoop;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(PostLateUpdate))]
-    public class ViewPositionSystem : ComponentSystem
+    public class SetToOwnerPositionSystem : ComponentSystem
     {
         protected override void OnUpdate()
         {
-            ForEach((ref View view, ref Position position) =>
+            ForEach((ref OwnerPosition ownerPosition, ref Offset offset, ref Position position) =>
             {
-                position.Value = EntityManager.GetComponentData<Position>(view.Owner).Value + view.Offset;
+                position.Value = ownerPosition.Value + offset.value;
             });
         }
     }

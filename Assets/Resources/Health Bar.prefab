@@ -89,6 +89,7 @@ GameObject:
   - component: {fileID: 455468773719879070}
   - component: {fileID: 455468773719879069}
   - component: {fileID: 9051803676405767881}
+  - component: {fileID: 3792388179871010850}
   m_Layer: 5
   m_Name: Health Bar
   m_TagString: Untagged
@@ -182,7 +183,7 @@ MonoBehaviour:
   m_SerializedData:
     IsVisible:
       m_Value: 0
-    MaxSqrDistanceFromCamera: 2500
+    MaxSqrDistanceFromCamera: 25
 --- !u!114 &9051803676405767881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,6 +202,19 @@ MonoBehaviour:
       x: 0
       y: 0
       z: 0
+--- !u!114 &3792388179871010850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 455468773719879067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: cbcef8ace9e575a40b88b93fa633fd68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &455468774465678633
 GameObject:
   m_ObjectHideFlags: 0

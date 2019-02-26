@@ -20,9 +20,9 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((Entity entity, ref HealthBar healthBar) =>
+            ForEach((Entity entity, ref HealthBar healthBar, ref Owner owner) =>
             {
-                if (EntityManager.HasComponent<Dead>(healthBar.Owner))
+                if (EntityManager.HasComponent<Dead>(owner.Value))
                 {
                     PostUpdateCommands.AddComponent(entity, new Destroy());
                 }
