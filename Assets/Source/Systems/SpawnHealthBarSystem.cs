@@ -99,7 +99,13 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, new HealthBar
                 {
                     Owner = spawnData.Owner,
-                    Visible = true
+                    IsVisible = false,
+                    MaxSqrDistanceFromCamera = 50 * 50
+                });
+
+                EntityManager.SetComponentData(entity, new HealthBarOwnerPosition
+                {
+                    Value = spawnData.Position
                 });
 
                 var transform = healthBar.GetComponent<RectTransform>();

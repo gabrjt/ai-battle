@@ -10,7 +10,9 @@ namespace Game.Components
         [HideInInspector]
         public Entity Owner;
 
-        public @bool Visible;
+        public @bool IsVisible;
+
+        public float MaxSqrDistanceFromCamera;
     }
 
     public class HealthBarProxy : ComponentDataProxy<HealthBar> { }
