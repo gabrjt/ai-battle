@@ -10,9 +10,16 @@ namespace Game.Systems
     [UpdateAfter(typeof(PostLateUpdate))]
     public class HealthBarPositionSystem : ComponentSystem
     {
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            RequireSingletonForUpdate<CameraSingleton>();
+        }
+
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CameraSingleton>()) return;
+            if (!HasSingleton<CameraSingleton>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
 
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
 

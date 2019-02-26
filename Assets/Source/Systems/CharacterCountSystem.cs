@@ -17,11 +17,17 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Character>() }
             });
+
+            RequireSingletonForUpdate<CharacterCount>();
         }
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CharacterCount>()) return;
+            if (!HasSingleton<CharacterCount>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
+
+            var characterCount = GetSingleton<CharacterCount>();
+
+            if (!EntityManager.HasComponent<TextMeshProUGUI>(characterCount.Owner)) return;
 
             var count = 0;
 
@@ -34,7 +40,6 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            var characterCount = GetSingleton<CharacterCount>();
             characterCount.Value = count;
             SetSingleton(characterCount);
 

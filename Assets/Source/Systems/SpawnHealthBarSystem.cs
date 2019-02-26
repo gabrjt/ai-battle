@@ -41,10 +41,14 @@ namespace Game.Systems
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));
 
             m_SpawnList = new NativeList<SpawnData>(Allocator.Persistent);
+
+            RequireSingletonForUpdate<CameraSingleton>();
         }
 
         protected override void OnUpdate()
         {
+            if (!HasSingleton<CameraSingleton>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
+
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
