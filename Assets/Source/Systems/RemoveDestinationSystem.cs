@@ -16,10 +16,12 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Dead>() }
+                All = new[] { ComponentType.ReadOnly<Destination>() },
+                Any = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<DestinationReached>() }
+                All = new[] { ComponentType.ReadOnly<Event>() },
+                Any = new[] { ComponentType.ReadOnly<DestinationReached>(), ComponentType.ReadOnly<Killed>() }
             });
 
             m_RemoveDestinationList = new NativeList<Entity>(Allocator.Persistent);
@@ -29,14 +31,33 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
+            var targetType = GetArchetypeChunkComponentType<Target>(true);
             var deadType = GetArchetypeChunkComponentType<Dead>(true);
             var destinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true);
+            var killedType = GetArchetypeChunkComponentType<Killed>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(deadType))
+                if (chunk.Has(targetType))
+                {
+                    var entityArray = chunk.GetNativeArray(entityType);
+                    var targetArray = chunk.GetNativeArray(targetType);
+
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var target = targetArray[entityIndex];
+
+                        if (!EntityManager.HasComponent<Dead>(target.Value) || m_RemoveDestinationList.Contains(entity)) continue;
+
+                        m_RemoveDestinationList.Add(entity);
+
+                        PostUpdateCommands.RemoveComponent<Destination>(entity);
+                    }
+                }
+                else if (chunk.Has(deadType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
 
@@ -59,7 +80,22 @@ namespace Game.Systems
                     {
                         var entity = destinationReachedArray[entityIndex].This;
 
-                        if (m_RemoveDestinationList.Contains(entity)) continue;
+                        if (!EntityManager.HasComponent<Destination>(entity) || m_RemoveDestinationList.Contains(entity)) continue;
+
+                        m_RemoveDestinationList.Add(entity);
+
+                        PostUpdateCommands.RemoveComponent<Destination>(entity);
+                    }
+                }
+                else if (chunk.Has(killedType))
+                {
+                    var killedArray = chunk.GetNativeArray(killedType);
+
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = killedArray[entityIndex].This;
+
+                        if (!EntityManager.HasComponent<Destination>(entity) || m_RemoveDestinationList.Contains(entity)) continue;
 
                         m_RemoveDestinationList.Add(entity);
 

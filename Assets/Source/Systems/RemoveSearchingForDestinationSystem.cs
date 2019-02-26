@@ -20,7 +20,8 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<DestinationFound>() }
+                All = new[] { ComponentType.ReadOnly<Event>() },
+                Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<Killed>() }
             });
 
             m_RemoveSearchingForDestinationList = new NativeList<Entity>(Allocator.Persistent);
@@ -32,6 +33,7 @@ namespace Game.Systems
             var entityType = GetArchetypeChunkEntityType();
             var characterType = GetArchetypeChunkComponentType<Character>(true);
             var destinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true);
+            var killedType = GetArchetypeChunkComponentType<Killed>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
@@ -60,7 +62,22 @@ namespace Game.Systems
                     {
                         var entity = destinationFoundArray[entityIndex].This;
 
-                        if (m_RemoveSearchingForDestinationList.Contains(entity)) continue;
+                        if (!EntityManager.HasComponent<SearchingForDestination>(entity) || m_RemoveSearchingForDestinationList.Contains(entity)) continue;
+
+                        m_RemoveSearchingForDestinationList.Add(entity);
+
+                        PostUpdateCommands.RemoveComponent<SearchingForDestination>(entity);
+                    }
+                }
+                else if (chunk.Has(killedType))
+                {
+                    var killedArray = chunk.GetNativeArray(killedType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = killedArray[entityIndex].This;
+
+                        if (!EntityManager.HasComponent<SearchingForDestination>(entity) || m_RemoveSearchingForDestinationList.Contains(entity)) continue;
 
                         m_RemoveSearchingForDestinationList.Add(entity);
 

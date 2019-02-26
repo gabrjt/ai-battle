@@ -64,7 +64,7 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Idle
                         {
-                            Duration = m_Random.NextFloat(1, 10),
+                            Duration = m_Random.NextFloat(5, 10),
                             StartTime = Time.time
                         });
                     }
@@ -83,7 +83,7 @@ namespace Game.Systems
 
                         PostUpdateCommands.AddComponent(entity, new Idle
                         {
-                            Duration = m_Random.NextFloat(1, 10),
+                            Duration = m_Random.NextFloat(5, 10),
                             StartTime = Time.time
                         });
                     }
