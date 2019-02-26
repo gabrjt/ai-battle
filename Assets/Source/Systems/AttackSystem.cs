@@ -8,17 +8,17 @@ namespace Game.Systems
 {
     public class AttackSystem : JobComponentSystem
     {
-        public struct Job : IJobProcessComponentDataWithEntity<Attack>
+        public struct Job : IJobProcessComponentDataWithEntity<Attacking>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Attack attack)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Attacking attack)
             {
                 if (attack.StartTime + attack.Duration > Time) return;
 
-                EntityCommandBuffer.RemoveComponent<Attack>(index, entity);
+                EntityCommandBuffer.RemoveComponent<Attacking>(index, entity);
             }
         }
 

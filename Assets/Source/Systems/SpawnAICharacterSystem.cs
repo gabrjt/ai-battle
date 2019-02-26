@@ -66,6 +66,8 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, new MaximumHealth { Value = maximumHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maximumHealth });
 
+                PostUpdateCommands.SetComponent(entity, new Attack { Value = m_Random.NextInt(10, 31) });
+
                 PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = m_Random.NextInt(1, 4) });
 
                 PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = m_Random.NextInt(1, 6) });
@@ -76,14 +78,17 @@ namespace Game.Systems
                 {
                     case 0:
                         PostUpdateCommands.AddComponent(entity, new Knight());
+                        PostUpdateCommands.SetComponent(entity, new AttackDuration { Value = 1 });
                         break;
 
                     case 1:
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                        PostUpdateCommands.SetComponent(entity, new AttackDuration { Value = 1.333f });
                         break;
 
                     case 2:
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
+                        PostUpdateCommands.SetComponent(entity, new AttackDuration { Value = 2.4f });
                         break;
 
                     default:

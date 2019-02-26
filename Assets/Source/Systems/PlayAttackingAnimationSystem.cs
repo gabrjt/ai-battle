@@ -8,7 +8,7 @@ namespace Game.Systems
     {
         protected override void OnUpdate()
         {
-            ForEach((ref ViewReference viewReference, ref Target target, ref Attack attack, ref AttackSpeed attackSpeed) =>
+            ForEach((ref ViewReference viewReference, ref Target target, ref Attacking attack, ref AttackSpeed attackSpeed) =>
             {
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
                 animator.speed = attackSpeed.Value;

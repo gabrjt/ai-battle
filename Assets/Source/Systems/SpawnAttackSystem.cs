@@ -23,6 +23,8 @@ namespace Game.Systems
             public MaximumDistance MaximumDistance;
 
             public Speed Speed;
+
+            public Damage Damage;
         }
 
         private ComponentGroup m_Group;
@@ -43,8 +45,16 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<AttackDistance>(), ComponentType.ReadOnly<AttackSpeed>() },
-                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attack>(), ComponentType.ReadOnly<Dead>() }
+                All = new[]
+                {
+                    ComponentType.ReadOnly<Target>(),
+                    ComponentType.ReadOnly<Position>(),
+                    ComponentType.ReadOnly<Attack>(),
+                    ComponentType.ReadOnly<AttackDistance>(),
+                    ComponentType.ReadOnly<AttackDuration>(),
+                    ComponentType.ReadOnly<AttackSpeed>()
+                },
+                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attacking>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(
@@ -63,7 +73,7 @@ namespace Game.Systems
             m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
-             
+
             /*
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             var mesh = sphere.GetComponent<MeshFilter>().sharedMesh;
@@ -97,7 +107,9 @@ namespace Game.Systems
             var entityType = GetArchetypeChunkEntityType();
             var targetType = GetArchetypeChunkComponentType<Target>(true);
             var positionType = GetArchetypeChunkComponentType<Position>(true);
+            var attackType = GetArchetypeChunkComponentType<Attack>(true);
             var attackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true);
+            var attackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true);
             var attackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
@@ -106,7 +118,9 @@ namespace Game.Systems
                 var entityArray = chunk.GetNativeArray(entityType);
                 var targetArray = chunk.GetNativeArray(targetType);
                 var positionArray = chunk.GetNativeArray(positionType);
+                var attackArray = chunk.GetNativeArray(attackType);
                 var attackDistanceArray = chunk.GetNativeArray(attackDistanceType);
+                var attackDurationArray = chunk.GetNativeArray(attackDurationType);
                 var attackSpeedArray = chunk.GetNativeArray(attackSpeedType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
@@ -138,12 +152,13 @@ namespace Game.Systems
                             Origin = position,
                             Value = attackDistance.Maximum
                         },
-                        Speed = new Speed { Value = attackSpeed * 5 }
+                        Speed = new Speed { Value = attackSpeed * 5 },
+                        Damage = new Damage { Value = attackArray[entityIndex].Value }
                     });
 
-                    var duration = 1.333f / attackSpeed;
+                    var duration = attackDurationArray[entityIndex].Value / attackSpeed;
 
-                    PostUpdateCommands.AddComponent(entity, new Attack
+                    PostUpdateCommands.AddComponent(entity, new Attacking
                     {
                         Duration = duration,
                         StartTime = Time.time
@@ -181,7 +196,7 @@ namespace Game.Systems
                 EntityManager.SetComponentData(entity, spawnData.Direction);
                 EntityManager.SetComponentData(entity, spawnData.MaximumDistance);
                 EntityManager.SetComponentData(entity, spawnData.Speed);
-                EntityManager.SetComponentData(entity, new Damage { Value = m_Random.NextInt(10, 31) });
+                EntityManager.SetComponentData(entity, spawnData.Damage);
                 EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
             }
 

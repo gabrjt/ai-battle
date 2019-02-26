@@ -4,10 +4,10 @@ using Unity.Entities;
 namespace Game.Components
 {
     [Serializable]
-    public struct Attack : IComponentData
+    public struct AttackDuration : IComponentData
     {
         public float Value;
     }
 
-    public class AttackProxy : ComponentDataProxy<Attack> { }
+    public class AttackDurationProxy : ComponentDataProxy<AttackDuration> { }
 }

@@ -35,7 +35,7 @@ namespace Game.Systems
                 {
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new SearchingForTarget
                     {
-                        Radius = 10,
+                        Radius = 25,
                         Interval = 1,
                         StartTime = Time.time
                     });

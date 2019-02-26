@@ -294,7 +294,7 @@ PrefabInstance:
     - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_Avatar
       value: 
-      objectReference: {fileID: 9000000, guid: f3392e95529ae7540ad53657e3d0ce7d, type: 3}
+      objectReference: {fileID: 9000000, guid: 81cd13a854d35cd4ab62cfc4ec57c669, type: 3}
     - target: {fileID: 460970, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0.018194122
