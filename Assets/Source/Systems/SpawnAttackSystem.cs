@@ -63,12 +63,15 @@ namespace Game.Systems
             m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
-
+             
+            /*
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             var mesh = sphere.GetComponent<MeshFilter>().sharedMesh;
             var material = sphere.GetComponent<MeshRenderer>().sharedMaterial;
+            */
 
             EntityManager.SetComponentData(m_Prefab, new Scale { Value = new float3(0.25f, 0.25f, 0.25f) });
+
             /*
             EntityManager.SetSharedComponentData(m_Prefab, new RenderMesh
             {
@@ -81,7 +84,7 @@ namespace Game.Systems
             });
             */
 
-            Object.Destroy(sphere);
+            // Object.Destroy(sphere);
 
             m_EntitySpawnList = new NativeList<AttackInstanceSpawnData>(Allocator.Persistent);
 
