@@ -100,7 +100,7 @@ namespace Game.Systems
                 {
                     Owner = spawnData.Owner,
                     IsVisible = false,
-                    MaxSqrDistanceFromCamera = 50 * 50
+                    MaxSqrDistanceFromCamera = 25
                 });
 
                 EntityManager.SetComponentData(entity, new HealthBarOwnerPosition

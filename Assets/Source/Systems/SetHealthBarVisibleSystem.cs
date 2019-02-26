@@ -5,34 +5,37 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class SetHealthBarVisibleSystem : JobComponentSystem
+namespace Game.Systems
 {
-    [BurstCompile]
-    private struct Job : IJobProcessComponentData<HealthBar, HealthBarOwnerPosition>
+    [UpdateAfter(typeof(SetCameraSingletonSystem))]
+    public class SetHealthBarVisibleSystem : JobComponentSystem
     {
-        public float3 CameraPosition;
-
-        public void Execute(ref HealthBar healthBar, ref HealthBarOwnerPosition healthBarOwnerPosition)
+        [BurstCompile]
+        private struct Job : IJobProcessComponentData<HealthBar, HealthBarOwnerPosition>
         {
-            healthBar.IsVisible = math.distancesq(CameraPosition, healthBarOwnerPosition.Value) < math.lengthsq(healthBar.MaxSqrDistanceFromCamera);
-            //healthBar.IsVisible = math.distance(CameraPosition, healthBarOwnerPosition.Value) < healthBar.MaxSqrDistanceFromCamera;
+            public float3 CameraPosition;
+
+            public void Execute(ref HealthBar healthBar, ref HealthBarOwnerPosition healthBarOwnerPosition)
+            {
+                healthBar.IsVisible = math.distancesq(CameraPosition, healthBarOwnerPosition.Value) < math.lengthsq(healthBar.MaxSqrDistanceFromCamera);
+            }
         }
-    }
 
-    protected override void OnCreateManager()
-    {
-        base.OnCreateManager();
-
-        RequireSingletonForUpdate<Camera>();
-    }
-
-    protected override JobHandle OnUpdate(JobHandle inputDeps)
-    {
-        if (!HasSingleton<CameraSingleton>() || !EntityManager.Exists(GetSingleton<CameraSingleton>().Owner))  return inputDeps; // TODO: use RequireSingletonForUpdate.
-
-        return new Job
+        protected override void OnCreateManager()
         {
-            CameraPosition = EntityManager.GetComponentObject<Transform>(GetSingleton<CameraSingleton>().Owner).parent.position
-        }.Schedule(this, inputDeps);
+            base.OnCreateManager();
+
+            RequireSingletonForUpdate<Camera>();
+        }
+
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        {
+            if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: use RequireSingletonForUpdate.
+
+            return new Job
+            {
+                CameraPosition = EntityManager.GetComponentObject<Transform>(GetSingleton<CameraSingleton>().Owner).parent.position
+            }.Schedule(this, inputDeps);
+        }
     }
 }
