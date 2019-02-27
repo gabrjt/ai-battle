@@ -103,7 +103,7 @@ public class SpectatorCameraBehaviour : MonoBehaviour
     {
         if (!m_Target) return;
 
-        transform.position = m_Target.position;
+        transform.position = math.lerp(transform.position, m_Target.position, Time.deltaTime);
         transform.rotation = math.mul(math.normalize(transform.rotation), quaternion.AxisAngle(math.up(), m_RotationSpeed * Time.deltaTime));
     }
 }
