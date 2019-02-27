@@ -36,7 +36,7 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<AttackSpeed> AttackSpeedType;
 
-            public NativeList<AttackSpawnData> EntitySpawnList;
+            public NativeList<SpawnData> EntitySpawnList;
 
             [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;
@@ -88,7 +88,7 @@ namespace Game.Systems
 
                     var origin = position + new float3(0, 0.35f, 0);
 
-                    EntitySpawnList.Add(new AttackSpawnData
+                    EntitySpawnList.Add(new SpawnData
                     {
                         Owner = entity,
                         Position = new Position
@@ -161,7 +161,7 @@ namespace Game.Systems
             public NativeArray<Entity> EntityArray;
 
             [ReadOnly]
-            public NativeArray<AttackSpawnData> SpawnDataArray;
+            public NativeArray<SpawnData> SpawnDataArray;
 
             public void Execute(int index)
             {
@@ -188,7 +188,7 @@ namespace Game.Systems
             }
         }
 
-        private struct AttackSpawnData
+        private struct SpawnData
         {
             public Entity Owner;
 
@@ -213,7 +213,7 @@ namespace Game.Systems
 
         private Entity m_Prefab;
 
-        private NativeList<AttackSpawnData> m_EntitySpawnList;
+        private NativeList<SpawnData> m_SpawnDataList;
 
         private MRandom m_Random;
 
@@ -274,7 +274,7 @@ namespace Game.Systems
 
             // Object.Destroy(sphere);
 
-            m_EntitySpawnList = new NativeList<AttackSpawnData>(Allocator.Persistent);
+            m_SpawnDataList = new NativeList<SpawnData>(Allocator.Persistent);
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
         }
@@ -283,7 +283,7 @@ namespace Game.Systems
         {
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
-            m_EntitySpawnList.Clear();
+            m_SpawnDataList.Clear();
 
             JobHandle inputDeps = default;
 
@@ -298,7 +298,7 @@ namespace Game.Systems
                 AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
                 AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
                 AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
-                EntitySpawnList = m_EntitySpawnList,
+                EntitySpawnList = m_SpawnDataList,
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 AttackedArchetype = m_AttackedArchetype,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
@@ -306,7 +306,7 @@ namespace Game.Systems
 
             inputDeps.Complete();
 
-            var entitySpawnArray = new NativeArray<Entity>(m_EntitySpawnList.Length, Allocator.TempJob);
+            var entitySpawnArray = new NativeArray<Entity>(m_SpawnDataList.Length, Allocator.TempJob);
 
             EntityManager.Instantiate(m_Prefab, entitySpawnArray);
 
@@ -321,7 +321,7 @@ namespace Game.Systems
                 DamageFromEntity = GetComponentDataFromEntity<Damage>(),
                 VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),
                 EntityArray = entitySpawnArray,
-                SpawnDataArray = m_EntitySpawnList.AsDeferredJobArray()
+                SpawnDataArray = m_SpawnDataList.AsDeferredJobArray()
             }.Schedule(entitySpawnArray.Length, 64, inputDeps);
 
             inputDeps.Complete();
@@ -331,9 +331,9 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
-            if (m_EntitySpawnList.IsCreated)
+            if (m_SpawnDataList.IsCreated)
             {
-                m_EntitySpawnList.Dispose();
+                m_SpawnDataList.Dispose();
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 
@@ -19,7 +20,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<RectTransform>(), ComponentType.ReadOnly<OwnerPosition>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<RectTransform>(), ComponentType.ReadOnly<Owner>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -32,10 +33,14 @@ namespace Game.Systems
 
             m_Camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
 
-            ForEach((RectTransform rectTransform, ref OwnerPosition ownerPosition) =>
+            var positionFromEntity = GetComponentDataFromEntity<Position>(true);
+
+            ForEach((RectTransform rectTransform, ref Owner owner) =>
             {
+                if (!positionFromEntity.Exists(owner.Value)) return;
+
                 var transform = rectTransform.parent;
-                transform.position = m_Camera.WorldToScreenPoint(ownerPosition.Value + math.up());
+                transform.position = m_Camera.WorldToScreenPoint(positionFromEntity[owner.Value].Value + math.up());
             }, m_Group);
         }
     }

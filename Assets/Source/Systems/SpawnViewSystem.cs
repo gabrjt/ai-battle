@@ -33,7 +33,7 @@ namespace Game.Systems
 
         private GameObject m_SkeletonPrefab;
 
-        private NativeList<SpawnData> m_SpawnList;
+        private NativeList<SpawnData> m_SpawnDataList;
 
         protected override void OnCreateManager()
         {
@@ -54,7 +54,7 @@ namespace Game.Systems
             Debug.Assert(m_OrvWolfRiderPrefab = Resources.Load<GameObject>("Orc Wolf Rider"));
             Debug.Assert(m_SkeletonPrefab = Resources.Load<GameObject>("Skeleton"));
 
-            m_SpawnList = new NativeList<SpawnData>(Allocator.Persistent);
+            m_SpawnDataList = new NativeList<SpawnData>(Allocator.Persistent);
 
             RequireSingletonForUpdate<CameraSingleton>();
         }
@@ -85,7 +85,7 @@ namespace Game.Systems
 
                         if (chunk.Has(knightType))
                         {
-                            m_SpawnList.Add(new SpawnData
+                            m_SpawnDataList.Add(new SpawnData
                             {
                                 Owner = entity,
                                 ViewType = ViewType.Knight,
@@ -93,7 +93,7 @@ namespace Game.Systems
                         }
                         else if (chunk.Has(orcWolfRiderType))
                         {
-                            m_SpawnList.Add(new SpawnData
+                            m_SpawnDataList.Add(new SpawnData
                             {
                                 Owner = entity,
                                 ViewType = ViewType.OrcWolfRider,
@@ -101,7 +101,7 @@ namespace Game.Systems
                         }
                         else if (chunk.Has(skeletonType))
                         {
-                            m_SpawnList.Add(new SpawnData
+                            m_SpawnDataList.Add(new SpawnData
                             {
                                 Owner = entity,
                                 ViewType = ViewType.Skeleton,
@@ -121,9 +121,9 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            for (int i = 0; i < m_SpawnList.Length; i++)
+            for (int i = 0; i < m_SpawnDataList.Length; i++)
             {
-                var spawnData = m_SpawnList[i];
+                var spawnData = m_SpawnDataList[i];
 
                 var owner = spawnData.Owner;
 
@@ -155,7 +155,6 @@ namespace Game.Systems
                 view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
 
                 EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
-                EntityManager.SetComponentData(entity, new OwnerPosition { Value = position });
 
                 EntityManager.SetComponentData(entity, new Position { Value = position });
                 EntityManager.SetComponentData(entity, new Rotation { Value = rotation });
@@ -163,16 +162,16 @@ namespace Game.Systems
                 EntityManager.AddComponentData(owner, new ViewReference { Value = entity });
             }
 
-            m_SpawnList.Clear();
+            m_SpawnDataList.Clear();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SpawnList.IsCreated)
+            if (m_SpawnDataList.IsCreated)
             {
-                m_SpawnList.Dispose();
+                m_SpawnDataList.Dispose();
             }
         }
     }

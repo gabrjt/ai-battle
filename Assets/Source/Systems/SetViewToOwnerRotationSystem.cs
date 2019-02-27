@@ -7,7 +7,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    public class SetToOwnerRotationSystem : JobComponentSystem
+    public class SetViewToOwnerRotationSystem : JobComponentSystem
     {
         [BurstCompile]
         [RequireComponentTag(typeof(Rotation), typeof(View))]

@@ -7,7 +7,7 @@ namespace Game.Components
     [Serializable]
     public struct Offset : IComponentData
     {
-        public float3 value;
+        public float3 Value;
     }
 
     public class OffsetProxy : ComponentDataProxy<Offset> { }

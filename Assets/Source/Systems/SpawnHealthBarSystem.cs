@@ -23,7 +23,7 @@ namespace Game.Systems
 
         private GameObject m_Prefab;
 
-        private NativeList<SpawnData> m_SpawnList;
+        private NativeList<SpawnData> m_SpawnDataList;
 
         protected override void OnCreateManager()
         {
@@ -41,7 +41,7 @@ namespace Game.Systems
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));
 
-            m_SpawnList = new NativeList<SpawnData>(Allocator.Persistent);
+            m_SpawnDataList = new NativeList<SpawnData>(Allocator.Persistent);
 
             RequireSingletonForUpdate<CameraSingleton>();
         }
@@ -68,7 +68,7 @@ namespace Game.Systems
                     {
                         var entity = entityArray[entityIndex];
                         PostUpdateCommands.AddComponent(entity, new Initialized());
-                        m_SpawnList.Add(new SpawnData { Owner = entity, Position = positionArray[entityIndex].Value });
+                        m_SpawnDataList.Add(new SpawnData { Owner = entity, Position = positionArray[entityIndex].Value });
                     }
                 }
                 else
@@ -87,9 +87,9 @@ namespace Game.Systems
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
             var canvasTransform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
 
-            for (int i = 0; i < m_SpawnList.Length; i++)
+            for (int i = 0; i < m_SpawnDataList.Length; i++)
             {
-                var spawnData = m_SpawnList[i];
+                var spawnData = m_SpawnDataList[i];
 
                 var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
 
@@ -98,25 +98,21 @@ namespace Game.Systems
                 healthBar.name = $"Health Bar {entity.Index}";
 
                 EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
-                EntityManager.SetComponentData(entity, new OwnerPosition
-                {
-                    Value = spawnData.Position
-                });
 
                 var transform = healthBar.GetComponent<RectTransform>();
                 transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
             }
 
-            m_SpawnList.Clear();
+            m_SpawnDataList.Clear();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SpawnList.IsCreated)
+            if (m_SpawnDataList.IsCreated)
             {
-                m_SpawnList.Dispose();
+                m_SpawnDataList.Dispose();
             }
         }
     }

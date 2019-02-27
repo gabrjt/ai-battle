@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 namespace Game.Systems
@@ -25,10 +26,13 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<MaxSqrDistanceFromCamera> MaxSqrDistanceFromCameraType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<OwnerPosition> OwnerPositionType;
+            public ArchetypeChunkComponentType<Owner> OwnerType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Visible> VisibleType;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Position> PositionFromEntity;
 
             [ReadOnly]
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
@@ -44,7 +48,7 @@ namespace Game.Systems
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
                 var maxSqrDistanceFromCameraArray = chunk.GetNativeArray(MaxSqrDistanceFromCameraType);
-                var ownerPositionArray = chunk.GetNativeArray(OwnerPositionType);
+                var ownerArray = chunk.GetNativeArray(OwnerType);
 
                 var hasVisible = chunk.Has(VisibleType);
 
@@ -52,9 +56,9 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
                     var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex];
-                    var ownerPosition = ownerPositionArray[entityIndex];
+                    var owner = ownerArray[entityIndex];
 
-                    var isVisible = math.distancesq(CameraPosition, ownerPosition.Value) < math.lengthsq(maxSqrDistanceFromCamera.Value);
+                    var isVisible = PositionFromEntity.Exists(owner.Value) && math.distancesq(CameraPosition, PositionFromEntity[owner.Value].Value) < math.lengthsq(maxSqrDistanceFromCamera.Value);
 
                     if (isVisible && !hasVisible)
                     {
@@ -68,7 +72,7 @@ namespace Game.Systems
             }
         }
 
-        struct ApplyJob : IJob
+        private struct ApplyJob : IJob
         {
             public NativeQueue<Entity> AddQueue;
             public NativeQueue<Entity> RemoveQueue;
@@ -103,11 +107,11 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>() },
+                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<Owner>() },
                 None = new[] { ComponentType.Create<Visible>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.Create<Visible>() }
+                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<Owner>(), ComponentType.Create<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -124,8 +128,9 @@ namespace Game.Systems
                 CameraPosition = EntityManager.GetComponentObject<Transform>(GetSingleton<CameraSingleton>().Owner).parent.position, // TODO: CameraArm Entity.
                 EntityType = GetArchetypeChunkEntityType(),
                 MaxSqrDistanceFromCameraType = GetArchetypeChunkComponentType<MaxSqrDistanceFromCamera>(true),
-                OwnerPositionType = GetArchetypeChunkComponentType<OwnerPosition>(true),
+                OwnerType = GetArchetypeChunkComponentType<Owner>(true),
                 VisibleType = GetArchetypeChunkComponentType<Visible>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 AddQueue = m_AddQueue.ToConcurrent(),
                 RemoveQueue = m_RemoveQueue.ToConcurrent()
             }.Schedule(m_Group, inputDeps);
