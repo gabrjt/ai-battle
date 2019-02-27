@@ -10,18 +10,18 @@ namespace Game.Systems
     public class MaxDistanceReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Destroy))]
-        private struct Job : IJobProcessComponentDataWithEntity<Position, MaxDistance>
+        private struct Job : IJobProcessComponentDataWithEntity<Position, MaxSqrDistance>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
             public EntityArchetype Archetype;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaxDistance MaxDistance)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaxSqrDistance maxSqrDistance)
             {
-                if (math.distance(position.Value, MaxDistance.Origin) < MaxDistance.Value) return;
+                if (math.distancesq(position.Value, maxSqrDistance.Origin) < maxSqrDistance.Value) return;
 
-                var MaxDistanceReached = EntityCommandBuffer.CreateEntity(index, Archetype);
-                EntityCommandBuffer.SetComponent(index, MaxDistanceReached, new MaxDistanceReached
+                var maxDistanceReached = EntityCommandBuffer.CreateEntity(index, Archetype);
+                EntityCommandBuffer.SetComponent(index, maxDistanceReached, new MaxDistanceReached
                 {
                     This = entity
                 });

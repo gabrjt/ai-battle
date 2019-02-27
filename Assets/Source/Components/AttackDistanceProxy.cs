@@ -11,7 +11,5 @@ namespace Game.Components
         public float Max;
     }
 
-    public class AttackDistanceProxy : ComponentDataProxy<AttackDistance>
-    {
-    }
+    public class AttackDistanceProxy : ComponentDataProxy<AttackDistance> { }
 }

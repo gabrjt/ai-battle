@@ -28,7 +28,7 @@ GameObject:
   - component: {fileID: 4568791136650108089}
   - component: {fileID: 5194874122470748591}
   - component: {fileID: 8249894241122096751}
-  - component: {fileID: 4944285465385998733}
+  - component: {fileID: 5499753692547032725}
   m_Layer: 9
   m_Name: AI Character
   m_TagString: Untagged
@@ -349,7 +349,7 @@ MonoBehaviour:
       x: 0
       y: 0
       z: 0
---- !u!114 &4944285465385998733
+--- !u!114 &5499753692547032725
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -359,8 +359,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: fdbeee1158bb04349b2ca92a1e38a642, type: 3}
+  m_Script: {fileID: 11500000, guid: 3cfb3da23ae29c240a21ed30b5c15f23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    Value: 2500
+    Value: 22500

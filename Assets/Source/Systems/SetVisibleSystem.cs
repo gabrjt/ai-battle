@@ -22,7 +22,7 @@ namespace Game.Systems
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<SqrMaxDistanceFromCamera> MaxSqrDistanceFromCameraType;
+            public ArchetypeChunkComponentType<MaxSqrDistanceFromCamera> MaxSqrDistanceFromCameraType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<OwnerPosition> OwnerPositionType;
@@ -103,11 +103,11 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<SqrMaxDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>() },
+                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>() },
                 None = new[] { ComponentType.Create<Visible>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<SqrMaxDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.Create<Visible>() }
+                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.Create<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -123,7 +123,7 @@ namespace Game.Systems
             {
                 CameraPosition = EntityManager.GetComponentObject<Transform>(GetSingleton<CameraSingleton>().Owner).parent.position, // TODO: CameraArm Entity.
                 EntityType = GetArchetypeChunkEntityType(),
-                MaxSqrDistanceFromCameraType = GetArchetypeChunkComponentType<SqrMaxDistanceFromCamera>(true),
+                MaxSqrDistanceFromCameraType = GetArchetypeChunkComponentType<MaxSqrDistanceFromCamera>(true),
                 OwnerPositionType = GetArchetypeChunkComponentType<OwnerPosition>(true),
                 VisibleType = GetArchetypeChunkComponentType<Visible>(true),
                 AddQueue = m_AddQueue.ToConcurrent(),

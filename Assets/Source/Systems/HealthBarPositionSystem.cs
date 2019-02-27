@@ -10,6 +10,7 @@ namespace Game.Systems
     public class HealthBarPositionSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
+
         private Camera m_Camera;
 
         protected override void OnCreateManager()

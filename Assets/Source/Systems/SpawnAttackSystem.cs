@@ -10,6 +10,7 @@ using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SpawnAttackSystem : ComponentSystem
     {
         private struct ConsolidateJob : IJob
@@ -99,10 +100,10 @@ namespace Game.Systems
                         {
                             Value = direction
                         },
-                        MaxDistance = new MaxDistance
+                        MaxSqrDistance = new MaxSqrDistance
                         {
                             Origin = position,
-                            Value = attackDistance.Max
+                            Value = attackDistance.Max * attackDistance.Max
                         },
                         Speed = new Speed { Value = attackSpeed * 5 },
                         Damage = new Damage { Value = attackArray[entityIndex].Value }
@@ -144,7 +145,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Direction> DirectionFromEntity;
 
             [NativeDisableParallelForRestriction]
-            public ComponentDataFromEntity<MaxDistance> MaxDistanceFromEntity;
+            public ComponentDataFromEntity<MaxSqrDistance> MaxSqrDistanceFromEntity;
 
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Speed> SpeedFromEntity;
@@ -176,7 +177,7 @@ namespace Game.Systems
                 PositionFromEntity[entity] = spawnData.Position;
                 RotationFromEntity[entity] = spawnData.Rotation;
                 DirectionFromEntity[entity] = spawnData.Direction;
-                MaxDistanceFromEntity[entity] = spawnData.MaxDistance;
+                MaxSqrDistanceFromEntity[entity] = spawnData.MaxSqrDistance;
                 SpeedFromEntity[entity] = spawnData.Speed;
                 DamageFromEntity[entity] = spawnData.Damage;
 
@@ -197,7 +198,7 @@ namespace Game.Systems
 
             public Direction Direction;
 
-            public MaxDistance MaxDistance;
+            public MaxSqrDistance MaxSqrDistance;
 
             public Speed Speed;
 
@@ -244,7 +245,7 @@ namespace Game.Systems
                 ComponentType.ReadOnly<Direction>(),
                 ComponentType.ReadOnly<Velocity>(),
                 ComponentType.ReadOnly<Damage>(),
-                ComponentType.ReadOnly<MaxDistance>(),
+                ComponentType.ReadOnly<MaxSqrDistance>(),
                 ComponentType.ReadOnly<Prefab>());
 
             m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Attacked>());
@@ -315,7 +316,7 @@ namespace Game.Systems
                 PositionFromEntity = GetComponentDataFromEntity<Position>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
                 DirectionFromEntity = GetComponentDataFromEntity<Direction>(),
-                MaxDistanceFromEntity = GetComponentDataFromEntity<MaxDistance>(),
+                MaxSqrDistanceFromEntity = GetComponentDataFromEntity<MaxSqrDistance>(),
                 SpeedFromEntity = GetComponentDataFromEntity<Speed>(),
                 DamageFromEntity = GetComponentDataFromEntity<Damage>(),
                 VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),

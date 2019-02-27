@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 455468773719879069}
   - component: {fileID: 3792388179871010850}
   - component: {fileID: 9051803676405767881}
-  - component: {fileID: 4505001176322794890}
+  - component: {fileID: 5807744695222166686}
   - component: {fileID: 3672042554877532685}
   m_Layer: 5
   m_Name: Health Bar
@@ -213,7 +213,7 @@ MonoBehaviour:
       x: 0
       y: 0
       z: 0
---- !u!114 &4505001176322794890
+--- !u!114 &5807744695222166686
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -223,11 +223,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: c45342a7d3874e84a8f9b13ba8caff5c, type: 3}
+  m_Script: {fileID: 11500000, guid: 623396efbf4e9784784c449f2bc7e2f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    Value: 25
+    Value: 100
 --- !u!114 &3672042554877532685
 MonoBehaviour:
   m_ObjectHideFlags: 0
