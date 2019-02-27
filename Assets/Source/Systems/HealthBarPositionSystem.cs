@@ -10,6 +10,7 @@ namespace Game.Systems
     public class HealthBarPositionSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
+        private Camera m_Camera;
 
         protected override void OnCreateManager()
         {
@@ -21,18 +22,19 @@ namespace Game.Systems
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
+            RequireForUpdate(m_Group);
         }
 
         protected override void OnUpdate()
         {
             if (!HasSingleton<CameraSingleton>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
+            m_Camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
 
             ForEach((RectTransform rectTransform, ref OwnerPosition ownerPosition) =>
             {
                 var transform = rectTransform.parent;
-                transform.position = camera.WorldToScreenPoint(ownerPosition.Value + math.up());
+                transform.position = m_Camera.WorldToScreenPoint(ownerPosition.Value + math.up());
             }, m_Group);
         }
     }

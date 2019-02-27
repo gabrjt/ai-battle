@@ -8,7 +8,6 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(OwnerRotationSystem))]
     public class RotateTowardsTargetSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -19,13 +18,9 @@ namespace Game.Systems
 
             public void Execute([ReadOnly] ref Position position, [ReadOnly] ref Target target, ref Rotation rotation)
             {
-                if (PositionFromEntity.Exists(target.Value))
-                {
-                    var targetPosition = PositionFromEntity[target.Value].Value;
-                    var direction = math.normalizesafe(targetPosition - position.Value);
+                if (!PositionFromEntity.Exists(target.Value)) return;
 
-                    rotation.Value = quaternion.LookRotation(direction, math.up());
-                }
+                rotation.Value = quaternion.LookRotation(PositionFromEntity[target.Value].Value - position.Value, math.up());
             }
         }
 

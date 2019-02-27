@@ -17,7 +17,10 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>() },
-                Any = new[] { ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadOnly<Dead>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
@@ -38,7 +41,7 @@ namespace Game.Systems
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(targetType) || chunk.Has(deadType))
+                if (chunk.Has(deadType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
                     var targetArray = chunk.GetNativeArray(targetType);
@@ -48,7 +51,24 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex].Value;
 
-                        if (!EntityManager.HasComponent<Dead>(entity) && (EntityManager.Exists(target) || m_RemoveTargetList.Contains(entity) && !EntityManager.HasComponent<Dead>(target))) continue;
+                        if (m_RemoveTargetList.Contains(entity)) continue;
+
+                        m_RemoveTargetList.Add(entity);
+
+                        PostUpdateCommands.RemoveComponent<Target>(entity);
+                    }
+                }
+                else if (chunk.Has(targetType))
+                {
+                    var entityArray = chunk.GetNativeArray(entityType);
+                    var targetArray = chunk.GetNativeArray(targetType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var target = targetArray[entityIndex].Value;
+
+                        if (!EntityManager.HasComponent<Dead>(target) || m_RemoveTargetList.Contains(entity)) continue;
 
                         m_RemoveTargetList.Add(entity);
 

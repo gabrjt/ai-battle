@@ -57,7 +57,8 @@ namespace Game.Systems
                         PostUpdateCommands.RemoveComponent<Destination>(entity);
                     }
                 }
-                else if (chunk.Has(deadType))
+
+                if (chunk.Has(deadType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
 
@@ -72,7 +73,8 @@ namespace Game.Systems
                         PostUpdateCommands.RemoveComponent<Destination>(entity);
                     }
                 }
-                else if (chunk.Has(destinationReachedType))
+
+                if (chunk.Has(destinationReachedType))
                 {
                     var destinationReachedArray = chunk.GetNativeArray(destinationReachedType);
 
@@ -87,7 +89,8 @@ namespace Game.Systems
                         PostUpdateCommands.RemoveComponent<Destination>(entity);
                     }
                 }
-                else if (chunk.Has(killedType))
+
+                if (chunk.Has(killedType))
                 {
                     var killedArray = chunk.GetNativeArray(killedType);
 

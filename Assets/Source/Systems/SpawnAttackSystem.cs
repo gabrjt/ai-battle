@@ -55,7 +55,7 @@ namespace Game.Systems
 
                     Execute(chunk, chunkIndex, firstEntityIndex);
 
-                    firstEntityIndex = chunk.Count;
+                    firstEntityIndex += chunk.Count;
                 }
             }
 

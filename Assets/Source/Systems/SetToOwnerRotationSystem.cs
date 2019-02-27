@@ -1,19 +1,33 @@
 ﻿using Game.Components;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Transforms;
-using UnityEngine.Experimental.PlayerLoop;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(PostLateUpdate))]
-    public class SetToOwnerRotationSystem : ComponentSystem
+    public class SetToOwnerRotationSystem : JobComponentSystem
     {
-        protected override void OnUpdate()
+        [BurstCompile]
+        [RequireComponentTag(typeof(Rotation), typeof(View))]
+        private struct Job : IJobProcessComponentDataWithEntity<Owner>
         {
-            ForEach((ref OwnerRotation ownerRotation, ref Rotation rotation) =>
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Rotation> RotationFromEntity;
+
+            public void Execute(Entity entity, int index, [ReadOnly] ref Owner owner)
             {
-                rotation.Value = ownerRotation.Value;
-            });
+                RotationFromEntity[entity] = RotationFromEntity[owner.Value];
+            }
+        }
+
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        {
+            return new Job
+            {
+                RotationFromEntity = GetComponentDataFromEntity<Rotation>()
+            }.Schedule(this, inputDeps);
         }
     }
 }
