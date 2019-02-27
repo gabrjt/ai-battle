@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SpawnViewSystem : ComponentSystem
     {
         private enum ViewType

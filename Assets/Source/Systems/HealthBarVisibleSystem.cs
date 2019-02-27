@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,8 @@ namespace Game.Systems
 {
     public class HealthBarVisibleSystem : ComponentSystem
     {
+        private struct Initialized : ISystemStateComponentData { }
+
         private ComponentGroup m_Group;
 
         protected override void OnCreateManager()
@@ -15,7 +18,12 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<OwnerPosition>(), ComponentType.ReadOnly<Visible>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Visible>() },
+                None = new[] { ComponentType.Create<Initialized>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.Create<Initialized>() },
+                None = new[] { ComponentType.ReadOnly<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -23,20 +31,49 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CameraSingleton>()) return; // TODO: use RequireSingletonForUpdate.
+            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
+            var entityType = GetArchetypeChunkEntityType();
+            var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
 
-            ForEach((Entity entity, ref Visible visible, ref Owner owner, ref OwnerPosition ownerPosition) =>
+            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
-                if (visible.LastValue == visible.Value) return;
+                var chunk = chunkArray[chunkIndex];
+                var entityArray = chunk.GetNativeArray(entityType);
 
-                var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
-
-                var images = gameObject.GetComponentsInChildren<Image>();
-                foreach (var image in images)
+                if (!chunk.Has(initializedType))
                 {
-                    image.enabled = visible.Value;
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        PostUpdateCommands.AddComponent(entity, new Initialized());
+                        SetEnabledImages(entity, true);
+                    }
                 }
-            }, m_Group);
+                else if (chunk.Has(initializedType))
+                {
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        PostUpdateCommands.RemoveComponent<Initialized>(entity);
+                        SetEnabledImages(entity, false);
+                    }
+                }
+            }
+
+            chunkArray.Dispose();
+        }
+
+        private void SetEnabledImages(Entity entity, bool enabled)
+        {
+            if (!EntityManager.HasComponent<RectTransform>(entity)) return;
+
+            var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
+
+            var images = gameObject.GetComponentsInChildren<Image>();
+            foreach (var image in images)
+            {
+                image.enabled = enabled;
+            }
         }
     }
 }

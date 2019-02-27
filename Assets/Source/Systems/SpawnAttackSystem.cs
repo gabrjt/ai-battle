@@ -1,6 +1,8 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
@@ -10,7 +12,182 @@ namespace Game.Systems
 {
     public class SpawnAttackSystem : ComponentSystem
     {
-        private struct AttackInstanceSpawnData
+        private struct ConsolidateJob : IJob
+        {
+            public float Time;
+
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<ArchetypeChunk> ChunkArray;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Target> TargetType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Position> PositionType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Attack> AttackType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<AttackDistance> AttackDistanceType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<AttackDuration> AttackDurationType;
+            [ReadOnly]
+            public ArchetypeChunkComponentType<AttackSpeed> AttackSpeedType;
+
+            public NativeList<AttackSpawnData> EntitySpawnList;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Position> PositionFromEntity;
+
+            [ReadOnly]
+            public EntityArchetype AttackedArchetype;
+
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                var firstEntityIndex = 0;
+
+                for (var chunkIndex = 0; chunkIndex < ChunkArray.Length; chunkIndex++)
+                {
+                    var chunk = ChunkArray[chunkIndex];
+
+                    Execute(chunk, chunkIndex, firstEntityIndex);
+
+                    firstEntityIndex = chunk.Count;
+                }
+            }
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var entityArray = chunk.GetNativeArray(EntityType);
+                var targetArray = chunk.GetNativeArray(TargetType);
+                var positionArray = chunk.GetNativeArray(PositionType);
+                var attackArray = chunk.GetNativeArray(AttackType);
+                var attackDistanceArray = chunk.GetNativeArray(AttackDistanceType);
+                var attackDurationArray = chunk.GetNativeArray(AttackDurationType);
+                var attackSpeedArray = chunk.GetNativeArray(AttackSpeedType);
+
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+                    var target = targetArray[entityIndex];
+
+                    if (!PositionFromEntity.Exists(target.Value)) continue;
+
+                    var position = positionArray[entityIndex].Value;
+                    var targetPosition = PositionFromEntity[target.Value].Value;
+                    var attackDistance = attackDistanceArray[entityIndex];
+                    var attackSpeed = attackSpeedArray[entityIndex].Value;
+
+                    if (math.distance(position, targetPosition) > attackDistance.Max) continue;
+
+                    var direction = math.normalizesafe(targetPosition - position);
+
+                    var origin = position + new float3(0, 0.35f, 0);
+
+                    EntitySpawnList.Add(new AttackSpawnData
+                    {
+                        Owner = entity,
+                        Position = new Position
+                        {
+                            Value = origin
+                        },
+                        Rotation = new Rotation { Value = quaternion.LookRotation(direction, math.up()) },
+                        Direction = new Direction
+                        {
+                            Value = direction
+                        },
+                        MaxDistance = new MaxDistance
+                        {
+                            Origin = position,
+                            Value = attackDistance.Max
+                        },
+                        Speed = new Speed { Value = attackSpeed * 5 },
+                        Damage = new Damage { Value = attackArray[entityIndex].Value }
+                    });
+
+                    var duration = attackDurationArray[entityIndex].Value / attackSpeed;
+
+                    EntityCommandBuffer.AddComponent(entity, new Attacking
+                    {
+                        Duration = duration,
+                        StartTime = Time
+                    });
+
+                    EntityCommandBuffer.AddComponent(entity, new Cooldown
+                    {
+                        Duration = duration,
+                        StartTime = Time
+                    });
+
+                    var attacked = EntityCommandBuffer.CreateEntity(AttackedArchetype);
+                    EntityCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
+                }
+            }
+        }
+
+        [BurstCompile]
+        private struct ApplyJob : IJobParallelFor
+        {
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<AttackInstance> AttackInstanceFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Position> PositionFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Rotation> RotationFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Direction> DirectionFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<MaxDistance> MaxDistanceFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Speed> SpeedFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Damage> DamageFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Velocity> VelocityFromEntity;
+
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
+            public NativeArray<AttackSpawnData> SpawnDataArray;
+
+            public void Execute(int index)
+            {
+                var spawnData = SpawnDataArray[index];
+                var entity = EntityArray[index];
+
+                AttackInstanceFromEntity[entity] = new AttackInstance
+                {
+                    Owner = spawnData.Owner,
+                    Radius = 0.25f
+                };
+
+                PositionFromEntity[entity] = spawnData.Position;
+                RotationFromEntity[entity] = spawnData.Rotation;
+                DirectionFromEntity[entity] = spawnData.Direction;
+                MaxDistanceFromEntity[entity] = spawnData.MaxDistance;
+                SpeedFromEntity[entity] = spawnData.Speed;
+                DamageFromEntity[entity] = spawnData.Damage;
+
+                VelocityFromEntity[entity] = new Velocity
+                {
+                    Value = spawnData.Direction.Value * spawnData.Speed.Value
+                };
+            }
+        }
+
+        private struct AttackSpawnData
         {
             public Entity Owner;
 
@@ -35,7 +212,7 @@ namespace Game.Systems
 
         private Entity m_Prefab;
 
-        private NativeList<AttackInstanceSpawnData> m_EntitySpawnList;
+        private NativeList<AttackSpawnData> m_EntitySpawnList;
 
         private MRandom m_Random;
 
@@ -96,113 +273,57 @@ namespace Game.Systems
 
             // Object.Destroy(sphere);
 
-            m_EntitySpawnList = new NativeList<AttackInstanceSpawnData>(Allocator.Persistent);
+            m_EntitySpawnList = new NativeList<AttackSpawnData>(Allocator.Persistent);
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
         }
 
         protected override void OnUpdate()
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var targetType = GetArchetypeChunkComponentType<Target>(true);
-            var positionType = GetArchetypeChunkComponentType<Position>(true);
-            var attackType = GetArchetypeChunkComponentType<Attack>(true);
-            var attackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true);
-            var attackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true);
-            var attackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true);
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            m_EntitySpawnList.Clear();
+
+            JobHandle inputDeps = default;
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
-                var entityArray = chunk.GetNativeArray(entityType);
-                var targetArray = chunk.GetNativeArray(targetType);
-                var positionArray = chunk.GetNativeArray(positionType);
-                var attackArray = chunk.GetNativeArray(attackType);
-                var attackDistanceArray = chunk.GetNativeArray(attackDistanceType);
-                var attackDurationArray = chunk.GetNativeArray(attackDurationType);
-                var attackSpeedArray = chunk.GetNativeArray(attackSpeedType);
+                Time = Time.time,
+                ChunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob),
+                EntityType = GetArchetypeChunkEntityType(),
+                TargetType = GetArchetypeChunkComponentType<Target>(true),
+                PositionType = GetArchetypeChunkComponentType<Position>(true),
+                AttackType = GetArchetypeChunkComponentType<Attack>(true),
+                AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
+                AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
+                AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
+                EntitySpawnList = m_EntitySpawnList,
+                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                AttackedArchetype = m_AttackedArchetype,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                {
-                    var entity = entityArray[entityIndex];
-                    var target = targetArray[entityIndex];
-
-                    if (!EntityManager.HasComponent<Position>(target.Value) || !EntityManager.Exists(target.Value)) continue;
-
-                    var position = positionArray[entityIndex].Value;
-                    var targetPosition = EntityManager.GetComponentData<Position>(target.Value).Value;
-                    var attackDistance = attackDistanceArray[entityIndex];
-                    var attackSpeed = attackSpeedArray[entityIndex].Value;
-
-                    if (math.distance(position, targetPosition) > attackDistance.Max) continue;
-
-                    var direction = math.normalizesafe(targetPosition - position);
-
-                    var origin = position + new float3(0, 0.35f, 0);
-
-                    m_EntitySpawnList.Add(new AttackInstanceSpawnData
-                    {
-                        Owner = entity,
-                        Position = new Position { Value = origin },
-                        Rotation = new Rotation { Value = quaternion.LookRotation(direction, math.up()) },
-                        Direction = new Direction { Value = direction },
-                        MaxDistance = new MaxDistance
-                        {
-                            Origin = position,
-                            Value = attackDistance.Max
-                        },
-                        Speed = new Speed { Value = attackSpeed * 5 },
-                        Damage = new Damage { Value = attackArray[entityIndex].Value }
-                    });
-
-                    var duration = attackDurationArray[entityIndex].Value / attackSpeed;
-
-                    PostUpdateCommands.AddComponent(entity, new Attacking
-                    {
-                        Duration = duration,
-                        StartTime = Time.time
-                    });
-
-                    PostUpdateCommands.AddComponent(entity, new Cooldown
-                    {
-                        Duration = duration,
-                        StartTime = Time.time
-                    });
-
-                    var attacked = PostUpdateCommands.CreateEntity(m_AttackedArchetype);
-                    PostUpdateCommands.SetComponent(attacked, new Attacked { This = entity });
-                }
-            }
-
-            chunkArray.Dispose();
+            inputDeps.Complete();
 
             var entitySpawnArray = new NativeArray<Entity>(m_EntitySpawnList.Length, Allocator.TempJob);
 
             EntityManager.Instantiate(m_Prefab, entitySpawnArray);
 
-            for (var i = 0; i < entitySpawnArray.Length; i++)
+            inputDeps = new ApplyJob
             {
-                var spawnData = m_EntitySpawnList[i];
-                var entity = entitySpawnArray[i];
+                AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(),
+                PositionFromEntity = GetComponentDataFromEntity<Position>(),
+                RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
+                DirectionFromEntity = GetComponentDataFromEntity<Direction>(),
+                MaxDistanceFromEntity = GetComponentDataFromEntity<MaxDistance>(),
+                SpeedFromEntity = GetComponentDataFromEntity<Speed>(),
+                DamageFromEntity = GetComponentDataFromEntity<Damage>(),
+                VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),
+                EntityArray = entitySpawnArray,
+                SpawnDataArray = m_EntitySpawnList.AsDeferredJobArray()
+            }.Schedule(entitySpawnArray.Length, 64, inputDeps);
 
-                EntityManager.SetComponentData(entity, new AttackInstance
-                {
-                    Owner = spawnData.Owner,
-                    Radius = 0.25f
-                });
-                EntityManager.SetComponentData(entity, spawnData.Position);
-                EntityManager.SetComponentData(entity, spawnData.Rotation);
-                EntityManager.SetComponentData(entity, spawnData.Direction);
-                EntityManager.SetComponentData(entity, spawnData.MaxDistance);
-                EntityManager.SetComponentData(entity, spawnData.Speed);
-                EntityManager.SetComponentData(entity, spawnData.Damage);
-                EntityManager.SetComponentData(entity, new Velocity { Value = spawnData.Direction.Value * EntityManager.GetComponentData<Speed>(entity).Value });
-            }
-
-            entitySpawnArray.Dispose();
-
-            m_EntitySpawnList.Clear();
+            inputDeps.Complete();
         }
 
         protected override void OnDestroyManager()

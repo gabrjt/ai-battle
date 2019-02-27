@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SpawnHealthBarSystem : ComponentSystem
     {
         private struct SpawnData
