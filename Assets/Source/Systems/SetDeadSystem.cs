@@ -1,15 +1,100 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace Game.Systems
 {
-    public class SetDeadSystem : ComponentSystem
+    public class SetDeadSystem : JobComponentSystem
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, Dead>.Concurrent SetDeadMap;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Health> HealthType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Killed> KilledType;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Dead> DeadFromEntity;
+
+            public float Time;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(HealthType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+                    var healthArray = chunk.GetNativeArray(HealthType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var health = healthArray[entityIndex];
+
+                        if (health.Value > 0) continue;
+
+                        SetDeadMap.TryAdd(entity, new Dead
+                        {
+                            Duration = 5,
+                            StartTime = Time
+                        });
+                    }
+                }
+                else if (chunk.Has(KilledType))
+                {
+                    var killedArray = chunk.GetNativeArray(KilledType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = killedArray[entityIndex].Other;
+
+                        if (DeadFromEntity.Exists(entity)) continue;
+
+                        SetDeadMap.TryAdd(entity, new Dead
+                        {
+                            Duration = 5,
+                            StartTime = Time
+                        });
+                    }
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            [ReadOnly]
+            public NativeHashMap<Entity, Dead> SetDeadMap;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                var entityArray = SetDeadMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+
+                    EntityCommandBuffer.AddComponent(entity, new Dead());
+                }
+
+                entityArray.Dispose();
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_SetDeadList;
+        private NativeHashMap<Entity, Dead> m_SetDeadMap;
 
         protected override void OnCreateManager()
         {
@@ -25,74 +110,43 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Killed>() }
             });
 
-            m_SetDeadList = new NativeList<Entity>(Allocator.Persistent);
+            m_SetDeadMap = new NativeHashMap<Entity, Dead>(5000, Allocator.Persistent); // TODO: externalize count
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var healthType = GetArchetypeChunkComponentType<Health>(true);
-            var killedType = GetArchetypeChunkComponentType<Killed>(true);
+            m_SetDeadMap.Clear();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                SetDeadMap = m_SetDeadMap.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
+                HealthType = GetArchetypeChunkComponentType<Health>(true),
+                KilledType = GetArchetypeChunkComponentType<Killed>(true),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
+                Time = Time.deltaTime
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(healthType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
-                    var healthArray = chunk.GetNativeArray(healthType);
+            inputDeps = new ApplyJob
+            {
+                SetDeadMap = m_SetDeadMap,
+                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+            }.Schedule(inputDeps);
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        var health = healthArray[entityIndex];
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        if (health.Value > 0 || m_SetDeadList.Contains(entity)) continue;
-
-                        m_SetDeadList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Dead
-                        {
-                            Duration = 5,
-                            StartTime = Time.time
-                        });
-                    }
-                }
-                else if (chunk.Has(killedType))
-                {
-                    var killedArray = chunk.GetNativeArray(killedType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = killedArray[entityIndex].Other;
-
-                        if (!EntityManager.Exists(entity) || EntityManager.HasComponent<Dead>(entity) || m_SetDeadList.Contains(entity)) continue;
-
-                        m_SetDeadList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Dead
-                        {
-                            Duration = 5,
-                            StartTime = Time.time
-                        });
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
-
-            m_SetDeadList.Clear();
+            return inputDeps;
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SetDeadList.IsCreated)
+            if (m_SetDeadMap.IsCreated)
             {
-                m_SetDeadList.Dispose();
+                m_SetDeadMap.Dispose();
             }
         }
     }

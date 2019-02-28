@@ -62,7 +62,7 @@ namespace Game.Systems
             {
                 var entityArray = SetTargetMap.GetKeyArray(Allocator.Temp);
 
-                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
 
