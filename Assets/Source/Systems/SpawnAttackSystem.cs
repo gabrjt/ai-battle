@@ -36,7 +36,7 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<AttackSpeed> AttackSpeedType;
 
-            public NativeList<SpawnData> EntitySpawnList;
+            public NativeList<SpawnData> SpawnDataList;
 
             [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;
@@ -88,7 +88,7 @@ namespace Game.Systems
 
                     var origin = position + new float3(0, 0.35f, 0);
 
-                    EntitySpawnList.Add(new SpawnData
+                    SpawnDataList.Add(new SpawnData
                     {
                         Owner = entity,
                         Position = new Position
@@ -298,7 +298,7 @@ namespace Game.Systems
                 AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
                 AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
                 AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
-                EntitySpawnList = m_SpawnDataList,
+                SpawnDataList = m_SpawnDataList,
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 AttackedArchetype = m_AttackedArchetype,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()

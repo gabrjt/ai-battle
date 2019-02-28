@@ -1,15 +1,88 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
-    public class SpawnHealthBarSystem : ComponentSystem
+    [UpdateAfter(typeof(SetCameraSingletonSystem))]
+    [UpdateAfter(typeof(SetCanvasSingletonSystem))]
+    public class SpawnHealthBarSystem : JobComponentSystem
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeQueue<Entity>.Concurrent AddInitializedEntityQueue;
+
+            public NativeQueue<Entity>.Concurrent RemoveInitializedEntityQueue;
+
+            public NativeQueue<SpawnData>.Concurrent SpawnDataQueue;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Initialized> InitializedType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Position> PositionType;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                var entityArray = chunk.GetNativeArray(EntityType);
+                var positionArray = chunk.GetNativeArray(PositionType);
+
+                var initialized = chunk.Has(InitializedType);
+
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+
+                    if (!initialized)
+                    {
+                        AddInitializedEntityQueue.Enqueue(entity);
+
+                        SpawnDataQueue.Enqueue(new SpawnData
+                        {
+                            Owner = entity,
+                            Position = positionArray[entityIndex].Value
+                        });
+                    }
+                    else
+                    {
+                        RemoveInitializedEntityQueue.Enqueue(entity);
+                    }
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            public NativeQueue<Entity> AddInitializedEntityQueue;
+
+            public NativeQueue<Entity> RemoveInitializedEntityQueue;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                while (AddInitializedEntityQueue.TryDequeue(out var entity))
+                {
+                    EntityCommandBuffer.AddComponent(entity, new Initialized());
+                }
+
+                while (RemoveInitializedEntityQueue.TryDequeue(out var entity))
+                {
+                    EntityCommandBuffer.RemoveComponent<Initialized>(entity);
+                }
+            }
+        }
+
         private struct SpawnData
         {
             public Entity Owner;
@@ -23,7 +96,11 @@ namespace Game.Systems
 
         private GameObject m_Prefab;
 
-        private NativeList<SpawnData> m_SpawnDataList;
+        private NativeQueue<Entity> m_AddInitializedEntityQueue;
+
+        private NativeQueue<Entity> m_RemoveInitializedEntityQueue;
+
+        private NativeQueue<SpawnData> m_SpawnDataQueue;
 
         protected override void OnCreateManager()
         {
@@ -32,65 +109,54 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() },
-                None = new[] { ComponentType.ReadOnly<Initialized>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.Create<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Initialized>() },
+                All = new[] { ComponentType.Create<Initialized>() },
                 None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() }
             });
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));
 
-            m_SpawnDataList = new NativeList<SpawnData>(Allocator.Persistent);
+            m_AddInitializedEntityQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_RemoveInitializedEntityQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
 
             RequireSingletonForUpdate<CameraSingleton>();
+            RequireSingletonForUpdate<CanvasSingleton>();
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (!HasSingleton<CameraSingleton>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
+            if (!HasSingleton<CameraSingleton>() && !HasSingleton<CanvasSingleton>()) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var initializedType = GetArchetypeChunkComponentType<Initialized>(true);
-            var positionType = GetArchetypeChunkComponentType<Position>(true);
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
 
-            for (int chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
-                var entityArray = chunk.GetNativeArray(entityType);
+                AddInitializedEntityQueue = m_AddInitializedEntityQueue.ToConcurrent(),
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue.ToConcurrent(),
+                SpawnDataQueue = m_SpawnDataQueue.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
+                InitializedType = GetArchetypeChunkComponentType<Initialized>(),
+                PositionType = GetArchetypeChunkComponentType<Position>(true)
+            }.Schedule(m_Group, inputDeps);
 
-                if (!chunk.Has(initializedType))
-                {
-                    var positionArray = chunk.GetNativeArray(positionType);
+            inputDeps = new ApplyJob
+            {
+                AddInitializedEntityQueue = m_AddInitializedEntityQueue,
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        PostUpdateCommands.AddComponent(entity, new Initialized());
-                        m_SpawnDataList.Add(new SpawnData { Owner = entity, Position = positionArray[entityIndex].Value });
-                    }
-                }
-                else
-                {
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        PostUpdateCommands.RemoveComponent<Initialized>(entity);
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
+            inputDeps.Complete();
 
             var canvas = GetSingleton<CanvasSingleton>();
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
             var canvasTransform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
 
-            for (int i = 0; i < m_SpawnDataList.Length; i++)
+            while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
-                var spawnData = m_SpawnDataList[i];
-
                 var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
 
                 var entity = healthBar.GetComponentInChildren<GameObjectEntity>().Entity;
@@ -103,16 +169,28 @@ namespace Game.Systems
                 transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
             }
 
-            m_SpawnDataList.Clear();
+            barrier.AddJobHandleForProducer(inputDeps);
+
+            return inputDeps;
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SpawnDataList.IsCreated)
+            if (m_AddInitializedEntityQueue.IsCreated)
             {
-                m_SpawnDataList.Dispose();
+                m_AddInitializedEntityQueue.Dispose();
+            }
+
+            if (m_RemoveInitializedEntityQueue.IsCreated)
+            {
+                m_RemoveInitializedEntityQueue.Dispose();
+            }
+
+            if (m_SpawnDataQueue.IsCreated)
+            {
+                m_SpawnDataQueue.Dispose();
             }
         }
     }
