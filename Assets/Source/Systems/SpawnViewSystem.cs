@@ -80,6 +80,56 @@ namespace Game.Systems
             }
         }
 
+        [BurstCompile]
+        private struct SetDataJob : IJobParallelFor
+        {
+            [ReadOnly]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
+            public NativeArray<SetData> SetDataArray;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Owner> OwnerFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Position> PositionFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Rotation> RotationFromEntity;
+
+            public void Execute(int index)
+            {
+                var entity = EntityArray[index];
+                var setData = SetDataArray[index];
+
+                OwnerFromEntity[entity] = setData.Owner;
+                PositionFromEntity[entity] = setData.Position;
+                RotationFromEntity[entity] = setData.Rotation;
+            }
+        }
+
+        private struct AddViewReferenceJob : IJob
+        {
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<SetData> SetDataArray;
+
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                for (int entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
+                {
+                    EntityCommandBuffer.AddComponent(SetDataArray[entityIndex].Owner.Value, new ViewReference { Value = EntityArray[entityIndex] });
+                }
+            }
+        }
+
         private struct ApplyJob : IJob
         {
             public NativeQueue<Entity> AddInitializedEntityQueue;
@@ -108,6 +158,15 @@ namespace Game.Systems
             public Entity Owner;
 
             public ViewType ViewType;
+        }
+
+        private struct SetData
+        {
+            public Owner Owner;
+
+            public Position Position;
+
+            public Rotation Rotation;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -179,6 +238,10 @@ namespace Game.Systems
 
             inputDeps.Complete();
 
+            var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
+            var setDataArray = new NativeArray<SetData>(m_SpawnDataQueue.Count, Allocator.TempJob);
+
+            var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
                 var owner = spawnData.Owner;
@@ -210,13 +273,35 @@ namespace Game.Systems
 
                 view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
 
-                EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
+                entityArray[entityIndex] = entity;
 
-                EntityManager.SetComponentData(entity, new Position { Value = position });
-                EntityManager.SetComponentData(entity, new Rotation { Value = rotation });
+                var setData = new SetData
+                {
+                    Owner = new Owner { Value = spawnData.Owner },
+                    Position = new Position { Value = position },
+                    Rotation = new Rotation { Value = rotation }
+                };
 
-                EntityManager.AddComponentData(owner, new ViewReference { Value = entity });
+                setDataArray[entityIndex] = setData;
+
+                ++entityIndex;
             }
+
+            inputDeps = new SetDataJob
+            {
+                EntityArray = entityArray,
+                SetDataArray = setDataArray,
+                OwnerFromEntity = GetComponentDataFromEntity<Owner>(),
+                PositionFromEntity = GetComponentDataFromEntity<Position>(),
+                RotationFromEntity = GetComponentDataFromEntity<Rotation>()
+            }.Schedule(entityArray.Length, 64, inputDeps);
+
+            inputDeps = new AddViewReferenceJob
+            {
+                EntityArray = entityArray,
+                SetDataArray = setDataArray,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
 

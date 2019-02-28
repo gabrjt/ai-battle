@@ -86,9 +86,11 @@ namespace Game.Systems
         [BurstCompile]
         private struct SetDataJob : IJobParallelFor
         {
+            [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> EntityArray;
 
+            [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Owner> SetDataArray;
 
@@ -176,7 +178,7 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
             var ownerArray = new NativeArray<Owner>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
-            var count = 0;
+            var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
                 var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
@@ -188,9 +190,9 @@ namespace Game.Systems
                 var transform = healthBar.GetComponent<RectTransform>();
                 transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
 
-                entityArray[count] = entity;
-                ownerArray[count] = new Owner { Value = spawnData.Owner };
-                ++count;
+                entityArray[entityIndex] = entity;
+                ownerArray[entityIndex] = new Owner { Value = spawnData.Owner };
+                ++entityIndex;
             }
 
             inputDeps = new SetDataJob

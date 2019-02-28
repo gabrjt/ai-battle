@@ -68,7 +68,7 @@ namespace Game.Systems
             }
         }
 
-        private struct SetViewTypeJob : IJobParallelFor
+        private struct AddViewTypeJob : IJob
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -79,23 +79,26 @@ namespace Game.Systems
             public NativeArray<SetData> SetDataArray;
 
             [ReadOnly]
-            public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+            public EntityCommandBuffer EntityCommandBuffer;
 
-            public void Execute(int index)
+            public void Execute()
             {
-                switch (SetDataArray[index].ViewType)
+                for (var index = 0; index < EntityArray.Length; index++)
                 {
-                    case ViewType.Knight:
-                        EntityCommandBuffer.AddComponent(index, EntityArray[index], new Knight());
-                        break;
+                    switch (SetDataArray[index].ViewType)
+                    {
+                        case ViewType.Knight:
+                            EntityCommandBuffer.AddComponent(EntityArray[index], new Knight());
+                            break;
 
-                    case ViewType.OrcWolfRider:
-                        EntityCommandBuffer.AddComponent(index, EntityArray[index], new OrcWolfRider());
-                        break;
+                        case ViewType.OrcWolfRider:
+                            EntityCommandBuffer.AddComponent(EntityArray[index], new OrcWolfRider());
+                            break;
 
-                    case ViewType.Skeleton:
-                        EntityCommandBuffer.AddComponent(index, EntityArray[index], new Skeleton());
-                        break;
+                        case ViewType.Skeleton:
+                            EntityCommandBuffer.AddComponent(EntityArray[index], new Skeleton());
+                            break;
+                    }
                 }
             }
         }
@@ -251,12 +254,12 @@ namespace Game.Systems
                 AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>()
             }.Schedule(setDataArray.Length, 64, inputDeps);
 
-            inputDeps = new SetViewTypeJob
+            inputDeps = new AddViewTypeJob
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent()
-            }.Schedule(entityArray.Length, 64, inputDeps);
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
             inputDeps.Complete();
         }
