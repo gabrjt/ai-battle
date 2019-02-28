@@ -89,6 +89,8 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            m_SetTargetMap.Clear();
+
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
             inputDeps = new ConsolidateJob
