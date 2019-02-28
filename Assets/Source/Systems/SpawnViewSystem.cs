@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using Game.Enums;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -8,7 +9,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class SpawnViewSystem : JobComponentSystem
+    public partial class SpawnViewSystem : JobComponentSystem
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -100,13 +101,6 @@ namespace Game.Systems
                     EntityCommandBuffer.RemoveComponent<Initialized>(entity);
                 }
             }
-        }
-
-        private enum ViewType
-        {
-            Knight,
-            OrcWolfRider,
-            Skeleton
         }
 
         private struct SpawnData
