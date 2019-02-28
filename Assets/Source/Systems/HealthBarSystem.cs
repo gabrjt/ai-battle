@@ -20,9 +20,14 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
+            var healthFromOwner = GetComponentDataFromEntity<Health>(true);
+            var maxHealthFromOwner = GetComponentDataFromEntity<MaxHealth>(true);
+
             ForEach((Image image, ref Owner owner) =>
             {
-                image.fillAmount = EntityManager.GetComponentData<Health>(owner.Value).Value / EntityManager.GetComponentData<MaxHealth>(owner.Value).Value;
+                if (!healthFromOwner.Exists(owner.Value) || !maxHealthFromOwner.Exists(owner.Value)) return;
+
+                image.fillAmount = healthFromOwner[owner.Value].Value / maxHealthFromOwner[owner.Value].Value;
             }, m_Group);
         }
     }
