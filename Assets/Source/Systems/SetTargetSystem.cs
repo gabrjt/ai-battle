@@ -33,7 +33,7 @@ namespace Game.Systems
                         SetTargetMap.TryAdd(entity, new Target { Value = targetFound.Other });
                     }
                 }
-                else if (chunk.Has(TargetFoundType))
+                else if (chunk.Has(DamagedType))
                 {
                     var damagedArray = chunk.GetNativeArray(DamagedType);
 
@@ -56,6 +56,8 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
+            public ComponentDataFromEntity<Target> TargetFromEntity;
+
             public void Execute()
             {
                 var entityArray = SetTargetMap.GetKeyArray(Allocator.Temp);
@@ -63,7 +65,15 @@ namespace Game.Systems
                 for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-                    EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
+
+                    if (TargetFromEntity.Exists(entity))
+                    {
+                        TargetFromEntity[entity] = SetTargetMap[entity];
+                    }
+                    else
+                    {
+                        EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
+                    }
                 }
 
                 entityArray.Dispose();
@@ -103,7 +113,8 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetTargetMap = m_SetTargetMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                TargetFromEntity = GetComponentDataFromEntity<Target>()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);

@@ -68,7 +68,7 @@ namespace Game.Systems
                     {
                         var entity = killedArray[entityIndex].Other;
 
-                        if (EntityManager.HasComponent<Dead>(entity) || m_SetDeadList.Contains(entity)) continue;
+                        if (!EntityManager.Exists(entity) || EntityManager.HasComponent<Dead>(entity) || m_SetDeadList.Contains(entity)) continue;
 
                         m_SetDeadList.Add(entity);
 
