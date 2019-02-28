@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(EndFrameBarrier))]
+    [UpdateBefore(typeof(EndFrameBarrier))]
     public class DestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -19,7 +19,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destroy>() }
+                All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>() }
             });
 
             m_GameObjectList = new List<GameObject>();

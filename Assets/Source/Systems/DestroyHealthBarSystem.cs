@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [UpdateBefore(typeof(EndFrameBarrier))]
     public class DestroyHealthBarSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -18,7 +19,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Destroy>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>() }
             });
 
             m_GameObjectList = new List<GameObject>();
@@ -38,14 +39,9 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    if (EntityManager.HasComponent<RectTransform>(entity))
-                    {
-                        m_GameObjectList.Add(EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject);
-                    }
-                    else
-                    {
-                        PostUpdateCommands.DestroyEntity(entity);
-                    }
+                    if (!EntityManager.HasComponent<RectTransform>(entity)) continue;
+
+                    m_GameObjectList.Add(EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject);
                 }
             }
 

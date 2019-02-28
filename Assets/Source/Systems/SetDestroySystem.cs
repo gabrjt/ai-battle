@@ -4,6 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SetDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -41,6 +42,7 @@ namespace Game.Systems
                     var entity = diedArray[entityIndex].This;
 
                     PostUpdateCommands.AddComponent(entity, new Destroy());
+                    PostUpdateCommands.AddComponent(entity, new Disabled());
 
                     var destroyed = entityCommandBuffer.CreateEntity(m_Archetype);
                     entityCommandBuffer.SetComponent(destroyed, new Destroyed { This = entity });

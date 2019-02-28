@@ -9,34 +9,10 @@ namespace Game.Systems
     public class SetOwnedDestroySystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ConsolidateDestroyedJob : IJobChunk
+        private struct ConsolidateJob : IJobChunk
         {
-            public NativeQueue<Entity>.Concurrent DestroyedQueue;
+            public NativeQueue<Entity>.Concurrent OwnerQueue;
 
-            [ReadOnly]
-            public ArchetypeChunkEntityType EntityType;
-
-            [ReadOnly]
-            public ArchetypeChunkComponentType<Destroyed> DestroyedType;
-
-            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-            {
-                if (chunk.Has(DestroyedType))
-                {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-                    var destroyedArray = chunk.GetNativeArray(DestroyedType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        DestroyedQueue.Enqueue(destroyedArray[entityIndex].This);
-                    }
-                }
-            }
-        }
-
-        [BurstCompile]
-        private struct ConsolidateOwnedJob : IJobChunk
-        {
             public NativeQueue<Entity>.Concurrent OwnedQueue;
 
             [ReadOnly]
@@ -45,16 +21,25 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<Owner> OwnerType;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Destroyed> DestroyedFromEntity;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (chunk.Has(OwnerType))
-                {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-                    var ownerArray = chunk.GetNativeArray(OwnerType);
+                var isOwner = chunk.Has(OwnerType);
 
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                var entityArray = chunk.GetNativeArray(EntityType);
+
+                for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+                    if (DestroyedFromEntity.Exists(entity))
                     {
-                        OwnedQueue.Enqueue(ownerArray[entityIndex].Value);
+                        OwnerQueue.Enqueue(DestroyedFromEntity[entity].This);
+                    }
+                    else if (isOwner)
+                    {
+                        OwnedQueue.Enqueue(entity);
                     }
                 }
             }
@@ -77,21 +62,25 @@ namespace Game.Systems
 
             public void Execute()
             {
-                for (var entityIndex = 0; entityIndex < OwnedArray.Length; entityIndex++)
+                for (var ownedIndex = 0; ownedIndex < OwnedArray.Length; ownedIndex++)
                 {
-                    var owner = OwnedArray[entityIndex];
-                    var owned = OwnedArray[entityIndex];
+                    for (int ownerIndex = 0; ownerIndex < OwnerArray.Length; ownerIndex++)
+                    {
+                        var owner = OwnerArray[ownerIndex];
+                        var owned = OwnedArray[ownedIndex];
 
-                    if (!OwnerFromEntity.Exists(owned) || owner != OwnerFromEntity[owned].Value) continue;
+                        if (!OwnerFromEntity.Exists(owned) || owner != OwnerFromEntity[owned].Value) continue;
 
-                    EntityCommandBuffer.AddComponent(owned, new Destroy());
+                        EntityCommandBuffer.AddComponent(owned, new Destroy());
+                        EntityCommandBuffer.AddComponent(owned, new Disabled());
+                    }
                 }
             }
         }
 
         private ComponentGroup m_Group;
 
-        private NativeQueue<Entity> m_DestroyedQueue;
+        private NativeQueue<Entity> m_OwnerQueue;
 
         private NativeQueue<Entity> m_OwnedQueue;
 
@@ -108,38 +97,33 @@ namespace Game.Systems
                 None = new[] { ComponentType.Create<Destroy>() }
             });
 
-            m_DestroyedQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_OwnerQueue = new NativeQueue<Entity>(Allocator.Persistent);
             m_OwnedQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_DestroyedQueue.Clear();
+            m_OwnerQueue.Clear();
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
-            inputDeps = new ConsolidateDestroyedJob
+            inputDeps = new ConsolidateJob
             {
-                DestroyedQueue = m_DestroyedQueue.ToConcurrent(),
-                EntityType = GetArchetypeChunkEntityType(),
-                DestroyedType = GetArchetypeChunkComponentType<Destroyed>(true)
-            }.Schedule(m_Group, inputDeps);
-
-            inputDeps = new ConsolidateOwnedJob
-            {
+                OwnerQueue = m_OwnerQueue.ToConcurrent(),
                 OwnedQueue = m_OwnedQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                OwnerType = GetArchetypeChunkComponentType<Owner>(true)
+                OwnerType = GetArchetypeChunkComponentType<Owner>(true),
+                DestroyedFromEntity = GetComponentDataFromEntity<Destroyed>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps.Complete();
 
             var entityIndex = 0;
 
-            var destroyedArray = new NativeArray<Entity>(m_DestroyedQueue.Count, Allocator.TempJob);
-            while (m_DestroyedQueue.TryDequeue(out var entity))
+            var ownerArray = new NativeArray<Entity>(m_OwnerQueue.Count, Allocator.TempJob);
+            while (m_OwnerQueue.TryDequeue(out var entity))
             {
-                destroyedArray[entityIndex++] = entity;
+                ownerArray[entityIndex++] = entity;
             }
 
             entityIndex = 0;
@@ -152,7 +136,7 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                OwnerArray = destroyedArray,
+                OwnerArray = ownerArray,
                 OwnedArray = ownedArray,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
@@ -167,9 +151,9 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
-            if (m_DestroyedQueue.IsCreated)
+            if (m_OwnerQueue.IsCreated)
             {
-                m_DestroyedQueue.Dispose();
+                m_OwnerQueue.Dispose();
             }
 
             if (m_OwnedQueue.IsCreated)

@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public partial class SpawnViewSystem : JobComponentSystem
     {
         [BurstCompile]

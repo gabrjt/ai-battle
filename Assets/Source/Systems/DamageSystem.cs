@@ -29,7 +29,7 @@ namespace Game.Systems
 
             ForEach((ref Damaged damaged) =>
             {
-                if (EntityManager.Exists(damaged.Other))
+                if (EntityManager.Exists(damaged.Other) && EntityManager.HasComponent<Health>(damaged.Other))
                 {
                     var targetHealth = EntityManager.GetComponentData<Health>(damaged.Other);
                     targetHealth.Value -= damaged.Value;

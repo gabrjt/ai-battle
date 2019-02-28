@@ -6,6 +6,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class RemoveDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -160,6 +161,16 @@ namespace Game.Systems
             barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
+
+            if (m_RemoveDestinationMap.IsCreated)
+            {
+                m_RemoveDestinationMap.Dispose();
+            }
         }
 
         protected override void OnDestroyManager()

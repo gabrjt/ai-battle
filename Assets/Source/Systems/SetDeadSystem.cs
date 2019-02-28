@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SetDeadSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -141,6 +142,16 @@ namespace Game.Systems
             barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
+
+            if (m_SetDeadMap.IsCreated)
+            {
+                m_SetDeadMap.Dispose();
+            }
         }
 
         protected override void OnDestroyManager()

@@ -45,7 +45,10 @@ namespace Game.Systems
 
                         m_SetDestroyList.Add(entity);
 
+                        //PostUpdateCommands.DestroyEntity(entity);
+
                         PostUpdateCommands.AddComponent(entity, new Destroy());
+                        PostUpdateCommands.AddComponent(entity, new Disabled());
                     }
                 }
                 else if (chunk.Has(MaxDistanceReachedType))
@@ -60,7 +63,10 @@ namespace Game.Systems
 
                         m_SetDestroyList.Add(entity);
 
+                        //PostUpdateCommands.DestroyEntity(entity);
+
                         PostUpdateCommands.AddComponent(entity, new Destroy());
+                        PostUpdateCommands.AddComponent(entity, new Disabled());
                     }
                 }
             }

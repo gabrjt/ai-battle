@@ -6,6 +6,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class RemoveTargetSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -17,7 +18,7 @@ namespace Game.Systems
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Dead> DeadType;
+            public ArchetypeChunkComponentType<Target> TargetType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Killed> KilledType;
@@ -26,20 +27,30 @@ namespace Game.Systems
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Target> TargetFromEntity;
+            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (chunk.Has(DeadType))
+                if (chunk.Has(TargetType))
                 {
                     var entityArray = chunk.GetNativeArray(EntityType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    var targetArray = chunk.GetNativeArray(TargetType);
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-                        var target = TargetFromEntity[entity];
 
-                        RemoveTargetMap.TryAdd(entity, target);
+                        if (DeadFromEntity.Exists(entity))
+                        {
+                            RemoveTargetMap.TryAdd(entity, targetArray[entityIndex]);
+                        }
+                        else
+                        {
+                            var target = targetArray[entityIndex];
+
+                            if (!DeadFromEntity.Exists(target.Value) || !DestroyFromEntity.Exists(target.Value)) continue;
+
+                            RemoveTargetMap.TryAdd(entity, target);
+                        }
                     }
                 }
                 else if (chunk.Has(KilledType))
@@ -51,23 +62,7 @@ namespace Game.Systems
                         var entity = killedArray[entityIndex].This;
                         var target = killedArray[entityIndex].Other;
 
-                        if (!TargetFromEntity.Exists(entity)) return;
-
                         RemoveTargetMap.TryAdd(entity, new Target { Value = target });
-                    }
-                }
-                else
-                {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        var target = TargetFromEntity[entity];
-
-                        if (!DeadFromEntity.Exists(target.Value)) return;
-
-                        RemoveTargetMap.TryAdd(entity, target);
                     }
                 }
             }
@@ -82,11 +77,18 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Target> TargetFromEntity;
+
             public void Execute()
             {
                 for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
                 {
-                    EntityCommandBuffer.RemoveComponent<Target>(EntityArray[entityIndex]);
+                    var entity = EntityArray[entityIndex];
+
+                    if (!TargetFromEntity.Exists(entity)) continue;
+
+                    EntityCommandBuffer.RemoveComponent<Target>(entity);
                 }
             }
         }
@@ -129,10 +131,10 @@ namespace Game.Systems
             {
                 RemoveTargetMap = m_RemoveTargetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                DeadType = GetArchetypeChunkComponentType<Dead>(true),
+                TargetType = GetArchetypeChunkComponentType<Target>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                TargetFromEntity = barrier.GetComponentDataFromEntity<Target>(true),
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps.Complete();
@@ -140,12 +142,23 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 EntityArray = m_RemoveTargetMap.GetKeyArray(Allocator.TempJob),
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
+
+            if (m_RemoveTargetMap.IsCreated)
+            {
+                m_RemoveTargetMap.Dispose();
+            }
         }
 
         protected override void OnDestroyManager()

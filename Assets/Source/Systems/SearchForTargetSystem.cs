@@ -89,7 +89,7 @@ namespace Game.Systems
                         var target = m_CachedColliderArray[colliderIndex];
                         var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
 
-                        if (entity == targetEntity || EntityManager.HasComponent<Dead>(targetEntity)) continue;
+                        if (entity == targetEntity || EntityManager.HasComponent<Dead>(targetEntity) || EntityManager.HasComponent<Destroy>(targetEntity)) continue;
 
                         var targetFound = m_EntityCommandBuffer.CreateEntity(m_Archetype);
 

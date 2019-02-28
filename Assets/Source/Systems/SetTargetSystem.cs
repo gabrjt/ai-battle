@@ -6,6 +6,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    //[DisableAutoCreation]
     public class SetTargetSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -123,6 +124,16 @@ namespace Game.Systems
             barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
+
+            if (m_SetTargetMap.IsCreated)
+            {
+                m_SetTargetMap.Dispose();
+            }
         }
 
         protected override void OnDestroyManager()
