@@ -77,7 +77,7 @@ namespace Game.Systems
                     {
                         var entity = destinationReachedArray[entityIndex].This;
 
-                        if (m_SetIdleList.Contains(entity)) continue;
+                        if (EntityManager.HasComponent<Idle>(entity) || m_SetIdleList.Contains(entity)) continue;
 
                         m_SetIdleList.Add(entity);
 

@@ -1,14 +1,115 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class RemoveDestinationSystem : ComponentSystem
+    public class RemoveDestinationSystem : JobComponentSystem
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, Destination>.Concurrent RemoveDestinationMap;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Target> TargetType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<DestinationReached> DestinationReachedType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Killed> KilledType;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Destination> DestinationFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Dead> DeadFromEntity;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(TargetType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+                    var targetArray = chunk.GetNativeArray(TargetType);
+
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var target = targetArray[entityIndex];
+
+                        if (!DeadFromEntity.Exists(target.Value)) continue;
+
+                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                    }
+                }
+
+                if (chunk.Has(DestinationReachedType))
+                {
+                    var destinationReachedArray = chunk.GetNativeArray(DestinationReachedType);
+
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = destinationReachedArray[entityIndex].This;
+
+                        if (!DestinationFromEntity.Exists(entity)) continue;
+
+                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                    }
+                }
+
+                if (chunk.Has(KilledType))
+                {
+                    var killedArray = chunk.GetNativeArray(KilledType);
+
+                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = killedArray[entityIndex].This;
+
+                        if (!DestinationFromEntity.Exists(entity)) continue;
+
+                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                    }
+                }
+
+                var deadEntityArray = chunk.GetNativeArray(EntityType);
+                for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
+                {
+                    var entity = deadEntityArray[entityIndex];
+
+                    if (!DeadFromEntity.Exists(entity)) continue;
+
+                    RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
+                {
+                    EntityCommandBuffer.RemoveComponent<Destination>(EntityArray[entityIndex]);
+                }
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_RemoveDestinationList;
+        private NativeHashMap<Entity, Destination> m_RemoveDestinationMap;
 
         protected override void OnCreateManager()
         {
@@ -24,101 +125,46 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<DestinationReached>(), ComponentType.ReadOnly<Killed>() }
             });
 
-            m_RemoveDestinationList = new NativeList<Entity>(Allocator.Persistent);
+            m_RemoveDestinationMap = new NativeHashMap<Entity, Destination>(5000, Allocator.Persistent);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var targetType = GetArchetypeChunkComponentType<Target>(true);
-            var deadType = GetArchetypeChunkComponentType<Dead>(true);
-            var destinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true);
-            var killedType = GetArchetypeChunkComponentType<Killed>(true);
+            m_RemoveDestinationMap.Clear();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                RemoveDestinationMap = m_RemoveDestinationMap.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
+                TargetType = GetArchetypeChunkComponentType<Target>(true),
+                KilledType = GetArchetypeChunkComponentType<Killed>(true),
+                DestinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true),
+                DestinationFromEntity = GetComponentDataFromEntity<Destination>(true),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true)
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(targetType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
-                    var targetArray = chunk.GetNativeArray(targetType);
+            inputDeps.Complete();
 
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        var target = targetArray[entityIndex];
+            inputDeps = new ApplyJob
+            {
+                EntityArray = m_RemoveDestinationMap.GetKeyArray(Allocator.TempJob),
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                        if (!EntityManager.HasComponent<Dead>(target.Value) || m_RemoveDestinationList.Contains(entity)) continue;
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        m_RemoveDestinationList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<Destination>(entity);
-                    }
-                }
-
-                if (chunk.Has(deadType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-
-                        if (m_RemoveDestinationList.Contains(entity)) continue;
-
-                        m_RemoveDestinationList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<Destination>(entity);
-                    }
-                }
-
-                if (chunk.Has(destinationReachedType))
-                {
-                    var destinationReachedArray = chunk.GetNativeArray(destinationReachedType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = destinationReachedArray[entityIndex].This;
-
-                        if (!EntityManager.HasComponent<Destination>(entity) || m_RemoveDestinationList.Contains(entity)) continue;
-
-                        m_RemoveDestinationList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<Destination>(entity);
-                    }
-                }
-
-                if (chunk.Has(killedType))
-                {
-                    var killedArray = chunk.GetNativeArray(killedType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = killedArray[entityIndex].This;
-
-                        if (!EntityManager.HasComponent<Destination>(entity) || m_RemoveDestinationList.Contains(entity)) continue;
-
-                        m_RemoveDestinationList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<Destination>(entity);
-                    }
-                }
-            }
-
-            m_RemoveDestinationList.Clear();
-
-            chunkArray.Dispose();
+            return inputDeps;
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_RemoveDestinationList.IsCreated)
+            if (m_RemoveDestinationMap.IsCreated)
             {
-                m_RemoveDestinationList.Dispose();
+                m_RemoveDestinationMap.Dispose();
             }
         }
     }

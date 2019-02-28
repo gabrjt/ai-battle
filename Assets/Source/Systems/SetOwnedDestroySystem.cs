@@ -60,7 +60,7 @@ namespace Game.Systems
             }
         }
 
-        private struct AddDestroyedJob : IJob
+        private struct ApplyJob : IJob
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -150,7 +150,7 @@ namespace Game.Systems
                 ownedArray[entityIndex++] = entity;
             }
 
-            inputDeps = new AddDestroyedJob
+            inputDeps = new ApplyJob
             {
                 OwnerArray = destroyedArray,
                 OwnedArray = ownedArray,

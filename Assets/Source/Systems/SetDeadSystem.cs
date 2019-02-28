@@ -85,7 +85,7 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    EntityCommandBuffer.AddComponent(entity, new Dead());
+                    EntityCommandBuffer.AddComponent(entity, SetDeadMap[entity]);
                 }
 
                 entityArray.Dispose();
@@ -126,13 +126,13 @@ namespace Game.Systems
                 HealthType = GetArchetypeChunkComponentType<Health>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                Time = Time.deltaTime
+                Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
                 SetDeadMap = m_SetDeadMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
