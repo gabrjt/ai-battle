@@ -7,6 +7,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    // TODO: use Burst.
     public class MaxDistanceReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Destroy))]

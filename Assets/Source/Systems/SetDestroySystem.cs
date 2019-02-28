@@ -19,11 +19,13 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Destroyed>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<Destroyed>());
         }
 
         protected override void OnUpdate()
         {
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
             var diedType = GetArchetypeChunkComponentType<Died>(true);
@@ -40,8 +42,8 @@ namespace Game.Systems
 
                     PostUpdateCommands.AddComponent(entity, new Destroy());
 
-                    var destroyed = PostUpdateCommands.CreateEntity(m_Archetype);
-                    PostUpdateCommands.SetComponent(destroyed, new Destroyed { This = entity });
+                    var destroyed = entityCommandBuffer.CreateEntity(m_Archetype);
+                    entityCommandBuffer.SetComponent(destroyed, new Destroyed { This = entity });
                 }
             }
 

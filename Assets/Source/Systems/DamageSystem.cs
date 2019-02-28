@@ -4,6 +4,7 @@ using Unity.Entities;
 namespace Game.Systems
 {
     [UpdateBefore(typeof(ClampHealthSystem))]
+    [UpdateAfter(typeof(EndFrameBarrier))]
     public class DamageSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -19,11 +20,13 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Damaged>() },
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<Killed>());
         }
 
         protected override void OnUpdate()
         {
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
             ForEach((ref Damaged damaged) =>
             {
                 if (EntityManager.Exists(damaged.Other))
@@ -35,8 +38,8 @@ namespace Game.Systems
                     {
                         if (EntityManager.Exists(damaged.This))
                         {
-                            var killed = PostUpdateCommands.CreateEntity(m_Archetype);
-                            PostUpdateCommands.SetComponent(killed, new Killed
+                            var killed = entityCommandBuffer.CreateEntity(m_Archetype);
+                            entityCommandBuffer.SetComponent(killed, new Killed
                             {
                                 This = damaged.This,
                                 Other = damaged.Other

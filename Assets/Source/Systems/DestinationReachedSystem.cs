@@ -7,6 +7,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    // TODO: use Burst.
     public class DestinationReachedSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(Target))]
@@ -34,7 +35,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<DestinationReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

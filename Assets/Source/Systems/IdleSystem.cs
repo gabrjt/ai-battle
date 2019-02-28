@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    // TODO: use Burst.
     public class IdleSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(SearchingForDestination), typeof(Destination), typeof(Target))]
@@ -35,7 +36,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<IdleTimeExpired>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<IdleTimeExpired>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

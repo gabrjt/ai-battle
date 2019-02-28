@@ -41,6 +41,8 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
             ForEach((Entity entity, ref SearchingForTarget searchForTarget, ref Position position) =>
             {
                 if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
@@ -58,8 +60,6 @@ namespace Game.Systems
                     }
                     else
                     {
-                        var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
-
                         foreach (var target in targetArray)
                         {
                             var targetEntity = target.GetComponent<GameObjectEntity>().Entity;

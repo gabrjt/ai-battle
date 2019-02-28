@@ -23,11 +23,13 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationFound>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<DestinationFound>());
         }
 
         protected override void OnUpdate()
         {
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
             var terrain = Terrain.activeTerrain;
 
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
@@ -44,8 +46,8 @@ namespace Game.Systems
 
                     if (NavMesh.SamplePosition(terrain.GetRandomPosition(), out var hit, 1, NavMesh.AllAreas))
                     {
-                        var destinationFound = PostUpdateCommands.CreateEntity(m_Archetype);
-                        PostUpdateCommands.SetComponent(destinationFound, new DestinationFound
+                        var destinationFound = entityCommandBuffer.CreateEntity(m_Archetype);
+                        entityCommandBuffer.SetComponent(destinationFound, new DestinationFound
                         {
                             This = entity,
                             Value = hit.position

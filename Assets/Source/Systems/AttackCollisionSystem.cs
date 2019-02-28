@@ -43,8 +43,8 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_DamagedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Damaged>());
-            m_CollidedArchetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Collided>());
+            m_DamagedArchetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<Damaged>());
+            m_CollidedArchetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<Collided>());
 
             m_SphereCastCommandDataList = new NativeList<SpherecastCommandData>(Allocator.Persistent);
 
@@ -54,6 +54,8 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
             ForEach((Entity entity, ref AttackInstance AttackInstance, ref Direction direction, ref Position position, ref Speed speed) =>
             {
                 m_SphereCastCommandDataList.Add(new SpherecastCommandData
@@ -90,16 +92,16 @@ namespace Game.Systems
                 var damage = EntityManager.GetComponentData<Damage>(entity).Value;
                 var target = result.collider.GetComponent<GameObjectEntity>().Entity;
 
-                var damaged = EntityManager.CreateEntity(m_DamagedArchetype);
-                EntityManager.SetComponentData(damaged, new Damaged
+                var damaged = entityCommandBuffer.CreateEntity(m_DamagedArchetype);
+                entityCommandBuffer.SetComponent(damaged, new Damaged
                 {
                     Value = damage,
                     This = owner,
                     Other = target
                 });
 
-                var collided = EntityManager.CreateEntity(m_CollidedArchetype);
-                EntityManager.SetComponentData(collided, new Collided
+                var collided = entityCommandBuffer.CreateEntity(m_CollidedArchetype);
+                entityCommandBuffer.SetComponent(collided, new Collided
                 {
                     This = entity,
                     Other = target
