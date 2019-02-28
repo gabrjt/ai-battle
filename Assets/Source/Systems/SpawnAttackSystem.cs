@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -11,32 +12,34 @@ using MRandom = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     //[DisableAutoCreation]
-    public class SpawnAttackSystem : ComponentSystem
+    public class SpawnAttackSystem : JobComponentSystem
     {
-        private struct ConsolidateJob : IJob
+        private struct ConsolidateJob : IJobChunk
         {
             public float Time;
 
             [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<ArchetypeChunk> ChunkArray;
+            public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
-            public ArchetypeChunkEntityType EntityType;
-            [ReadOnly]
             public ArchetypeChunkComponentType<Target> TargetType;
+
             [ReadOnly]
             public ArchetypeChunkComponentType<Position> PositionType;
+
             [ReadOnly]
             public ArchetypeChunkComponentType<Attack> AttackType;
+
             [ReadOnly]
             public ArchetypeChunkComponentType<AttackDistance> AttackDistanceType;
+
             [ReadOnly]
             public ArchetypeChunkComponentType<AttackDuration> AttackDurationType;
+
             [ReadOnly]
             public ArchetypeChunkComponentType<AttackSpeed> AttackSpeedType;
 
-            public NativeList<SpawnData> SpawnDataList;
+            public NativeHashMap<Entity, SpawnData>.Concurrent SpawnDataMap;
 
             [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;
@@ -44,21 +47,10 @@ namespace Game.Systems
             [ReadOnly]
             public EntityArchetype AttackedArchetype;
 
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
-            public void Execute()
-            {
-                var firstEntityIndex = 0;
-
-                for (var chunkIndex = 0; chunkIndex < ChunkArray.Length; chunkIndex++)
-                {
-                    var chunk = ChunkArray[chunkIndex];
-
-                    Execute(chunk, chunkIndex, firstEntityIndex);
-
-                    firstEntityIndex += chunk.Count;
-                }
-            }
+            [NativeSetThreadIndex]
+            private readonly int m_ThreadIndex;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -88,7 +80,7 @@ namespace Game.Systems
 
                     var origin = position + new float3(0, 0.35f, 0);
 
-                    SpawnDataList.Add(new SpawnData
+                    SpawnDataMap.TryAdd(entity, new SpawnData
                     {
                         Owner = entity,
                         Position = new Position
@@ -111,20 +103,20 @@ namespace Game.Systems
 
                     var duration = attackDurationArray[entityIndex].Value / attackSpeed;
 
-                    EntityCommandBuffer.AddComponent(entity, new Attacking
+                    EntityCommandBuffer.AddComponent(m_ThreadIndex, entity, new Attacking
                     {
                         Duration = duration,
                         StartTime = Time
                     });
 
-                    EntityCommandBuffer.AddComponent(entity, new Cooldown
+                    EntityCommandBuffer.AddComponent(m_ThreadIndex, entity, new Cooldown
                     {
                         Duration = duration,
                         StartTime = Time
                     });
 
-                    var attacked = EntityCommandBuffer.CreateEntity(AttackedArchetype);
-                    EntityCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
+                    var attacked = EntityCommandBuffer.CreateEntity(m_ThreadIndex, AttackedArchetype);
+                    EntityCommandBuffer.SetComponent(m_ThreadIndex, attacked, new Attacked { This = entity });
                 }
             }
         }
@@ -161,11 +153,12 @@ namespace Game.Systems
             public NativeArray<Entity> EntityArray;
 
             [ReadOnly]
-            public NativeArray<SpawnData> SpawnDataArray;
+            public NativeHashMap<Entity, SpawnData> SpawnDataMap;
 
             public void Execute(int index)
             {
-                var spawnData = SpawnDataArray[index];
+                var spawnDataArray = SpawnDataMap.GetValueArray(Allocator.Temp);
+                var spawnData = spawnDataArray[index];
                 var entity = EntityArray[index];
 
                 AttackInstanceFromEntity[entity] = new AttackInstance
@@ -185,6 +178,8 @@ namespace Game.Systems
                 {
                     Value = spawnData.Direction.Value * spawnData.Speed.Value
                 };
+
+                spawnDataArray.Dispose();
             }
         }
 
@@ -213,7 +208,7 @@ namespace Game.Systems
 
         private Entity m_Prefab;
 
-        private NativeList<SpawnData> m_SpawnDataList;
+        private NativeHashMap<Entity, SpawnData> m_SpawnDataMap;
 
         private MRandom m_Random;
 
@@ -274,23 +269,20 @@ namespace Game.Systems
 
             // Object.Destroy(sphere);
 
-            m_SpawnDataList = new NativeList<SpawnData>(Allocator.Persistent);
+            m_SpawnDataMap = new NativeHashMap<Entity, SpawnData>(5000, Allocator.Persistent);
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            m_SpawnDataMap.Clear();
+
             var barrier = World.GetExistingManager<EndFrameBarrier>();
-
-            m_SpawnDataList.Clear();
-
-            JobHandle inputDeps = default;
 
             inputDeps = new ConsolidateJob
             {
                 Time = Time.time,
-                ChunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 PositionType = GetArchetypeChunkComponentType<Position>(true),
@@ -298,20 +290,22 @@ namespace Game.Systems
                 AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
                 AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
                 AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
-                SpawnDataList = m_SpawnDataList,
+                SpawnDataMap = m_SpawnDataMap.ToConcurrent(),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 AttackedArchetype = m_AttackedArchetype,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
-            }.Schedule(inputDeps);
+                EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent()
+            }.Schedule(m_Group, inputDeps);
 
             inputDeps.Complete();
 
-            var entitySpawnArray = new NativeArray<Entity>(m_SpawnDataList.Length, Allocator.TempJob);
+            var entityArray = new NativeArray<Entity>(m_SpawnDataMap.Length, Allocator.TempJob);
 
-            EntityManager.Instantiate(m_Prefab, entitySpawnArray);
+            EntityManager.Instantiate(m_Prefab, entityArray);
 
             inputDeps = new ApplyJob
             {
+                EntityArray = entityArray,
+                SpawnDataMap = m_SpawnDataMap,
                 AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
@@ -320,20 +314,20 @@ namespace Game.Systems
                 SpeedFromEntity = GetComponentDataFromEntity<Speed>(),
                 DamageFromEntity = GetComponentDataFromEntity<Damage>(),
                 VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),
-                EntityArray = entitySpawnArray,
-                SpawnDataArray = m_SpawnDataList.AsDeferredJobArray()
-            }.Schedule(entitySpawnArray.Length, 64, inputDeps);
+            }.Schedule(entityArray.Length, 64, inputDeps);
 
-            inputDeps.Complete();
+            barrier.AddJobHandleForProducer(inputDeps);
+
+            return inputDeps;
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SpawnDataList.IsCreated)
+            if (m_SpawnDataMap.IsCreated)
             {
-                m_SpawnDataList.Dispose();
+                m_SpawnDataMap.Dispose();
             }
         }
     }

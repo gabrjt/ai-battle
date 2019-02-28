@@ -31,7 +31,7 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<TargetFound>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<TargetFound>());
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
             m_Layer = 1 << m_LayerMask;
@@ -58,14 +58,16 @@ namespace Game.Systems
                     }
                     else
                     {
+                        var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+
                         foreach (var target in targetArray)
                         {
                             var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
 
                             if (EntityManager.HasComponent<Dead>(targetEntity)) continue;
 
-                            var targetFound = PostUpdateCommands.CreateEntity(m_Archetype);
-                            PostUpdateCommands.SetComponent(targetFound, new TargetFound
+                            var targetFound = entityCommandBuffer.CreateEntity(m_Archetype);
+                            entityCommandBuffer.SetComponent(targetFound, new TargetFound
                             {
                                 This = entity,
                                 Other = targetEntity

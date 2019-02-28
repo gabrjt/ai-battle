@@ -18,8 +18,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
-                Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() },
-                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Dead>() }
+                Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
             });
 
             m_SetDestinationList = new NativeList<Entity>(Allocator.Persistent);

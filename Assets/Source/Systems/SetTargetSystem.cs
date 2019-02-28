@@ -1,14 +1,78 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class SetTargetSystem : ComponentSystem
+    public class SetTargetSystem : JobComponentSystem
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, Target>.Concurrent SetTargetMap;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Damaged> DamagedType;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(TargetFoundType))
+                {
+                    var targetFoundArray = chunk.GetNativeArray(TargetFoundType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var targetFound = targetFoundArray[entityIndex];
+                        var entity = targetFound.This;
+
+                        SetTargetMap.TryAdd(entity, new Target { Value = targetFound.Other });
+                    }
+                }
+                else if (chunk.Has(TargetFoundType))
+                {
+                    var damagedArray = chunk.GetNativeArray(DamagedType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var damaged = damagedArray[entityIndex];
+                        var entity = damaged.Other;
+
+                        SetTargetMap.TryAdd(entity, new Target { Value = damaged.This });
+                    }
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            [ReadOnly]
+            public NativeHashMap<Entity, Target> SetTargetMap;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                var entityArray = SetTargetMap.GetKeyArray(Allocator.Temp);
+
+                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+                    EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
+                }
+
+                entityArray.Dispose();
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_SetTargetList;
+        private NativeHashMap<Entity, Target> m_SetTargetMap;
 
         protected override void OnCreateManager()
         {
@@ -20,65 +84,38 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<TargetFound>(), ComponentType.ReadOnly<Damaged>() },
             });
 
-            m_SetTargetList = new NativeList<Entity>(Allocator.Persistent);
+            m_SetTargetMap = new NativeHashMap<Entity, Target>(5000, Allocator.Persistent); // TODO: externalize count;
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var targetFoundType = GetArchetypeChunkComponentType<TargetFound>(true);
-            var damagedType = GetArchetypeChunkComponentType<Damaged>(true);
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                SetTargetMap = m_SetTargetMap.ToConcurrent(),
+                TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
+                DamagedType = GetArchetypeChunkComponentType<Damaged>(true)
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(targetFoundType))
-                {
-                    var targetFoundArray = chunk.GetNativeArray(targetFoundType);
+            inputDeps = new ApplyJob
+            {
+                SetTargetMap = m_SetTargetMap,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var targetFound = targetFoundArray[entityIndex];
-                        var entity = targetFound.This;
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        if (m_SetTargetList.Contains(entity)) continue;
-
-                        m_SetTargetList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Target { Value = targetFound.Other });
-                    }
-                }
-                else if (chunk.Has(damagedType))
-                {
-                    var damagedArray = chunk.GetNativeArray(damagedType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var damaged = damagedArray[entityIndex];
-                        var entity = damaged.Other;
-
-                        if (EntityManager.HasComponent<Target>(entity) || m_SetTargetList.Contains(entity)) continue;
-
-                        m_SetTargetList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Target { Value = damaged.This });
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
-
-            m_SetTargetList.Clear();
+            return inputDeps;
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SetTargetList.IsCreated)
+            if (m_SetTargetMap.IsCreated)
             {
-                m_SetTargetList.Dispose();
+                m_SetTargetMap.Dispose();
             }
         }
     }

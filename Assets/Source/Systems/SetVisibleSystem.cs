@@ -75,7 +75,9 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             public NativeQueue<Entity> AddQueue;
+
             public NativeQueue<Entity> RemoveQueue;
+
             public EntityCommandBuffer EntityCommandBuffer;
 
             public void Execute()

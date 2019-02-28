@@ -3,7 +3,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(EndFrameBarrier))]
+    [UpdateBefore(typeof(EndFrameBarrier))]
     public class CleanupEventsSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

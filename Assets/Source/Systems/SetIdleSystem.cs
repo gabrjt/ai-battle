@@ -23,7 +23,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 None = new[]
                 {
-                    ComponentType.ReadOnly<Idle>(),
+                    ComponentType.Create<Idle>(),
                     ComponentType.ReadOnly<SearchingForDestination>(),
                     ComponentType.ReadOnly<Destination>(),
                     ComponentType.ReadOnly<Target>(),

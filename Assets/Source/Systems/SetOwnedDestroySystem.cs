@@ -14,7 +14,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Owner>() },
-                None = new[] { ComponentType.ReadOnly<Destroy>() }
+                None = new[] { ComponentType.Create<Destroy>() }
             });
         }
 

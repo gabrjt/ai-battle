@@ -18,7 +18,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Health>() },
-                None = new[] { ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.Create<Dead>() }
             },
             new EntityArchetypeQuery
             {
