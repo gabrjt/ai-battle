@@ -17,7 +17,8 @@ namespace Game.Systems
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> EntityArray;
 
-            public NativeArray<SpherecastCommandData> SphereCastCommandDataArray;
+            public NativeArray<SpherecastCommandData> SpherecastCommandDataArray;
+            public NativeArray<SpherecastCommand> CommandArray;
 
             [ReadOnly]
             public ComponentDataFromEntity<AttackInstance> AttackInstanceFromEntity;
@@ -34,13 +35,16 @@ namespace Game.Systems
             [ReadOnly]
             public float DeltaTime;
 
+            [ReadOnly]
+            public int Layer;
+
             public void Execute(int index)
             {
                 var entity = EntityArray[index];
 
                 var attackInstanceFromEntity = AttackInstanceFromEntity[entity];
 
-                SphereCastCommandDataArray[index] = new SpherecastCommandData
+                var spherecastCommand = new SpherecastCommandData
                 {
                     Entity = entity,
                     Owner = attackInstanceFromEntity.Owner,
@@ -49,6 +53,9 @@ namespace Game.Systems
                     Distance = SpeedFromEntity[entity].Value * DeltaTime,
                     Radius = attackInstanceFromEntity.Radius
                 };
+
+                SpherecastCommandDataArray[index] = spherecastCommand;
+                CommandArray[index] = new SpherecastCommand(spherecastCommand.Origin, spherecastCommand.Radius, spherecastCommand.Direction, spherecastCommand.Distance, Layer);
             }
         }
 
@@ -73,7 +80,7 @@ namespace Game.Systems
 
         private EntityArchetype m_CollidedArchetype;
 
-        private NativeArray<SpherecastCommandData> m_SphereCastCommandDataArray;
+        private NativeArray<SpherecastCommandData> m_SpherecastCommandDataArray;
 
         private NativeArray<SpherecastCommand> m_CommandArray;
 
@@ -101,48 +108,39 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
-
             var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
 
-            m_SphereCastCommandDataArray = new NativeArray<SpherecastCommandData>(entityArray.Length, Allocator.TempJob);
+            m_SpherecastCommandDataArray = new NativeArray<SpherecastCommandData>(entityArray.Length, Allocator.TempJob);
+            m_CommandArray = new NativeArray<SpherecastCommand>(m_SpherecastCommandDataArray.Length, Allocator.TempJob);
+            m_ResultArray = new NativeArray<RaycastHit>(m_SpherecastCommandDataArray.Length, Allocator.TempJob);
 
             var inputDeps = default(JobHandle);
 
             inputDeps = new ConsolidateJob
             {
                 EntityArray = entityArray,
-                SphereCastCommandDataArray = m_SphereCastCommandDataArray,
+                SpherecastCommandDataArray = m_SpherecastCommandDataArray,
+                CommandArray = m_CommandArray,
                 AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 DirectionFromEntity = GetComponentDataFromEntity<Direction>(true),
                 SpeedFromEntity = GetComponentDataFromEntity<Speed>(true),
-                DeltaTime = Time.deltaTime
+                DeltaTime = Time.deltaTime,
+                Layer = m_Layer
             }.Schedule(entityArray.Length, 64, inputDeps);
 
-            inputDeps.Complete();
+            SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1, inputDeps).Complete();
 
-            m_CommandArray = new NativeArray<SpherecastCommand>(m_SphereCastCommandDataArray.Length, Allocator.TempJob);
-            m_ResultArray = new NativeArray<RaycastHit>(m_SphereCastCommandDataArray.Length, Allocator.TempJob);
+            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
 
-            for (var i = 0; i < m_SphereCastCommandDataArray.Length; i++)
+            for (int index = 0; index < m_ResultArray.Length; index++)
             {
-                var sphereCastCommand = m_SphereCastCommandDataArray[i];
-                m_CommandArray[i] = new SpherecastCommand(sphereCastCommand.Origin, sphereCastCommand.Radius, sphereCastCommand.Direction, sphereCastCommand.Distance, m_Layer);
-            }
-
-            SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1).Complete();
-
-            for (int i = 0; i < m_ResultArray.Length; i++)
-            {
-                var result = m_ResultArray[i];
+                var result = m_ResultArray[index];
 
                 if (!result.collider) continue;
 
-                var entity = m_SphereCastCommandDataArray[i].Entity;
-                var owner = m_SphereCastCommandDataArray[i].Owner;
-
-                EntityManager.AddComponentData(entity, new Disabled());
+                var entity = m_SpherecastCommandDataArray[index].Entity;
+                var owner = m_SpherecastCommandDataArray[index].Owner;
 
                 var damage = EntityManager.GetComponentData<Damage>(entity).Value;
                 var target = result.collider.GetComponent<GameObjectEntity>().Entity;
@@ -163,7 +161,7 @@ namespace Game.Systems
                 });
             }
 
-            m_SphereCastCommandDataArray.Dispose();
+            m_SpherecastCommandDataArray.Dispose();
             m_CommandArray.Dispose();
             m_ResultArray.Dispose();
         }
@@ -172,9 +170,9 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
-            if (m_SphereCastCommandDataArray.IsCreated)
+            if (m_SpherecastCommandDataArray.IsCreated)
             {
-                m_SphereCastCommandDataArray.Dispose();
+                m_SpherecastCommandDataArray.Dispose();
             }
 
             if (m_CommandArray.IsCreated)

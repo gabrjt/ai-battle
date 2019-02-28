@@ -1,5 +1,6 @@
 ﻿using Game.Components;
-using System.Linq;
+using System;
+using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -10,6 +11,19 @@ namespace Game.Systems
 {
     public class SearchForTargetSystem : ComponentSystem
     {
+        private class Comparer : IComparer<Collider>
+        {
+            public float3 Position;
+
+            public int Compare(Collider lhs, Collider rhs)
+            {
+                var lhsSqrDistance = math.distancesq(lhs.transform.position, Position);
+                var rhsSqrDistance = math.distancesq(rhs.transform.position, Position);
+
+                return lhsSqrDistance.CompareTo(rhsSqrDistance);
+            }
+        }
+
         private ComponentGroup m_Group;
 
         private EntityArchetype m_Archetype;
@@ -19,6 +33,14 @@ namespace Game.Systems
         private int m_Layer;
 
         private MRandom m_Random;
+
+        readonly Comparer m_Comparer = new Comparer();
+
+        private Collider[] m_CachedColliderArray = new Collider[10];
+
+        EntityCommandBuffer m_EntityCommandBuffer;
+
+        F_EDD<SearchingForTarget, Position> m_OnUpdate;
 
         protected override void OnCreateManager()
         {
@@ -37,47 +59,57 @@ namespace Game.Systems
             m_Layer = 1 << m_LayerMask;
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_OnUpdate = OnUpdate;
         }
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            m_EntityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
 
-            ForEach((Entity entity, ref SearchingForTarget searchForTarget, ref Position position) =>
+            ForEach(m_OnUpdate, m_Group);
+        }
+
+        void OnUpdate(Entity entity, ref SearchingForTarget searchForTarget, ref Position position)
+        {
+            if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
             {
-                if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
+                var positionValue = position.Value;
+                var count = Physics.OverlapSphereNonAlloc(position.Value, searchForTarget.Radius, m_CachedColliderArray, m_Layer);
+
+                if (count > 0)
                 {
-                    var positionValue = position.Value;
+                    m_Comparer.Position = positionValue;
 
-                    var targetArray = Physics.OverlapSphere(position.Value, searchForTarget.Radius, m_Layer)
-                        .Where(collider => collider.GetComponent<GameObjectEntity>().Entity != entity)
-                        .OrderBy(collider => math.distance(collider.transform.position, positionValue))
-                        .ToArray();
+                    Array.Sort(m_CachedColliderArray, 0, count, m_Comparer);
 
-                    if (targetArray.Length == 0)
+                    var colliderIndex = 0;
+
+                    do
                     {
-                        searchForTarget.StartTime = Time.time;
-                    }
-                    else
-                    {
-                        foreach (var target in targetArray)
+                        var target = m_CachedColliderArray[colliderIndex];
+                        var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
+
+                        if (entity == targetEntity || EntityManager.HasComponent<Dead>(targetEntity)) continue;
+
+                        var targetFound = m_EntityCommandBuffer.CreateEntity(m_Archetype);
+
+                        m_EntityCommandBuffer.SetComponent(targetFound, new TargetFound
                         {
-                            var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
+                            This = entity,
+                            Other = targetEntity
+                        });
 
-                            if (EntityManager.HasComponent<Dead>(targetEntity)) continue;
-
-                            var targetFound = entityCommandBuffer.CreateEntity(m_Archetype);
-                            entityCommandBuffer.SetComponent(targetFound, new TargetFound
-                            {
-                                This = entity,
-                                Other = targetEntity
-                            });
-
-                            break;
-                        }
+                        break;
                     }
+                    while (++colliderIndex < count);
+
+                    Array.Clear(m_CachedColliderArray, 0, count);
                 }
-            }, m_Group);
+                else
+                {
+                    searchForTarget.StartTime = Time.time;
+                }
+            }
         }
     }
 }

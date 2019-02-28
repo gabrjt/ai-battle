@@ -77,6 +77,7 @@ namespace Game.Systems
                     }
                 }
 
+                // TODO: consolidate job phase 2.
                 var deadEntityArray = chunk.GetNativeArray(EntityType);
                 for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
                 {
