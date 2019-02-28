@@ -16,7 +16,7 @@ namespace Game.Systems
     {
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, SpawnData>.Concurrent SpawnDataMap;
+            public NativeQueue<SpawnData>.Concurrent SpawnDataQueue;
 
             [ReadOnly]
             public EntityArchetype AttackedArchetype;
@@ -80,7 +80,7 @@ namespace Game.Systems
 
                     var origin = position + new float3(0, 0.35f, 0);
 
-                    SpawnDataMap.TryAdd(entity, new SpawnData
+                    SpawnDataQueue.Enqueue(new SpawnData
                     {
                         Owner = entity,
                         Position = new Position
@@ -206,7 +206,7 @@ namespace Game.Systems
 
         private Entity m_Prefab;
 
-        private NativeHashMap<Entity, SpawnData> m_SpawnDataMap;
+        private NativeQueue<SpawnData> m_SpawnDataQueue;
 
         private MRandom m_Random;
 
@@ -269,20 +269,20 @@ namespace Game.Systems
             Object.Destroy(sphere);
 #endif
 
-            m_SpawnDataMap = new NativeHashMap<Entity, SpawnData>(5000, Allocator.Persistent);
-
             m_Random = new MRandom((uint)System.Environment.TickCount);
+
+            m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_SpawnDataMap.Clear();
+            m_SpawnDataQueue.Clear();
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SpawnDataMap = m_SpawnDataMap.ToConcurrent(),
+                SpawnDataQueue = m_SpawnDataQueue.ToConcurrent(),
                 EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
@@ -298,14 +298,21 @@ namespace Game.Systems
 
             inputDeps.Complete();
 
-            var entityArray = new NativeArray<Entity>(m_SpawnDataMap.Length, Allocator.TempJob);
+            var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
+            var spawnDataArray = new NativeArray<SpawnData>(m_SpawnDataQueue.Count, Allocator.TempJob);
+
+            var count = 0;
+            while (m_SpawnDataQueue.TryDequeue(out var spawnData))
+            {
+                spawnDataArray[count++] = spawnData;
+            }
 
             EntityManager.Instantiate(m_Prefab, entityArray);
 
             inputDeps = new ApplyJob
             {
                 EntityArray = entityArray,
-                SpawnDataArray = m_SpawnDataMap.GetValueArray(Allocator.TempJob),
+                SpawnDataArray = spawnDataArray,
                 AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
@@ -325,9 +332,9 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
-            if (m_SpawnDataMap.IsCreated)
+            if (m_SpawnDataQueue.IsCreated)
             {
-                m_SpawnDataMap.Dispose();
+                m_SpawnDataQueue.Dispose();
             }
         }
     }

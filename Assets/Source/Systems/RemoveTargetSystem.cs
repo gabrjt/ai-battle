@@ -116,7 +116,12 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_RemoveTargetMap.Clear();
+            if (m_RemoveTargetMap.IsCreated)
+            {
+                m_RemoveTargetMap.Dispose();
+            }
+
+            m_RemoveTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 

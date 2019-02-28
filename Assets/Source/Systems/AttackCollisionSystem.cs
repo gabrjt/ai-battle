@@ -18,6 +18,7 @@ namespace Game.Systems
             public NativeArray<Entity> EntityArray;
 
             public NativeArray<SpherecastCommandData> SpherecastCommandDataArray;
+
             public NativeArray<SpherecastCommand> CommandArray;
 
             [ReadOnly]

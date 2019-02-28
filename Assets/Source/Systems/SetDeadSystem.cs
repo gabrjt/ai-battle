@@ -109,13 +109,16 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Killed>() }
             });
-
-            m_SetDeadMap = new NativeHashMap<Entity, Dead>(5000, Allocator.Persistent); // TODO: externalize count
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_SetDeadMap.Clear();
+            if (m_SetDeadMap.IsCreated)
+            {
+                m_SetDeadMap.Dispose();
+            }
+
+            m_SetDeadMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 

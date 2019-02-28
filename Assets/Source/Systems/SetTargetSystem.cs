@@ -93,13 +93,16 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<TargetFound>(), ComponentType.ReadOnly<Damaged>() },
             });
-
-            m_SetTargetMap = new NativeHashMap<Entity, Target>(5000, Allocator.Persistent); // TODO: externalize count;
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_SetTargetMap.Clear();
+            if (m_SetTargetMap.IsCreated)
+            {
+                m_SetTargetMap.Dispose();
+            }
+
+            m_SetTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 

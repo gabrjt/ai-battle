@@ -125,13 +125,16 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationReached>(), ComponentType.ReadOnly<Killed>() }
             });
-
-            m_RemoveDestinationMap = new NativeHashMap<Entity, Destination>(5000, Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_RemoveDestinationMap.Clear();
+            if (m_RemoveDestinationMap.IsCreated)
+            {
+                m_RemoveDestinationMap.Dispose();
+            }
+
+            m_RemoveDestinationMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
