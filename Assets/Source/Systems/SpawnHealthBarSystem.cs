@@ -83,6 +83,24 @@ namespace Game.Systems
             }
         }
 
+        [BurstCompile]
+        private struct SetDataJob : IJobParallelFor
+        {
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            [DeallocateOnJobCompletion]
+            public NativeArray<Owner> SetDataArray;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Owner> OwnerFromEntity;
+
+            public void Execute(int index)
+            {
+                OwnerFromEntity[EntityArray[index]] = SetDataArray[index];
+            }
+        }
+
         private struct SpawnData
         {
             public Entity Owner;
@@ -155,6 +173,10 @@ namespace Game.Systems
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
             var canvasTransform = EntityManager.GetComponentObject<RectTransform>(canvas.Owner);
 
+            var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
+            var ownerArray = new NativeArray<Owner>(m_SpawnDataQueue.Count, Allocator.TempJob);
+
+            var count = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
                 var healthBar = Object.Instantiate(m_Prefab, canvasTransform);
@@ -163,11 +185,20 @@ namespace Game.Systems
 
                 healthBar.name = $"Health Bar {entity.Index}";
 
-                EntityManager.SetComponentData(entity, new Owner { Value = spawnData.Owner });
-
                 var transform = healthBar.GetComponent<RectTransform>();
                 transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
+
+                entityArray[count] = entity;
+                ownerArray[count] = new Owner { Value = spawnData.Owner };
+                ++count;
             }
+
+            inputDeps = new SetDataJob
+            {
+                EntityArray = entityArray,
+                SetDataArray = ownerArray,
+                OwnerFromEntity = GetComponentDataFromEntity<Owner>()
+            }.Schedule(entityArray.Length, 64, inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
 
