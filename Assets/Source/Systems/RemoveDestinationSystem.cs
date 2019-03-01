@@ -52,43 +52,44 @@ namespace Game.Systems
                         RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
                 }
-
-                if (chunk.Has(DestinationReachedType))
+                else
                 {
-                    var destinationReachedArray = chunk.GetNativeArray(DestinationReachedType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    if (chunk.Has(DestinationReachedType))
                     {
-                        var entity = destinationReachedArray[entityIndex].This;
+                        var destinationReachedArray = chunk.GetNativeArray(DestinationReachedType);
 
-                        if (!DestinationFromEntity.Exists(entity)) continue;
+                        for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                        {
+                            var entity = destinationReachedArray[entityIndex].This;
+
+                            if (!DestinationFromEntity.Exists(entity)) continue;
+
+                            RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                        }
+                    }
+                    else if (chunk.Has(KilledType))
+                    {
+                        var killedArray = chunk.GetNativeArray(KilledType);
+
+                        for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                        {
+                            var entity = killedArray[entityIndex].This;
+
+                            if (!DestinationFromEntity.Exists(entity)) continue;
+
+                            RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                        }
+                    }
+
+                    var deadEntityArray = chunk.GetNativeArray(EntityType);
+                    for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
+                    {
+                        var entity = deadEntityArray[entityIndex];
+
+                        if (!DeadFromEntity.Exists(entity)) continue;
 
                         RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
-                }
-
-                if (chunk.Has(KilledType))
-                {
-                    var killedArray = chunk.GetNativeArray(KilledType);
-
-                    for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = killedArray[entityIndex].This;
-
-                        if (!DestinationFromEntity.Exists(entity)) continue;
-
-                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
-                    }
-                }
-
-                var deadEntityArray = chunk.GetNativeArray(EntityType);
-                for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
-                {
-                    var entity = deadEntityArray[entityIndex];
-
-                    if (!DeadFromEntity.Exists(entity)) continue;
-
-                    RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
                 }
             }
         }

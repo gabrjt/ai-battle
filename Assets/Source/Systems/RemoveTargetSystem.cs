@@ -58,7 +58,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        if (target.Value != default) continue; // TODO: check != default.
+                        if (target.Value != default && !DeadFromEntity.Exists(target.Value)) continue; // TODO: check != default.
 
                         RemoveTargetMap.TryAdd(entity, target);
                     }

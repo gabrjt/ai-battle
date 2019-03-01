@@ -16,10 +16,15 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<SearchingForTarget>() },
-                Any = new[] { ComponentType.ReadOnly<Dead>() },
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>(), ComponentType.Create<SearchingForTarget>() },
                 None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() }
-            }, new EntityArchetypeQuery
+            },
+            new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() },
+                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() }
+            },
+            new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<TargetFound>() }
             });
@@ -31,14 +36,30 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
-            var characterType = GetArchetypeChunkComponentType<Character>(true);
+            var targetType = GetArchetypeChunkComponentType<Target>(true);
+            var deadType = GetArchetypeChunkComponentType<Dead>(true);
             var targetFoundType = GetArchetypeChunkComponentType<TargetFound>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(characterType))
+                if (chunk.Has(targetType))
+                {
+                    var entityArray = chunk.GetNativeArray(entityType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+
+                        if (m_RemoveSearchingForTargetList.Contains(entity)) continue;
+
+                        m_RemoveSearchingForTargetList.Add(entity);
+
+                        PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
+                    }
+                }
+                else if (chunk.Has(deadType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
 
