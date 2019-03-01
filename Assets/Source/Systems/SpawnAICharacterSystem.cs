@@ -183,7 +183,7 @@ namespace Game.Systems
 
                 var maxHealth = m_Random.NextInt(100, 301);
                 var attack = m_Random.NextInt(10, 31);
-                var attackSpeed = m_Random.NextFloat(1, 4);
+                var attackSpeed = m_Random.NextFloat(1, 3);
                 var healthRegeneration = m_Random.NextFloat(1, 6);
 
                 var viewTypeIndex = m_Random.NextInt(0, 3);

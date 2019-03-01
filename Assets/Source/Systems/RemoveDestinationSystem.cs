@@ -7,6 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    [UpdateAfter(typeof(DeadBarrier))]
     public class RemoveDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

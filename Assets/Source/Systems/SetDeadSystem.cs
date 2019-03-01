@@ -9,6 +9,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(DamageSystem))]
+    [UpdateBefore(typeof(DeadBarrier))]
     public class SetDeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -119,7 +120,7 @@ namespace Game.Systems
 
             m_SetDeadMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<DeadBarrier>();
 
             inputDeps = new ConsolidateJob
             {
