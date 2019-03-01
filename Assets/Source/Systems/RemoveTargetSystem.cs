@@ -132,7 +132,7 @@ namespace Game.Systems
 
             m_RemoveTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -146,13 +146,13 @@ namespace Game.Systems
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
                 RemoveTargetMap = m_RemoveTargetMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
 

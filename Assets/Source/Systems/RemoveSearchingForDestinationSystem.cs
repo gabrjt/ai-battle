@@ -4,6 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(RemoveBarrier))]
     public class RemoveSearchingForDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

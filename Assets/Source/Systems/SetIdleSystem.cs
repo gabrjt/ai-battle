@@ -6,6 +6,7 @@ using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(SetBarrier))]
     public class SetIdleSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

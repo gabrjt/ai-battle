@@ -81,7 +81,7 @@ namespace Game.Systems
 
             m_SetSearchingForTargetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -89,8 +89,6 @@ namespace Game.Systems
                 EntityType = GetArchetypeChunkEntityType(),
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
-
-            inputDeps.Complete();
 
             inputDeps = new ApplyJob
             {

@@ -208,8 +208,6 @@ namespace Game.Systems
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
                 SetDestinationMap = m_SetDestinationMap,
@@ -217,6 +215,8 @@ namespace Game.Systems
                 Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
 

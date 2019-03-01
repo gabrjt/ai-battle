@@ -4,6 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(RemoveBarrier))]
     public class RemoveIdleSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

@@ -118,7 +118,7 @@ namespace Game.Systems
 
             m_SetDeadMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<DeadBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -130,13 +130,13 @@ namespace Game.Systems
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
                 SetDeadMap = m_SetDeadMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
 

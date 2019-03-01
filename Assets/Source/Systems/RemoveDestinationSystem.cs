@@ -136,14 +136,12 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_RemoveDestinationMap.IsCreated)
-            {
-                m_RemoveDestinationMap.Dispose();
-            }
+            Dispose();
 
             m_RemoveDestinationMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<RemoveBarrier>();
+
 
             inputDeps = new ConsolidateJob
             {
@@ -157,13 +155,13 @@ namespace Game.Systems
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
                 RemoveDestinationMap = m_RemoveDestinationMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
 

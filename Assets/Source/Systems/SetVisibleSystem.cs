@@ -159,7 +159,7 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: use RequireSingletonForUpdate.
 
-            var barrier = World.Active.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.Active.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -176,8 +176,6 @@ namespace Game.Systems
                 MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true)
             }.Schedule(m_Group, inputDeps);
-
-            inputDeps.Complete();
 
             inputDeps = new ApplyJob
             {

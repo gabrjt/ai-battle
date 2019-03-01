@@ -131,8 +131,6 @@ namespace Game.Systems
                 DestroyedFromEntity = GetComponentDataFromEntity<Destroyed>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
                 OwnerQueue = m_OwnerQueue,
@@ -140,6 +138,8 @@ namespace Game.Systems
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
 
