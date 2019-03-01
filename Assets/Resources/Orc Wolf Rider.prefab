@@ -656,7 +656,7 @@ SkinnedMeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129450}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1012,7 +1012,6 @@ GameObject:
   - component: {fileID: 1512316971271330800}
   - component: {fileID: 8165405394004179239}
   - component: {fileID: 6693510703437215995}
-  - component: {fileID: 5288983941959013245}
   m_Layer: 0
   m_Name: Orc Wolf Rider
   m_TagString: Untagged
@@ -1222,19 +1221,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value: 625
---- !u!114 &5288983941959013245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 153010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 04006c882a3e2334ab9ac22665244c44, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &153408
 GameObject:
   m_ObjectHideFlags: 0
