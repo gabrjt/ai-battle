@@ -13,14 +13,12 @@ namespace Game.Systems
 {
     public class SpawnAttackSystem : JobComponentSystem
     {
+        [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
             public NativeQueue<SpawnData>.Concurrent SpawnDataQueue;
 
-            [ReadOnly]
-            public EntityArchetype AttackedArchetype;
-
-            public EntityCommandBuffer.Concurrent EntityCommandBuffer;
+            public NativeQueue<ApplyAttackingData>.Concurrent ApplyAttackingQueue;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -102,20 +100,45 @@ namespace Game.Systems
 
                     var duration = attackDurationArray[entityIndex].Value / attackSpeed;
 
-                    EntityCommandBuffer.AddComponent(m_ThreadIndex, entity, new Attacking
+                    ApplyAttackingQueue.Enqueue(new ApplyAttackingData
                     {
-                        Duration = duration,
-                        StartTime = Time
+                        Entity = entity,
+                        Attacking = new Attacking
+                        {
+                            Duration = duration,
+                            StartTime = Time
+                        },
+                        Cooldown = new Cooldown
+                        {
+                            Duration = duration,
+                            StartTime = Time
+                        }
                     });
+                }
+            }
+        }
 
-                    EntityCommandBuffer.AddComponent(m_ThreadIndex, entity, new Cooldown
-                    {
-                        Duration = duration,
-                        StartTime = Time
-                    });
+        private struct ApplyAttackingJob : IJob
+        {
+            public NativeQueue<ApplyAttackingData> ApplyAttackingQueue;
 
-                    var attacked = EntityCommandBuffer.CreateEntity(m_ThreadIndex, AttackedArchetype);
-                    EntityCommandBuffer.SetComponent(m_ThreadIndex, attacked, new Attacked { This = entity });
+            [ReadOnly]
+            public EntityArchetype AttackedArchetype;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                while (ApplyAttackingQueue.TryDequeue(out var applyAttackingData))
+                {
+                    var entity = applyAttackingData.Entity;
+
+                    EntityCommandBuffer.AddComponent(entity, applyAttackingData.Attacking);
+                    EntityCommandBuffer.AddComponent(entity, applyAttackingData.Cooldown);
+
+                    var attacked = EntityCommandBuffer.CreateEntity(AttackedArchetype);
+                    EntityCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
                 }
             }
         }
@@ -180,6 +203,15 @@ namespace Game.Systems
             }
         }
 
+        private struct ApplyAttackingData
+        {
+            public Entity Entity;
+
+            public Attacking Attacking;
+
+            public Cooldown Cooldown;
+        }
+
         private struct SpawnData
         {
             public Entity Owner;
@@ -206,6 +238,8 @@ namespace Game.Systems
         private Entity m_Prefab;
 
         private NativeQueue<SpawnData> m_SpawnDataQueue;
+
+        private NativeQueue<ApplyAttackingData> m_ApplyAttackingQueue;
 
         private MRandom m_Random;
 
@@ -270,19 +304,21 @@ namespace Game.Systems
 
             m_Random = new MRandom((uint)System.Environment.TickCount);
 
+            m_ApplyAttackingQueue = new NativeQueue<ApplyAttackingData>(Allocator.Persistent);
             m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             m_SpawnDataQueue.Clear();
+            m_ApplyAttackingQueue.Clear();
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
 
             inputDeps = new ConsolidateJob
             {
                 SpawnDataQueue = m_SpawnDataQueue.ToConcurrent(),
-                EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent(),
+                ApplyAttackingQueue = m_ApplyAttackingQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 PositionType = GetArchetypeChunkComponentType<Position>(true),
@@ -291,9 +327,15 @@ namespace Game.Systems
                 AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
                 AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
-                AttackedArchetype = m_AttackedArchetype,
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
+
+            inputDeps = new ApplyAttackingJob
+            {
+                ApplyAttackingQueue = m_ApplyAttackingQueue,
+                AttackedArchetype = m_AttackedArchetype,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
             inputDeps.Complete();
 
@@ -334,6 +376,11 @@ namespace Game.Systems
             if (m_SpawnDataQueue.IsCreated)
             {
                 m_SpawnDataQueue.Dispose();
+            }
+
+            if (m_ApplyAttackingQueue.IsCreated)
+            {
+                m_ApplyAttackingQueue.Dispose();
             }
         }
     }
