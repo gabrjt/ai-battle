@@ -20,6 +20,12 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<Damaged> DamagedType;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Dead> DeadFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 if (chunk.Has(TargetFoundType))
@@ -30,8 +36,11 @@ namespace Game.Systems
                     {
                         var targetFound = targetFoundArray[entityIndex];
                         var entity = targetFound.This;
+                        var target = targetFound.Other;
 
-                        SetTargetMap.TryAdd(entity, new Target { Value = targetFound.Other });
+                        if (DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) continue;
+
+                        SetTargetMap.TryAdd(entity, new Target { Value = target });
                     }
                 }
                 else if (chunk.Has(DamagedType))
@@ -42,8 +51,11 @@ namespace Game.Systems
                     {
                         var damaged = damagedArray[entityIndex];
                         var entity = damaged.Other;
+                        var target = damaged.This;
 
-                        SetTargetMap.TryAdd(entity, new Target { Value = damaged.This });
+                        if (DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) continue;
+
+                        SetTargetMap.TryAdd(entity, new Target { Value = target });
                     }
                 }
             }
@@ -111,7 +123,9 @@ namespace Game.Systems
             {
                 SetTargetMap = m_SetTargetMap.ToConcurrent(),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
-                DamagedType = GetArchetypeChunkComponentType<Damaged>(true)
+                DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
