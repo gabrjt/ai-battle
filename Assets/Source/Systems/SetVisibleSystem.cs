@@ -45,6 +45,9 @@ namespace Game.Systems
             public ComponentDataFromEntity<Health> HealthFromEntity;
 
             [ReadOnly]
+            public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
+
+            [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;
 
             [NativeSetThreadIndex]
@@ -66,7 +69,12 @@ namespace Game.Systems
                         var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex];
                         var owner = ownerArray[entityIndex];
 
-                        var isVisible = HealthFromEntity.Exists(owner.Value) && HealthFromEntity[owner.Value].Value > 0 && PositionFromEntity.Exists(owner.Value) && math.distancesq(CameraPosition, PositionFromEntity[owner.Value].Value) < maxSqrDistanceFromCamera.Value;
+                        var healthExists = HealthFromEntity.Exists(owner.Value);
+                        var maxHealthExists = MaxHealthFromEntity.Exists(owner.Value);
+
+                        var isVisible = PositionFromEntity.Exists(owner.Value) && math.distancesq(CameraPosition, PositionFromEntity[owner.Value].Value) < maxSqrDistanceFromCamera.Value &&
+                            healthExists && HealthFromEntity[owner.Value].Value > 0 &&
+                            maxHealthExists && HealthFromEntity[owner.Value].Value < MaxHealthFromEntity[owner.Value].Value;
 
                         SetVisible(hasVisible, entity, isVisible);
                     }
@@ -165,6 +173,7 @@ namespace Game.Systems
                 HealthBarType = GetArchetypeChunkComponentType<HealthBar>(true),
                 ViewType = GetArchetypeChunkComponentType<View>(true),
                 HealthFromEntity = GetComponentDataFromEntity<Health>(true),
+                MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true)
             }.Schedule(m_Group, inputDeps);
 
