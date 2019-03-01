@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(EndFrameBarrier))]
     public class DestroyHealthBarSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

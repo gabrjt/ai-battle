@@ -1,15 +1,97 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(RemoveBarrier))]
-    public class RemoveSearchingForTargetSystem : ComponentSystem
+    public class RemoveSearchingForTargetSystem : JobComponentSystem
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, SearchingForTarget>.Concurrent RemoveSearchingForTargetMap;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Target> TargetType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Dead> DeadType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<SearchingForTarget> SearchingForTargetFromEntity;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(TargetType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+
+                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                    }
+                }
+                else if (chunk.Has(DeadType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+
+                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                    }
+                }
+                else if (chunk.Has(TargetFoundType))
+                {
+                    var targetFoundArray = chunk.GetNativeArray(TargetFoundType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = targetFoundArray[entityIndex].This;
+
+                        if (!SearchingForTargetFromEntity.Exists(entity)) continue;
+
+                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                    }
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            public NativeHashMap<Entity, SearchingForTarget> RemoveSearchingForTargetMap;
+
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            public void Execute()
+            {
+                var entityArray = RemoveSearchingForTargetMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+
+                    EntityCommandBuffer.RemoveComponent<SearchingForTarget>(entity);
+                }
+
+                entityArray.Dispose();
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_RemoveSearchingForTargetList;
+        private NativeHashMap<Entity, SearchingForTarget> m_RemoveSearchingForTargetMap;
 
         protected override void OnCreateManager()
         {
@@ -29,81 +111,56 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<TargetFound>() }
             });
-
-            m_RemoveSearchingForTargetList = new NativeList<Entity>(Allocator.Persistent);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var targetType = GetArchetypeChunkComponentType<Target>(true);
-            var deadType = GetArchetypeChunkComponentType<Dead>(true);
-            var targetFoundType = GetArchetypeChunkComponentType<TargetFound>(true);
+            Dispose();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            m_RemoveSearchingForTargetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
+
+            var barrier = World.GetExistingManager<RemoveBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                RemoveSearchingForTargetMap = m_RemoveSearchingForTargetMap.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
+                TargetType = GetArchetypeChunkComponentType<Target>(true),
+                DeadType = GetArchetypeChunkComponentType<Dead>(true),
+                TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
+                SearchingForTargetFromEntity = GetComponentDataFromEntity<SearchingForTarget>(true)
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(targetType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
+            inputDeps = new ApplyJob
+            {
+                RemoveSearchingForTargetMap = m_RemoveSearchingForTargetMap,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        if (m_RemoveSearchingForTargetList.Contains(entity)) continue;
+            return inputDeps;
+        }
 
-                        m_RemoveSearchingForTargetList.Add(entity);
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
 
-                        PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
-                    }
-                }
-                else if (chunk.Has(deadType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-
-                        if (m_RemoveSearchingForTargetList.Contains(entity)) continue;
-
-                        m_RemoveSearchingForTargetList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
-                    }
-                }
-                else if (chunk.Has(targetFoundType))
-                {
-                    var targetFoundArray = chunk.GetNativeArray(targetFoundType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = targetFoundArray[entityIndex].This;
-
-                        if (m_RemoveSearchingForTargetList.Contains(entity)) continue;
-
-                        m_RemoveSearchingForTargetList.Add(entity);
-
-                        PostUpdateCommands.RemoveComponent<SearchingForTarget>(entity);
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
-
-            m_RemoveSearchingForTargetList.Clear();
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_RemoveSearchingForTargetList.IsCreated)
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_RemoveSearchingForTargetMap.IsCreated)
             {
-                m_RemoveSearchingForTargetList.Dispose();
+                m_RemoveSearchingForTargetMap.Dispose();
             }
         }
     }

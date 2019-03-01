@@ -120,7 +120,7 @@ namespace Game.Systems
         {
             m_OwnerQueue.Clear();
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<DestroyBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -138,8 +138,6 @@ namespace Game.Systems
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
-
-            inputDeps.Complete(); // TODO: check this dependency bug.
 
             barrier.AddJobHandleForProducer(inputDeps);
 

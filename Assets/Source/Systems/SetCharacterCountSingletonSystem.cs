@@ -4,6 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(SetBarrier))]
     public class SetCharacterCountSingletonSystem : ComponentSystem
     {
         private struct Initialized : ISystemStateComponentData { }

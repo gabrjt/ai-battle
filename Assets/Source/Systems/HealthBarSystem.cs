@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Game.Systems
 {
+    
     public class HealthBarSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

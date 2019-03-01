@@ -4,7 +4,6 @@ using Unity.Entities;
 namespace Game.Systems
 {
     [UpdateBefore(typeof(ClampHealthSystem))]
-    [UpdateAfter(typeof(EndFrameBarrier))]
     public class DamageSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -25,7 +24,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            var entityCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
 
             ForEach((ref Damaged damaged) =>
             {

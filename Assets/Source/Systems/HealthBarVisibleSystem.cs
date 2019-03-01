@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 namespace Game.Systems
 {
+    
     public class HealthBarVisibleSystem : JobComponentSystem
     {
         private struct Initialized : ISystemStateComponentData { }

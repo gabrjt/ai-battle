@@ -7,6 +7,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     // TODO: use Burst.
+    
     public class IdleSystem : JobComponentSystem
     {
         [RequireSubtractiveComponent(typeof(SearchingForDestination), typeof(Destination), typeof(Target))]

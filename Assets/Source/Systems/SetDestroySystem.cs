@@ -4,6 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(DestroyBarrier))]
     public class SetDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -24,7 +25,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            var entityCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
 
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();

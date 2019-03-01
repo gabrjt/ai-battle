@@ -8,6 +8,13 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [UpdateBefore(typeof(SetDeadSystem))]
+    [UpdateBefore(typeof(RemoveDestinationSystem))]
+    [UpdateBefore(typeof(SetOwnedDestroySystem))]
+    [UpdateBefore(typeof(RemoveTargetSystem))]
+    [UpdateBefore(typeof(SetDestinationSystem))]
+    [UpdateBefore(typeof(RemoveSearchingForTargetSystem))]
+    [UpdateBefore(typeof(SetAttackDestroySystem))]
     public class SetSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

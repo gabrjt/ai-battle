@@ -160,8 +160,6 @@ namespace Game.Systems
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            inputDeps.Complete(); // TODO: check this dependency bug.
-
             barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;

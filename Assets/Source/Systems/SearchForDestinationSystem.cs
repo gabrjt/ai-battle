@@ -7,6 +7,7 @@ using UnityEngine.AI;
 
 namespace Game.Systems
 {
+    
     public class SearchForDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

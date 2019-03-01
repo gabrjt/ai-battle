@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(EndFrameBarrier))]
+    [UpdateInGroup(typeof(DestroyBarrier))]
     public class DestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;

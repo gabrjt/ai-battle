@@ -9,6 +9,7 @@ using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    
     public class SearchForTargetSystem : ComponentSystem
     {
         private class Comparer : IComparer<Collider>

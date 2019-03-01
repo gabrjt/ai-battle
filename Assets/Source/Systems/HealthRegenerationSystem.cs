@@ -17,6 +17,8 @@ namespace Game.Systems
 
             public void Execute(ref Health health, [ReadOnly] ref HealthRegeneration healthRegeneration)
             {
+                if (health.Value <= 0) return;
+
                 health.Value += healthRegeneration.Value * DeltaTime;
             }
         }
