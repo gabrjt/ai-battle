@@ -10,6 +10,8 @@ namespace Game.Systems
         {
             ForEach((ref IdleTimeExpired idleTimeExpired) =>
             {
+                if (EntityManager.HasComponent<SearchingForDestination>(idleTimeExpired.This)) return;
+
                 PostUpdateCommands.AddComponent(idleTimeExpired.This, new SearchingForDestination());
             });
         }
