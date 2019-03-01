@@ -118,6 +118,8 @@ namespace Game.Systems
                 InitializedType = GetArchetypeChunkComponentType<Initialized>()
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,

@@ -131,6 +131,8 @@ namespace Game.Systems
                 DestroyedFromEntity = GetComponentDataFromEntity<Destroyed>(true)
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 OwnerQueue = m_OwnerQueue,

@@ -137,6 +137,8 @@ namespace Game.Systems
                 RemoveQueue = m_RemoveQueue.ToConcurrent()
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 AddQueue = m_AddQueue,

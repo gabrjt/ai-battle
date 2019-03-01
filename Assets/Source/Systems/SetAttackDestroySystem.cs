@@ -95,6 +95,8 @@ namespace Game.Systems
         {
             Dispose();
 
+            inputDeps.Complete();
+
             m_SetDestroyMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
@@ -106,6 +108,8 @@ namespace Game.Systems
                 MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true)
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 SetDestroyMap = m_SetDestroyMap,
@@ -114,6 +118,8 @@ namespace Game.Systems
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
+
+            inputDeps.Complete();
 
             return inputDeps;
         }

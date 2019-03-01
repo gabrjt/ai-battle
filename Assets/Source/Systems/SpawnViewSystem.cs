@@ -229,6 +229,8 @@ namespace Game.Systems
                 SkeletonType = GetArchetypeChunkComponentType<Skeleton>(true)
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,

@@ -7,7 +7,6 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(DeadBarrier))]
     public class RemoveDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -157,6 +156,8 @@ namespace Game.Systems
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
+
+            inputDeps.Complete();
 
             inputDeps = new ApplyJob
             {

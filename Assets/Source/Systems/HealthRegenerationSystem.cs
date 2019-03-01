@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(ClampHealthSystem))]
     public class HealthRegenerationSystem : JobComponentSystem
     {
         [BurstCompile]

@@ -5,7 +5,6 @@ using UnityEngine;
 namespace Game.Systems
 {
     [DisableAutoCreation]
-    [UpdateAfter(typeof(DeadBarrier))]
     public class DisableColliderSystem : ComponentSystem
     {
         protected override void OnUpdate()

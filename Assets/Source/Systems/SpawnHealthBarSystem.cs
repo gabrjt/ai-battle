@@ -162,14 +162,14 @@ namespace Game.Systems
                 PositionType = GetArchetypeChunkComponentType<Position>(true)
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
-
-            inputDeps.Complete();
 
             var canvas = GetSingleton<CanvasSingleton>();
             var camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);

@@ -1,12 +1,13 @@
 ﻿using Game.Components;
+using System;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace Game.Systems
 {
-#if USE_JOBS
-
-    [DisableAutoCreation]
     public class SetSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -89,6 +90,8 @@ namespace Game.Systems
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
+            inputDeps.Complete();
+
             inputDeps = new ApplyJob
             {
                 SetSearchingForTargetMap = m_SetSearchingForTargetMap,
@@ -122,38 +125,4 @@ namespace Game.Systems
             }
         }
     }
-
-#else
-
-    public class SetSearchingForTargetSystem : ComponentSystem
-    {
-        private ComponentGroup m_Group;
-
-        protected override void OnCreateManager()
-        {
-            base.OnCreateManager();
-
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>() },
-                Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
-            });
-        }
-
-        protected override void OnUpdate()
-        {
-            ForEach((Entity entity) =>
-            {
-                PostUpdateCommands.AddComponent(entity, new SearchingForTarget
-                {
-                    Radius = 15,
-                    Interval = 1,
-                    StartTime = Time.time
-                });
-            }, m_Group);
-        }
-    }
-
-#endif
 }
