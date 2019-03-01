@@ -8,7 +8,7 @@ namespace Game.Systems
 {
     public class DeadSystem : JobComponentSystem
     {
-        private struct Job : IJobProcessComponentDataWithEntity<Dead>
+        private struct Job : IJobProcessComponentDataWithEntity<Dead, Health>
         {
             public EntityCommandBuffer.Concurrent EntityCommandBuffer;
 
@@ -16,8 +16,10 @@ namespace Game.Systems
 
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead, ref Health health)
             {
+                health.Value = 0;
+
                 if (dead.StartTime + dead.Duration > Time) return;
 
                 var died = EntityCommandBuffer.CreateEntity(index, Archetype);

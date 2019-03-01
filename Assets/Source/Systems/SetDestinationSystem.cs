@@ -96,10 +96,12 @@ namespace Game.Systems
             {
                 if (!PositionFromEntity.Exists(entity)) return;
 
+                var position = PositionFromEntity[entity].Value;
+
                 SetDestinationMap.TryAdd(entity, new Destination
                 {
-                    Value = PositionFromEntity[entity].Value,
-                    LastValue = PositionFromEntity[entity].Value
+                    Value = position,
+                    LastValue = position
                 });
             }
 
@@ -145,12 +147,13 @@ namespace Game.Systems
 
                     if (DestinationFromEntity.Exists(entity))
                     {
+                        EntityCommandBuffer.SetComponent(entity, destination);
+                        
                         if (destination.Value.Equals(DestinationFromEntity[entity].Value))
                         {
                             var destinationReached = EntityCommandBuffer.CreateEntity(Archetype);
                             EntityCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
                         }
-                        EntityCommandBuffer.SetComponent(entity, destination);
                     }
                     else
                     {
