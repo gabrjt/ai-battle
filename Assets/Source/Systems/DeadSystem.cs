@@ -38,7 +38,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new Job
             {

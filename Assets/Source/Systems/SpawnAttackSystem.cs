@@ -128,6 +128,9 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
+            [ReadOnly]
+            public EntityCommandBuffer EventCommandBuffer;
+
             public void Execute()
             {
                 while (ApplyAttackingQueue.TryDequeue(out var applyAttackingData))
@@ -137,8 +140,8 @@ namespace Game.Systems
                     EntityCommandBuffer.AddComponent(entity, applyAttackingData.Attacking);
                     EntityCommandBuffer.AddComponent(entity, applyAttackingData.Cooldown);
 
-                    var attacked = EntityCommandBuffer.CreateEntity(AttackedArchetype);
-                    EntityCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
+                    var attacked = EventCommandBuffer.CreateEntity(AttackedArchetype);
+                    EventCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
                 }
             }
         }
@@ -314,6 +317,7 @@ namespace Game.Systems
             m_ApplyAttackingQueue.Clear();
 
             var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -334,7 +338,8 @@ namespace Game.Systems
             {
                 ApplyAttackingQueue = m_ApplyAttackingQueue,
                 AttackedArchetype = m_AttackedArchetype,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                EventCommandBuffer = eventBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps.Complete();
@@ -365,6 +370,7 @@ namespace Game.Systems
             }.Schedule(entityArray.Length, 64, inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

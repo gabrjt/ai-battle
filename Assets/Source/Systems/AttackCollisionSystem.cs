@@ -132,7 +132,7 @@ namespace Game.Systems
 
             SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1, inputDeps).Complete();
 
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            var eventCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
 
             for (int index = 0; index < m_ResultArray.Length; index++)
             {
@@ -146,16 +146,16 @@ namespace Game.Systems
                 var damage = EntityManager.GetComponentData<Damage>(entity).Value;
                 var target = result.collider.GetComponent<GameObjectEntity>().Entity;
 
-                var damaged = entityCommandBuffer.CreateEntity(m_DamagedArchetype);
-                entityCommandBuffer.SetComponent(damaged, new Damaged
+                var damaged = eventCommandBuffer.CreateEntity(m_DamagedArchetype);
+                eventCommandBuffer.SetComponent(damaged, new Damaged
                 {
                     Value = damage,
                     This = owner,
                     Other = target
                 });
 
-                var collided = entityCommandBuffer.CreateEntity(m_CollidedArchetype);
-                entityCommandBuffer.SetComponent(collided, new Collided
+                var collided = eventCommandBuffer.CreateEntity(m_CollidedArchetype);
+                eventCommandBuffer.SetComponent(collided, new Collided
                 {
                     This = entity,
                     Other = target

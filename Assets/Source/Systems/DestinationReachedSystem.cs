@@ -28,9 +28,6 @@ namespace Game.Systems
 
         private EntityArchetype m_Archetype;
 
-        [Inject]
-        private EndFrameBarrier m_EndFrameBarrier;
-
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -40,11 +37,17 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            return new Job
+            var barrier = World.GetExistingManager<EventBarrier>();
+
+            inputDeps = new Job
             {
-                EntityCommandBuffer = m_EndFrameBarrier.CreateCommandBuffer().ToConcurrent(),
+                EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent(),
                 Archetype = m_Archetype
             }.Schedule(this, inputDeps);
+
+            barrier.AddJobHandleForProducer(inputDeps);
+
+            return inputDeps;
         }
     }
 }

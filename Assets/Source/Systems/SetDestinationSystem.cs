@@ -132,6 +132,9 @@ namespace Game.Systems
             public EntityCommandBuffer EntityCommandBuffer;
 
             [ReadOnly]
+            public EntityCommandBuffer EventCommandBuffer;
+
+            [ReadOnly]
             public EntityArchetype Archetype;
 
             public ComponentDataFromEntity<Destination> DestinationFromEntity;
@@ -151,8 +154,8 @@ namespace Game.Systems
 
                         if (destination.Value.Equals(DestinationFromEntity[entity].Value))
                         {
-                            var destinationReached = EntityCommandBuffer.CreateEntity(Archetype);
-                            EntityCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
+                            var destinationReached = EventCommandBuffer.CreateEntity(Archetype);
+                            EventCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
                         }
                     }
                     else
@@ -195,6 +198,7 @@ namespace Game.Systems
             m_SetDestinationMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<SetBarrier>();
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -212,6 +216,7 @@ namespace Game.Systems
             {
                 SetDestinationMap = m_SetDestinationMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                EventCommandBuffer = eventBarrier.CreateCommandBuffer(),
                 Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
@@ -219,6 +224,7 @@ namespace Game.Systems
             inputDeps.Complete();
 
             barrier.AddJobHandleForProducer(inputDeps);
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }
