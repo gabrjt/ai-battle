@@ -29,6 +29,9 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Target> TargetFromEntity;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Idle> IdleFromEntity;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 if (chunk.Has(TargetFoundType))
@@ -56,7 +59,7 @@ namespace Game.Systems
                         var entity = damaged.Other;
                         var target = damaged.This;
 
-                        if ((DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) || TargetFromEntity.Exists(entity)) continue;
+                        if ((DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target) || TargetFromEntity.Exists(entity)) && !IdleFromEntity.Exists(entity)) continue;
 
                         SetTargetMap.TryAdd(entity, new Target { Value = target });
                     }
@@ -121,7 +124,8 @@ namespace Game.Systems
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
-                TargetFromEntity = GetComponentDataFromEntity<Target>(true)
+                TargetFromEntity = GetComponentDataFromEntity<Target>(true),
+                IdleFromEntity = GetComponentDataFromEntity<Idle>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
