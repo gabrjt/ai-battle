@@ -19,6 +19,9 @@ namespace Game.Systems
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
+            public ArchetypeChunkComponentType<Target> TargetType;
+
+            [ReadOnly]
             public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
 
             [ReadOnly]
@@ -35,6 +38,21 @@ namespace Game.Systems
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
+                if (chunk.Has(TargetType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+                    var targetArray = chunk.GetNativeArray(TargetType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var target = targetArray[entityIndex];
+
+                        if (DeadFromEntity.Exists(target.Value)) continue;
+
+                        SetTargetDestination(entity, target.Value);
+                    }
+                }
                 if (chunk.Has(TargetFoundType))
                 {
                     var targetFoundArray = chunk.GetNativeArray(TargetFoundType);
@@ -76,6 +94,8 @@ namespace Game.Systems
 
             private void Stop(Entity entity)
             {
+                if (!PositionFromEntity.Exists(entity)) return;
+
                 SetDestinationMap.TryAdd(entity, new Destination
                 {
                     Value = PositionFromEntity[entity].Value,
@@ -86,7 +106,6 @@ namespace Game.Systems
             private void SetTargetDestination(Entity entity, Entity target)
             {
                 if (DestinationFromEntity.Exists(entity) && PositionFromEntity.Exists(target))
-
                 {
                     var lastDestination = DestinationFromEntity[entity].Value;
                     SetDestinationMap.TryAdd(entity, new Destination
@@ -122,7 +141,6 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-
                     var destination = SetDestinationMap[entity];
 
                     if (DestinationFromEntity.Exists(entity))
@@ -136,7 +154,7 @@ namespace Game.Systems
                     }
                     else
                     {
-                        EntityCommandBuffer.AddComponent(entity, SetDestinationMap[entity]);
+                        EntityCommandBuffer.AddComponent(entity, destination);
                     }
                 }
 
@@ -155,6 +173,10 @@ namespace Game.Systems
             base.OnCreateManager();
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>() },
+                None = new[] { ComponentType.Create<Destination>(), ComponentType.ReadOnly<Dead>() }
+            }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
@@ -175,6 +197,7 @@ namespace Game.Systems
             {
                 SetDestinationMap = m_SetDestinationMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
+                TargetType = GetArchetypeChunkComponentType<Target>(true),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
