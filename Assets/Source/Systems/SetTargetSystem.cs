@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class SetTargetSystem : JobComponentSystem
+    public class SetTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -24,6 +25,9 @@ namespace Game.Systems
 
             [ReadOnly]
             public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Target> TargetFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -52,7 +56,7 @@ namespace Game.Systems
                         var entity = damaged.Other;
                         var target = damaged.This;
 
-                        if (DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) continue;
+                        if ((DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) || TargetFromEntity.Exists(entity)) continue;
 
                         SetTargetMap.TryAdd(entity, new Target { Value = target });
                     }
@@ -109,10 +113,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_SetTargetMap.IsCreated)
-            {
-                m_SetTargetMap.Dispose();
-            }
+            Dispose();
 
             m_SetTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
@@ -124,7 +125,8 @@ namespace Game.Systems
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
+                TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
@@ -143,16 +145,18 @@ namespace Game.Systems
         {
             base.OnStopRunning();
 
-            if (m_SetTargetMap.IsCreated)
-            {
-                m_SetTargetMap.Dispose();
-            }
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_SetTargetMap.IsCreated)
             {
                 m_SetTargetMap.Dispose();

@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class RemoveDestinationSystem : JobComponentSystem
+    public class RemoveDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -31,6 +32,9 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 if (chunk.Has(TargetType))
@@ -43,7 +47,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        if (!DeadFromEntity.Exists(target.Value)) continue;
+                        if (!DeadFromEntity.Exists(target.Value) && !DestroyFromEntity.Exists(target.Value)) continue;
 
                         RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
@@ -77,7 +81,6 @@ namespace Game.Systems
                     }
                 }
 
-                // TODO: consolidate job phase 2.
                 var deadEntityArray = chunk.GetNativeArray(EntityType);
                 for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
                 {
@@ -93,18 +96,21 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> EntityArray;
+            public NativeHashMap<Entity, Destination> RemoveDestinationMap;
 
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
             public void Execute()
             {
-                for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
+                var entityArray = RemoveDestinationMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
-                    EntityCommandBuffer.RemoveComponent<Destination>(EntityArray[entityIndex]);
+                    EntityCommandBuffer.RemoveComponent<Destination>(entityArray[entityIndex]);
                 }
+
+                entityArray.Dispose();
             }
         }
 
@@ -146,14 +152,13 @@ namespace Game.Systems
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DestinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true),
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>(true),
-                DeadFromEntity = GetComponentDataFromEntity<Dead>(true)
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
-
-            inputDeps.Complete();
 
             inputDeps = new ApplyJob
             {
-                EntityArray = m_RemoveDestinationMap.GetKeyArray(Allocator.TempJob),
+                RemoveDestinationMap = m_RemoveDestinationMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
@@ -166,16 +171,18 @@ namespace Game.Systems
         {
             base.OnStopRunning();
 
-            if (m_RemoveDestinationMap.IsCreated)
-            {
-                m_RemoveDestinationMap.Dispose();
-            }
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_RemoveDestinationMap.IsCreated)
             {
                 m_RemoveDestinationMap.Dispose();

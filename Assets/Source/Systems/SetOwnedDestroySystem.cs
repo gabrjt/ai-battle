@@ -47,13 +47,9 @@ namespace Game.Systems
 
         private struct ApplyJob : IJob
         {
-            [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> OwnerArray;
+            public NativeQueue<Entity> OwnerQueue;
 
-            [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> OwnedArray;
+            public NativeQueue<Entity> OwnedQueue;
 
             [ReadOnly]
             public ComponentDataFromEntity<Owner> OwnerFromEntity;
@@ -62,12 +58,28 @@ namespace Game.Systems
 
             public void Execute()
             {
-                for (var ownedIndex = 0; ownedIndex < OwnedArray.Length; ownedIndex++)
+                var entityIndex = 0;
+
+                var ownerArray = new NativeArray<Entity>(OwnerQueue.Count, Allocator.Temp);
+                while (OwnerQueue.TryDequeue(out var entity))
                 {
-                    for (int ownerIndex = 0; ownerIndex < OwnerArray.Length; ownerIndex++)
+                    ownerArray[entityIndex++] = entity;
+                }
+
+                entityIndex = 0;
+
+                var ownedArray = new NativeArray<Entity>(OwnedQueue.Count, Allocator.Temp);
+                while (OwnedQueue.TryDequeue(out var entity))
+                {
+                    ownedArray[entityIndex++] = entity;
+                }
+
+                for (var ownedIndex = 0; ownedIndex < ownedArray.Length; ownedIndex++)
+                {
+                    for (int ownerIndex = 0; ownerIndex < ownerArray.Length; ownerIndex++)
                     {
-                        var owner = OwnerArray[ownerIndex];
-                        var owned = OwnedArray[ownedIndex];
+                        var owner = ownerArray[ownerIndex];
+                        var owned = ownedArray[ownedIndex];
 
                         if (!OwnerFromEntity.Exists(owned) || owner != OwnerFromEntity[owned].Value) continue;
 
@@ -75,6 +87,9 @@ namespace Game.Systems
                         EntityCommandBuffer.AddComponent(owned, new Disabled());
                     }
                 }
+
+                ownerArray.Dispose();
+                ownedArray.Dispose();
             }
         }
 
@@ -116,28 +131,10 @@ namespace Game.Systems
                 DestroyedFromEntity = GetComponentDataFromEntity<Destroyed>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
-            var entityIndex = 0;
-
-            var ownerArray = new NativeArray<Entity>(m_OwnerQueue.Count, Allocator.TempJob);
-            while (m_OwnerQueue.TryDequeue(out var entity))
-            {
-                ownerArray[entityIndex++] = entity;
-            }
-
-            entityIndex = 0;
-
-            var ownedArray = new NativeArray<Entity>(m_OwnedQueue.Count, Allocator.TempJob);
-            while (m_OwnedQueue.TryDequeue(out var entity))
-            {
-                ownedArray[entityIndex++] = entity;
-            }
-
             inputDeps = new ApplyJob
             {
-                OwnerArray = ownerArray,
-                OwnedArray = ownedArray,
+                OwnerQueue = m_OwnerQueue,
+                OwnedQueue = m_OwnedQueue,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);

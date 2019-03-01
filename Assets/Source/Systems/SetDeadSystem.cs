@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(DamageSystem))]
-    public class SetDeadSystem : JobComponentSystem
+    public class SetDeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -114,10 +115,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_SetDeadMap.IsCreated)
-            {
-                m_SetDeadMap.Dispose();
-            }
+            Dispose();
 
             m_SetDeadMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
@@ -148,16 +146,18 @@ namespace Game.Systems
         {
             base.OnStopRunning();
 
-            if (m_SetDeadMap.IsCreated)
-            {
-                m_SetDeadMap.Dispose();
-            }
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_SetDeadMap.IsCreated)
             {
                 m_SetDeadMap.Dispose();

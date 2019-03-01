@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class RemoveTargetSystem : JobComponentSystem
+    public class RemoveTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -84,20 +85,23 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> EntityArray;
+            public NativeHashMap<Entity, Target> RemoveTargetMap;
 
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
             public void Execute()
             {
-                for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
+                var entityArray = RemoveTargetMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
-                    var entity = EntityArray[entityIndex];
+                    var entity = entityArray[entityIndex];
 
                     EntityCommandBuffer.RemoveComponent<Target>(entity);
                 }
+
+                entityArray.Dispose();
             }
         }
 
@@ -120,16 +124,11 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
             });
-
-            m_RemoveTargetMap = new NativeHashMap<Entity, Target>(5000, Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (m_RemoveTargetMap.IsCreated)
-            {
-                m_RemoveTargetMap.Dispose();
-            }
+            Dispose();
 
             m_RemoveTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
@@ -147,11 +146,9 @@ namespace Game.Systems
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps.Complete();
-
             inputDeps = new ApplyJob
             {
-                EntityArray = m_RemoveTargetMap.GetKeyArray(Allocator.TempJob),
+                RemoveTargetMap = m_RemoveTargetMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
@@ -164,16 +161,18 @@ namespace Game.Systems
         {
             base.OnStopRunning();
 
-            if (m_RemoveTargetMap.IsCreated)
-            {
-                m_RemoveTargetMap.Dispose();
-            }
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_RemoveTargetMap.IsCreated)
             {
                 m_RemoveTargetMap.Dispose();
