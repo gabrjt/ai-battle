@@ -82,14 +82,9 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    if (TargetFromEntity.Exists(entity))
-                    {
-                        TargetFromEntity[entity] = SetTargetMap[entity];
-                    }
-                    else
-                    {
-                        EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
-                    }
+                    if (TargetFromEntity.Exists(entity)) continue;
+
+                    EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
                 }
 
                 entityArray.Dispose();

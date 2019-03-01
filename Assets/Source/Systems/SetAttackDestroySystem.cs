@@ -1,14 +1,84 @@
 ﻿using Game.Components;
+using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class SetAttackDestroySystem : ComponentSystem
+    public class SetAttackDestroySystem : JobComponentSystem, IDisposable
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, Destroy>.Concurrent SetDestroyMap;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Collided> CollidedType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<MaxDistanceReached> MaxDistanceReachedType;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(CollidedType))
+                {
+                    var collidedArray = chunk.GetNativeArray(CollidedType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = collidedArray[entityIndex].This;
+
+                        SetDestroyMap.TryAdd(entity, new Destroy());
+                    }
+                }
+                else if (chunk.Has(MaxDistanceReachedType))
+                {
+                    var maxDistanceArray = chunk.GetNativeArray(MaxDistanceReachedType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = maxDistanceArray[entityIndex].This;
+
+                        SetDestroyMap.TryAdd(entity, new Destroy());
+                    }
+                }
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            [ReadOnly]
+            public NativeHashMap<Entity, Destroy> SetDestroyMap;
+
+            [ReadOnly]
+            public EntityCommandBuffer EntityCommandBuffer;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+
+            public void Execute()
+            {
+                var entityArray = SetDestroyMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+
+                    if (DestroyFromEntity.Exists(entity)) continue;
+
+                    EntityCommandBuffer.AddComponent(entity, SetDestroyMap[entity]);
+                    EntityCommandBuffer.AddComponent(entity, new Disabled());
+                }
+
+                entityArray.Dispose();
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_SetDestroyList;
+        private NativeHashMap<Entity, Destroy> m_SetDestroyMap;
 
         protected override void OnCreateManager()
         {
@@ -19,70 +89,54 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaxDistanceReached>() }
             });
-
-            m_SetDestroyList = new NativeList<Entity>(Allocator.Persistent);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var collidedType = GetArchetypeChunkComponentType<Collided>(true);
-            var MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true);
+            Dispose();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            m_SetDestroyMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
+
+            var barrier = World.GetExistingManager<EndFrameBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                SetDestroyMap = m_SetDestroyMap.ToConcurrent(),
+                CollidedType = GetArchetypeChunkComponentType<Collided>(true),
+                MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true)
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(collidedType))
-                {
-                    var collidedArray = chunk.GetNativeArray(collidedType);
+            inputDeps = new ApplyJob
+            {
+                SetDestroyMap = m_SetDestroyMap,
+                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
+            }.Schedule(inputDeps);
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = collidedArray[entityIndex].This;
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        if (m_SetDestroyList.Contains(entity)) continue;
+            return inputDeps;
+        }
 
-                        m_SetDestroyList.Add(entity);
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
 
-                        //PostUpdateCommands.DestroyEntity(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Destroy());
-                        PostUpdateCommands.AddComponent(entity, new Disabled());
-                    }
-                }
-                else if (chunk.Has(MaxDistanceReachedType))
-                {
-                    var MaxDistanceArray = chunk.GetNativeArray(MaxDistanceReachedType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = MaxDistanceArray[entityIndex].This;
-
-                        if (m_SetDestroyList.Contains(entity)) continue;
-
-                        m_SetDestroyList.Add(entity);
-
-                        //PostUpdateCommands.DestroyEntity(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Destroy());
-                        PostUpdateCommands.AddComponent(entity, new Disabled());
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
-
-            m_SetDestroyList.Clear();
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SetDestroyList.IsCreated)
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_SetDestroyMap.IsCreated)
             {
-                m_SetDestroyList.Dispose();
+                m_SetDestroyMap.Dispose();
             }
         }
     }
