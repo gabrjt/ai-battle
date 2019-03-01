@@ -139,7 +139,7 @@ namespace Game.Systems
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
 
-            inputDeps.Complete();
+            inputDeps.Complete(); // TODO: check this dependency bug.
 
             barrier.AddJobHandleForProducer(inputDeps);
 

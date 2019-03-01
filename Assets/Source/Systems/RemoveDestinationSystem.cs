@@ -142,7 +142,6 @@ namespace Game.Systems
 
             var barrier = World.GetExistingManager<RemoveBarrier>();
 
-
             inputDeps = new ConsolidateJob
             {
                 RemoveDestinationMap = m_RemoveDestinationMap.ToConcurrent(),
@@ -161,7 +160,7 @@ namespace Game.Systems
                 EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            inputDeps.Complete();
+            inputDeps.Complete(); // TODO: check this dependency bug.
 
             barrier.AddJobHandleForProducer(inputDeps);
 

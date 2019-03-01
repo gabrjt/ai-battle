@@ -221,7 +221,7 @@ namespace Game.Systems
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
 
-            inputDeps.Complete();
+            inputDeps.Complete(); // TODO: check this dependency bug.
 
             barrier.AddJobHandleForProducer(inputDeps);
             eventBarrier.AddJobHandleForProducer(inputDeps);

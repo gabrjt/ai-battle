@@ -113,7 +113,7 @@ namespace Game.Systems
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(inputDeps);
 
-            inputDeps.Complete();
+            inputDeps.Complete(); // TODO: check this dependency bug.
 
             barrier.AddJobHandleForProducer(inputDeps);
 
