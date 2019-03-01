@@ -110,6 +110,9 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
+            [ReadOnly]
+            public EntityArchetype Archetype;
+
             public ComponentDataFromEntity<Destination> DestinationFromEntity;
 
             public void Execute()
@@ -120,9 +123,16 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
+                    var destination = SetDestinationMap[entity];
+
                     if (DestinationFromEntity.Exists(entity))
                     {
-                        EntityCommandBuffer.SetComponent(entity, SetDestinationMap[entity]);
+                        if (destination.Value.Equals(DestinationFromEntity[entity].Value))
+                        {
+                            var destinationReached = EntityCommandBuffer.CreateEntity(Archetype);
+                            EntityCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
+                        }
+                        EntityCommandBuffer.SetComponent(entity, destination);
                     }
                     else
                     {
@@ -138,6 +148,8 @@ namespace Game.Systems
 
         private NativeHashMap<Entity, Destination> m_SetDestinationMap;
 
+        private EntityArchetype m_Archetype;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -147,6 +159,8 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
             });
+
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<DestinationReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -172,6 +186,7 @@ namespace Game.Systems
             {
                 SetDestinationMap = m_SetDestinationMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
 
