@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
     [UpdateAfter(typeof(DamageSystem))]
     public class SetDeadSystem : JobComponentSystem
     {

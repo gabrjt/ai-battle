@@ -6,10 +6,9 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(EndFrameBarrier))]
     public class RemoveTargetSystem : JobComponentSystem
     {
-        //[BurstCompile]
+        [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
             public NativeHashMap<Entity, Target>.Concurrent RemoveTargetMap;
@@ -58,7 +57,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        if (TargetFromEntity.Exists(entity) && target.Value != default(Entity) && (!DeadFromEntity.Exists(target.Value) || !DestroyFromEntity.Exists(target.Value))) continue; // TODO: check != default(Entity).
+                        if (target.Value != default) continue; // TODO: check != default.
 
                         RemoveTargetMap.TryAdd(entity, target);
                     }
@@ -72,7 +71,9 @@ namespace Game.Systems
                         var entity = killedArray[entityIndex].This;
                         var target = killedArray[entityIndex].Other;
 
-                        if ((!TargetFromEntity.Exists(entity) || TargetFromEntity[entity].Value != target) && TargetFromEntity[entity].Value != default(Entity)) continue;
+                        var targetExists = TargetFromEntity.Exists(entity);
+
+                        if (!targetExists || (targetExists && TargetFromEntity[entity].Value != target)) continue;
 
                         RemoveTargetMap.TryAdd(entity, new Target { Value = target });
                     }

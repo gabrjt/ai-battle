@@ -11,7 +11,6 @@ using MRandom = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
     public class SpawnAttackSystem : JobComponentSystem
     {
         private struct ConsolidateJob : IJobChunk

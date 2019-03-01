@@ -6,7 +6,6 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
     public class RemoveDestinationSystem : JobComponentSystem
     {
         [BurstCompile]

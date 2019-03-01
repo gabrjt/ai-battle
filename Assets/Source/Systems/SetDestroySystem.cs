@@ -4,7 +4,6 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
     public class SetDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;

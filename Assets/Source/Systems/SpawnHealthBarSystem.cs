@@ -9,7 +9,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    //[DisableAutoCreation]
     [UpdateAfter(typeof(SetCameraSingletonSystem))]
     [UpdateAfter(typeof(SetCanvasSingletonSystem))]
     public class SpawnHealthBarSystem : JobComponentSystem
