@@ -162,6 +162,8 @@ namespace Game.Systems
             {
                 meshRenderer.enabled = enabled;
             }
+
+            gameObject.GetComponentInChildren<Animator>().enabled = enabled;
         }
 
         protected override void OnDestroyManager()
