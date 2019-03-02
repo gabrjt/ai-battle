@@ -8,7 +8,7 @@ using Unity.Jobs;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.AI;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -136,7 +136,7 @@ namespace Game.Systems
 
         internal int m_TotalCount = 500; // TODO: externalize count;
 
-        private MRandom m_Random;
+        private Random m_Random;
 
         protected override void OnCreateManager()
         {
@@ -149,7 +149,7 @@ namespace Game.Systems
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Attach>());
 
-            m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)System.Environment.TickCount);
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
         }

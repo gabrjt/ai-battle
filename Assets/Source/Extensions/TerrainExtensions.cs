@@ -1,12 +1,12 @@
 ﻿using Unity.Mathematics;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Extensions
 {
     public static class TerrainExtensions
     {
-        private static MRandom m_Random = new MRandom((uint)System.Environment.TickCount);
+        private static Random m_Random = new Random((uint)System.Environment.TickCount);
 
         public static float3 GetRandomPosition(this Terrain terrain)
         {

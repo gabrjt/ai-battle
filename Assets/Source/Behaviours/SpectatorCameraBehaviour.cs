@@ -11,7 +11,7 @@ using UnityEditor;
 #endif
 
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 public class SpectatorCameraBehaviour : MonoBehaviour
 {
@@ -32,11 +32,11 @@ public class SpectatorCameraBehaviour : MonoBehaviour
 
     private EntityManager m_EntityManager;
 
-    private MRandom m_Random;
+    private Random m_Random;
 
     private void Start()
     {
-        m_Random = new MRandom((uint)System.Environment.TickCount);
+        m_Random = new Random((uint)System.Environment.TickCount);
 
         m_EntityManager = World.Active.GetExistingManager<EntityManager>();
 

@@ -72,8 +72,7 @@ namespace Game.Systems
                         var health = HealthFromEntity[owner].Value;
                         var maxHealth = MaxHealthFromEntity[owner].Value;
 
-                        var isVisible = math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera &&
-                                        health > 0 && health < maxHealth;
+                        var isVisible = IsVisible(maxSqrDistanceFromCamera, owner) && health > 0 && health < maxHealth;
 
                         SetVisible(hasVisible, entity, isVisible);
                     }
@@ -86,11 +85,14 @@ namespace Game.Systems
                         var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex].Value;
                         var owner = ownerArray[entityIndex].Value;
 
-                        var isVisible = math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera;
-
-                        SetVisible(hasVisible, entity, isVisible);
+                        SetVisible(hasVisible, entity, IsVisible(maxSqrDistanceFromCamera, owner));
                     }
                 }
+            }
+
+            private bool IsVisible(float maxSqrDistanceFromCamera, Entity owner)
+            {
+                return math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera;
             }
 
             private void SetVisible(bool hasVisible, Entity entity, bool isVisible)

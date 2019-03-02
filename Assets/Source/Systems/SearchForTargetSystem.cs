@@ -5,7 +5,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -33,7 +33,7 @@ namespace Game.Systems
 
         private int m_Layer;
 
-        private MRandom m_Random;
+        private Random m_Random;
 
         readonly Comparer m_Comparer = new Comparer();
 
@@ -59,7 +59,7 @@ namespace Game.Systems
             m_LayerMask = LayerMask.NameToLayer("Entity");
             m_Layer = 1 << m_LayerMask;
 
-            m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)System.Environment.TickCount);
             m_OnUpdate = OnUpdate;
         }
 

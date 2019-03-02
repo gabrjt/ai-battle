@@ -1,15 +1,17 @@
 ﻿using Game.Components;
 using Game.Enums;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
-    public partial class SpawnViewSystem : JobComponentSystem
+    public partial class SpawnViewSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -39,29 +41,30 @@ namespace Game.Systems
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
 
-                var initialized = chunk.Has(InitializedType);
-                var isKnight = chunk.Has(KnightType);
-                var isOrcWolfRider = chunk.Has(OrcWolfRiderType);
-                var isSkeleton = chunk.Has(SkeletonType);
+                var hasInitialized = chunk.Has(InitializedType);
+                var hasKnight = chunk.Has(KnightType);
+                var hasOrcWolfRider = chunk.Has(OrcWolfRiderType);
+                var hasSkeleton = chunk.Has(SkeletonType);
+
                 var viewType = default(ViewType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
 
-                    if (!initialized)
+                    if (!hasInitialized)
                     {
                         AddInitializedEntityQueue.Enqueue(entity);
 
-                        if (isKnight)
+                        if (hasKnight)
                         {
                             viewType = ViewType.Knight;
                         }
-                        else if (isOrcWolfRider)
+                        else if (hasOrcWolfRider)
                         {
                             viewType = ViewType.OrcWolfRider;
                         }
-                        else if (isSkeleton)
+                        else if (hasSkeleton)
                         {
                             viewType = ViewType.Skeleton;
                         }
@@ -312,6 +315,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_AddInitializedEntityQueue.IsCreated)
             {
                 m_AddInitializedEntityQueue.Dispose();

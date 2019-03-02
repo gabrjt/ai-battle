@@ -1,19 +1,96 @@
 ﻿using Game.Components;
+using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(SetBarrier))]
-    public class SetIdleSystem : ComponentSystem
+    public class SetIdleSystem : JobComponentSystem, IDisposable
     {
+        [BurstCompile]
+        private struct ConsolidateJob : IJobChunk
+        {
+            public NativeHashMap<Entity, Idle>.Concurrent SetMap;
+
+            [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<Character> CharacterType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<DestinationReached> DestinationReachedType;
+
+            public Random Random;
+
+            public float Time;
+
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                if (chunk.Has(CharacterType))
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        SetIdle(entity);
+                    }
+                }
+                else if (chunk.Has(DestinationReachedType))
+                {
+                    var destinationReachedArray = chunk.GetNativeArray(DestinationReachedType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = destinationReachedArray[entityIndex].This;
+
+                        SetIdle(entity);
+                    }
+                }
+            }
+
+            private void SetIdle(Entity entity)
+            {
+                SetMap.TryAdd(entity, new Idle
+                {
+                    Duration = Random.NextFloat(2, 10),
+                    StartTime = Time
+                });
+            }
+        }
+
+        private struct ApplyJob : IJob
+        {
+            [ReadOnly]
+            public NativeHashMap<Entity, Idle> SetMap;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
+
+                for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                {
+                    var entity = entityArray[entityIndex];
+
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
+                }
+
+                entityArray.Dispose();
+            }
+        }
+
         private ComponentGroup m_Group;
 
-        private NativeList<Entity> m_SetIdleList;
+        private NativeHashMap<Entity, Idle> m_SetMap;
 
-        private MRandom m_Random;
+        private Random m_Random;
 
         protected override void OnCreateManager()
         {
@@ -35,74 +112,57 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationReached>() }
             });
 
-            m_SetIdleList = new NativeList<Entity>(Allocator.Persistent);
-
-            m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)System.Environment.TickCount);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var characterType = GetArchetypeChunkComponentType<Character>(true);
-            var destinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true);
+            Dispose();
 
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            m_SetMap = new NativeHashMap<Entity, Idle>(m_Group.CalculateLength(), Allocator.TempJob);
+
+            var barrier = World.GetExistingManager<SetBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
+                SetMap = m_SetMap.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
+                CharacterType = GetArchetypeChunkComponentType<Character>(true),
+                DestinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true),
+                Random = m_Random,
+                Time = Time.time
+            }.Schedule(m_Group, inputDeps);
 
-                if (chunk.Has(characterType))
-                {
-                    var entityArray = chunk.GetNativeArray(entityType);
+            inputDeps = new ApplyJob
+            {
+                SetMap = m_SetMap,
+                CommandBuffer = barrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
 
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
+            barrier.AddJobHandleForProducer(inputDeps);
 
-                        if (m_SetIdleList.Contains(entity)) continue;
+            return inputDeps;
+        }
 
-                        m_SetIdleList.Add(entity);
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
 
-                        PostUpdateCommands.AddComponent(entity, new Idle
-                        {
-                            Duration = m_Random.NextFloat(2, 10),
-                            StartTime = Time.time
-                        });
-                    }
-                }
-                else if (chunk.Has(destinationReachedType))
-                {
-                    var destinationReachedArray = chunk.GetNativeArray(destinationReachedType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = destinationReachedArray[entityIndex].This;
-
-                        if (EntityManager.HasComponent<Idle>(entity) || m_SetIdleList.Contains(entity)) continue;
-
-                        m_SetIdleList.Add(entity);
-
-                        PostUpdateCommands.AddComponent(entity, new Idle
-                        {
-                            Duration = m_Random.NextFloat(2, 10),
-                            StartTime = Time.time
-                        });
-                    }
-                }
-            }
-
-            chunkArray.Dispose();
-
-            m_SetIdleList.Clear();
+            Dispose();
         }
 
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
 
-            if (m_SetIdleList.IsCreated)
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_SetMap.IsCreated)
             {
-                m_SetIdleList.Dispose();
+                m_SetMap.Dispose();
             }
         }
     }

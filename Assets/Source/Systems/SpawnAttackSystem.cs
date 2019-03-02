@@ -7,7 +7,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using MRandom = Unity.Mathematics.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -244,7 +244,7 @@ namespace Game.Systems
 
         private NativeQueue<ApplyAttackingData> m_ApplyAttackingQueue;
 
-        private MRandom m_Random;
+        private Random m_Random;
 
         protected override void OnCreateManager()
         {
@@ -305,7 +305,7 @@ namespace Game.Systems
             Object.Destroy(sphere);
 #endif
 
-            m_Random = new MRandom((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)System.Environment.TickCount);
 
             m_ApplyAttackingQueue = new NativeQueue<ApplyAttackingData>(Allocator.Persistent);
             m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
