@@ -204,7 +204,7 @@ namespace Game.Systems
 
                     case 2:
                         viewType = ViewType.Skeleton;
-                        attackDuration = 2.4f;
+                        attackDuration = 2f;
                         break;
 
                     default:
