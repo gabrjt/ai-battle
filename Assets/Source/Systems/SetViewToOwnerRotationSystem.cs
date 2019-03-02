@@ -18,8 +18,6 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Owner owner)
             {
-                if (!RotationFromEntity.Exists(owner.Value)) return;
-
                 RotationFromEntity[entity] = RotationFromEntity[owner.Value];
             }
         }
