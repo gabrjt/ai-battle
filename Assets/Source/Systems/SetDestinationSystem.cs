@@ -13,7 +13,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Destination>.Concurrent SetDestinationMap;
+            public NativeHashMap<Entity, Destination>.Concurrent SetMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -83,7 +83,7 @@ namespace Game.Systems
 
                         var entity = destinationFound.This;
 
-                        SetDestinationMap.TryAdd(entity, new Destination
+                        SetMap.TryAdd(entity, new Destination
                         {
                             Value = destinationFound.Value,
                             LastValue = destinationFound.Value
@@ -94,11 +94,9 @@ namespace Game.Systems
 
             private void Stop(Entity entity)
             {
-                if (!PositionFromEntity.Exists(entity)) return;
-
                 var position = PositionFromEntity[entity].Value;
 
-                SetDestinationMap.TryAdd(entity, new Destination
+                SetMap.TryAdd(entity, new Destination
                 {
                     Value = position,
                     LastValue = position
@@ -107,10 +105,10 @@ namespace Game.Systems
 
             private void SetTargetDestination(Entity entity, Entity target)
             {
-                if (DestinationFromEntity.Exists(entity) && PositionFromEntity.Exists(target))
+                if (DestinationFromEntity.Exists(entity))
                 {
                     var lastDestination = DestinationFromEntity[entity].Value;
-                    SetDestinationMap.TryAdd(entity, new Destination
+                    SetMap.TryAdd(entity, new Destination
                     {
                         Value = PositionFromEntity[target].Value,
                         LastValue = lastDestination
@@ -132,9 +130,6 @@ namespace Game.Systems
             public EntityCommandBuffer EntityCommandBuffer;
 
             [ReadOnly]
-            public EntityCommandBuffer EventCommandBuffer;
-
-            [ReadOnly]
             public EntityArchetype Archetype;
 
             public ComponentDataFromEntity<Destination> DestinationFromEntity;
@@ -150,14 +145,7 @@ namespace Game.Systems
 
                     if (DestinationFromEntity.Exists(entity))
                     {
-                        EntityCommandBuffer.SetComponent(entity, destination);
-                        /*
-                        if (destination.Value.Equals(DestinationFromEntity[entity].Value))
-                        {
-                            var destinationReached = EventCommandBuffer.CreateEntity(Archetype);
-                            EventCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
-                        }
-                        */
+                        EntityCommandBuffer.SetComponent(entity, destination);                        
                     }
                     else
                     {
@@ -171,7 +159,7 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, Destination> m_SetDestinationMap;
+        private NativeHashMap<Entity, Destination> m_SetMap;
 
         private EntityArchetype m_Archetype;
 
@@ -196,14 +184,13 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_SetDestinationMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<SetBarrier>();
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SetDestinationMap = m_SetDestinationMap.ToConcurrent(),
+                SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
@@ -215,15 +202,13 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                SetDestinationMap = m_SetDestinationMap,
+                SetDestinationMap = m_SetMap,
                 EntityCommandBuffer = barrier.CreateCommandBuffer(),
-                EventCommandBuffer = eventBarrier.CreateCommandBuffer(),
                 Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
-            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }
@@ -244,9 +229,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetDestinationMap.IsCreated)
+            if (m_SetMap.IsCreated)
             {
-                m_SetDestinationMap.Dispose();
+                m_SetMap.Dispose();
             }
         }
     }
