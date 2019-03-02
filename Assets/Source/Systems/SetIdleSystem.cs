@@ -25,8 +25,10 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<DestinationReached> DestinationReachedType;
 
+            [ReadOnly]
             public Random Random;
 
+            [ReadOnly]
             public float Time;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
