@@ -28,7 +28,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
+            var commandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
 
             var terrain = Terrain.activeTerrain;
 
@@ -46,8 +46,8 @@ namespace Game.Systems
 
                     if (NavMesh.SamplePosition(terrain.GetRandomPosition(), out var hit, 1, NavMesh.AllAreas))
                     {
-                        var destinationFound = entityCommandBuffer.CreateEntity(m_Archetype);
-                        entityCommandBuffer.SetComponent(destinationFound, new DestinationFound
+                        var destinationFound = commandBuffer.CreateEntity(m_Archetype);
+                        commandBuffer.SetComponent(destinationFound, new DestinationFound
                         {
                             This = entity,
                             Value = hit.position
