@@ -82,7 +82,7 @@ namespace Game.Systems
             public NativeArray<SetData> SetDataArray;
 
             [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -91,15 +91,15 @@ namespace Game.Systems
                     switch (SetDataArray[index].ViewType)
                     {
                         case ViewType.Knight:
-                            EntityCommandBuffer.AddComponent(EntityArray[index], new Knight());
+                            CommandBuffer.AddComponent(EntityArray[index], new Knight());
                             break;
 
                         case ViewType.OrcWolfRider:
-                            EntityCommandBuffer.AddComponent(EntityArray[index], new OrcWolfRider());
+                            CommandBuffer.AddComponent(EntityArray[index], new OrcWolfRider());
                             break;
 
                         case ViewType.Skeleton:
-                            EntityCommandBuffer.AddComponent(EntityArray[index], new Skeleton());
+                            CommandBuffer.AddComponent(EntityArray[index], new Skeleton());
                             break;
                     }
                 }
@@ -247,7 +247,7 @@ namespace Game.Systems
                 setDataArray[entityIndex] = setData;
             }
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var setBarrier = World.GetExistingManager<SetBarrier>();
 
             var inputDeps = default(JobHandle);
 
@@ -270,7 +270,7 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps.Complete();

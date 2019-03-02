@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,12 +7,13 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
     [UpdateAfter(typeof(SetCameraSingletonSystem))]
     [UpdateAfter(typeof(SetCanvasSingletonSystem))]
-    public class SpawnHealthBarSystem : JobComponentSystem
+    public class SpawnHealthBarSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -60,25 +62,32 @@ namespace Game.Systems
             }
         }
 
-        private struct ApplyJob : IJob
+        private struct AddInitializedJob : IJob
         {
             public NativeQueue<Entity> AddInitializedEntityQueue;
 
-            public NativeQueue<Entity> RemoveInitializedEntityQueue;
-
-            [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
                 while (AddInitializedEntityQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.AddComponent(entity, new Initialized());
+                    CommandBuffer.AddComponent(entity, new Initialized());
                 }
+            }
+        }
 
+        private struct RemoveInitializedJob : IJob
+        {
+            public NativeQueue<Entity> RemoveInitializedEntityQueue;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
                 while (RemoveInitializedEntityQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.RemoveComponent<Initialized>(entity);
+                    CommandBuffer.RemoveComponent<Initialized>(entity);
                 }
             }
         }
@@ -150,7 +159,8 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>() && !HasSingleton<CanvasSingleton>()) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -162,12 +172,19 @@ namespace Game.Systems
                 PositionType = GetArchetypeChunkComponentType<Position>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps = new ApplyJob
+            var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
+
+            var removeInitializedDeps = new RemoveInitializedJob
+            {
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
+                CommandBuffer = removeBarrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
 
             inputDeps.Complete();
 
@@ -202,7 +219,8 @@ namespace Game.Systems
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>()
             }.Schedule(entityArray.Length, 64, inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            setBarrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }
@@ -211,6 +229,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_AddInitializedEntityQueue.IsCreated)
             {
                 m_AddInitializedEntityQueue.Dispose();
