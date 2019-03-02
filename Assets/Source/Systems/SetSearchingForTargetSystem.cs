@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    // ONE DEPENDENCY TO RULE THEM ALL
     [UpdateBefore(typeof(SetDeadSystem))]
     [UpdateBefore(typeof(RemoveDestinationSystem))]
     [UpdateBefore(typeof(SetOwnedDestroySystem))]
@@ -16,6 +17,7 @@ namespace Game.Systems
     [UpdateBefore(typeof(RemoveSearchingForTargetSystem))]
     [UpdateBefore(typeof(SetAttackDestroySystem))]
     [UpdateBefore(typeof(SetIdleSystem))]
+    [UpdateBefore(typeof(RemoveSearchingForDestinationSystem))]
     public class SetSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
