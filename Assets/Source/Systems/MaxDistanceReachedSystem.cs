@@ -62,8 +62,6 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_MaxDistanceReachedQueue.Clear();
-
             var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob

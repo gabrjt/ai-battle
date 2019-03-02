@@ -60,9 +60,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_DiedQueue.Clear();
-
-            var barrier = World.GetExistingManager<EventBarrier>();
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -73,11 +71,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 DiedQueue = m_DiedQueue,
-                CommandBuffer = barrier.CreateCommandBuffer(),
+                CommandBuffer = eventBarrier.CreateCommandBuffer(),
                 Archetype = m_Archetype,
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -12,7 +12,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Target>.Concurrent RemoveTargetMap;
+            public NativeHashMap<Entity, Target>.Concurrent RemoveMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -46,7 +46,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        RemoveTargetMap.TryAdd(entity, target);
+                        RemoveMap.TryAdd(entity, target);
                     }
                 }
                 else if (chunk.Has(TargetType))
@@ -60,7 +60,7 @@ namespace Game.Systems
 
                         if (target.Value != default && !DeadFromEntity.Exists(target.Value) && !DestroyFromEntity.Exists(target.Value)) continue; // TODO: check != default.
 
-                        RemoveTargetMap.TryAdd(entity, target);
+                        RemoveMap.TryAdd(entity, target);
                     }
                 }
                 else if (chunk.Has(KilledType))
@@ -76,7 +76,7 @@ namespace Game.Systems
 
                         if (!targetExists || (targetExists && TargetFromEntity[entity].Value != target)) continue;
 
-                        RemoveTargetMap.TryAdd(entity, new Target { Value = target });
+                        RemoveMap.TryAdd(entity, new Target { Value = target });
                     }
                 }
             }
@@ -87,8 +87,7 @@ namespace Game.Systems
             [ReadOnly]
             public NativeHashMap<Entity, Target> RemoveTargetMap;
 
-            [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -98,7 +97,7 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    EntityCommandBuffer.RemoveComponent<Target>(entity);
+                    CommandBuffer.RemoveComponent<Target>(entity);
                 }
 
                 entityArray.Dispose();
@@ -132,11 +131,11 @@ namespace Game.Systems
 
             m_RemoveTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<RemoveBarrier>();
+            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                RemoveTargetMap = m_RemoveTargetMap.ToConcurrent(),
+                RemoveMap = m_RemoveTargetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 DeadType = GetArchetypeChunkComponentType<Dead>(true),
@@ -149,10 +148,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 RemoveTargetMap = m_RemoveTargetMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                CommandBuffer = removeBarrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

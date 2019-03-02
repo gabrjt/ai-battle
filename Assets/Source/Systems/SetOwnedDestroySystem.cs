@@ -118,9 +118,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_OwnerQueue.Clear();
-
-            var barrier = World.GetExistingManager<SetBarrier>();
+            var setBarrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -135,11 +133,11 @@ namespace Game.Systems
             {
                 OwnerQueue = m_OwnerQueue,
                 OwnedQueue = m_OwnedQueue,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                EntityCommandBuffer = setBarrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            setBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

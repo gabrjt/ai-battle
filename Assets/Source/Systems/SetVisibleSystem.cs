@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -11,7 +12,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateAfter(typeof(SetCameraSingletonSystem))]
-    public class SetVisibleSystem : JobComponentSystem
+    public class SetVisibleSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -108,24 +109,32 @@ namespace Game.Systems
             }
         }
 
-        private struct ApplyJob : IJob
+        private struct AddVisibleJob : IJob
         {
             public NativeQueue<Entity> AddQueue;
 
-            public NativeQueue<Entity> RemoveQueue;
-
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
                 while (AddQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.AddComponent(entity, new Visible());
+                    CommandBuffer.AddComponent(entity, new Visible());
                 }
+            }
+        }
 
+        private struct RemoveVisibleJob : IJob
+        {
+            public NativeQueue<Entity> RemoveQueue;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
                 while (RemoveQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.RemoveComponent<Visible>(entity);
+                    CommandBuffer.RemoveComponent<Visible>(entity);
                 }
             }
         }
@@ -160,7 +169,8 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: use RequireSingletonForUpdate.
 
-            var barrier = World.Active.GetExistingManager<SetBarrier>();
+            var setBarrier = World.Active.GetExistingManager<SetBarrier>();
+            var removeBarrier = World.Active.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -178,14 +188,22 @@ namespace Game.Systems
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps = new ApplyJob
+            var addVisibleDeps = new AddVisibleJob
             {
                 AddQueue = m_AddQueue,
-                RemoveQueue = m_RemoveQueue,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                CommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            var removeVisibleDeps = new RemoveVisibleJob
+            {
+                RemoveQueue = m_RemoveQueue,
+                CommandBuffer = setBarrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps = JobHandle.CombineDependencies(addVisibleDeps, removeVisibleDeps);
+
+            setBarrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

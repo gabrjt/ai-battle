@@ -122,7 +122,7 @@ namespace Game.Systems
 
             m_RemoveMap = new NativeHashMap<Entity, SearchingForDestination>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<RemoveBarrier>();
+            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -138,10 +138,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 RemoveMap = m_RemoveMap,
-                CommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = removeBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -115,9 +115,6 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_AddInitializedEntityQueue.Clear();
-            m_RemoveInitializedEntityQueue.Clear();
-
             var setBarrier = World.GetExistingManager<SetBarrier>();
             var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 

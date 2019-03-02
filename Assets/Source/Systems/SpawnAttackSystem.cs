@@ -314,9 +314,6 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_SpawnDataQueue.Clear();
-            m_ApplyAttackingQueue.Clear();
-
             var setBarrier = World.GetExistingManager<SetBarrier>();
             var eventBarrier = World.GetExistingManager<EventBarrier>();
 

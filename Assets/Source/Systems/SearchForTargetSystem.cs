@@ -76,8 +76,6 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_DataQueue.Clear();
-
             inputDeps = new ConsolidateJob
             {
                 DataQueue = m_DataQueue.ToConcurrent(),
