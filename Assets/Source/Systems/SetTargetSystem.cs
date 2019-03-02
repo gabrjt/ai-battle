@@ -12,7 +12,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Target>.Concurrent SetTargetMap;
+            public NativeHashMap<Entity, Target>.Concurrent SetMap;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
@@ -24,13 +24,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
-
-            [ReadOnly]
             public ComponentDataFromEntity<Target> TargetFromEntity;
-
-            [ReadOnly]
-            public ComponentDataFromEntity<Idle> IdleFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -44,9 +38,9 @@ namespace Game.Systems
                         var entity = targetFound.This;
                         var target = targetFound.Other;
 
-                        if (DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target)) continue;
+                        if (DeadFromEntity.Exists(target)) continue;
 
-                        SetTargetMap.TryAdd(entity, new Target { Value = target });
+                        SetMap.TryAdd(entity, new Target { Value = target });
                     }
                 }
                 else if (chunk.Has(DamagedType))
@@ -56,12 +50,14 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var damaged = damagedArray[entityIndex];
-                        var entity = damaged.Other;
-                        var target = damaged.This;
+                        var damagedEntity = damaged.Other;
+                        var hasCurrentTarget = TargetFromEntity.Exists(damagedEntity);
+                        var currentTarget = hasCurrentTarget ? TargetFromEntity[damagedEntity].Value : default;
+                        var newTarget = damaged.This;
 
-                        if ((DeadFromEntity.Exists(target) || DestroyFromEntity.Exists(target) || TargetFromEntity.Exists(entity)) && !IdleFromEntity.Exists(entity)) continue;
+                        if (DeadFromEntity.Exists(newTarget) || hasCurrentTarget && !DeadFromEntity.Exists(currentTarget)) continue;
 
-                        SetTargetMap.TryAdd(entity, new Target { Value = target });
+                        SetMap.TryAdd(damagedEntity, new Target { Value = newTarget });
                     }
                 }
             }
@@ -70,24 +66,29 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, Target> SetTargetMap;
+            public NativeHashMap<Entity, Target> SetMap;
+
+            public EntityCommandBuffer CommandBuffer;
 
             [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
-
             public ComponentDataFromEntity<Target> TargetFromEntity;
 
             public void Execute()
             {
-                var entityArray = SetTargetMap.GetKeyArray(Allocator.Temp);
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
 
-                    if (TargetFromEntity.Exists(entity)) continue;
-
-                    EntityCommandBuffer.AddComponent(entity, SetTargetMap[entity]);
+                    if (TargetFromEntity.Exists(entity))
+                    {
+                        CommandBuffer.SetComponent(entity, SetMap[entity]);
+                    }
+                    else
+                    {
+                        CommandBuffer.AddComponent(entity, SetMap[entity]);
+                    }
                 }
 
                 entityArray.Dispose();
@@ -119,19 +120,17 @@ namespace Game.Systems
 
             inputDeps = new ConsolidateJob
             {
-                SetTargetMap = m_SetTargetMap.ToConcurrent(),
+                SetMap = m_SetTargetMap.ToConcurrent(),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true),
-                IdleFromEntity = GetComponentDataFromEntity<Idle>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                SetTargetMap = m_SetTargetMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                SetMap = m_SetTargetMap,
+                CommandBuffer = barrier.CreateCommandBuffer(),
                 TargetFromEntity = GetComponentDataFromEntity<Target>()
             }.Schedule(inputDeps);
 
