@@ -172,7 +172,7 @@ namespace Game.Systems
                 if (int.TryParse(EntityManager.GetComponentObject<TMPro.TMP_InputField>(GetSingleton<CharacterCountInputField>().Owner).text, out var inputFieldCount) &&
                     inputFieldCount > 0)
                 {
-                    m_TotalCount = inputFieldCount;
+                    m_TotalCount = math.min(inputFieldCount, 10000);
                 }
             }
 

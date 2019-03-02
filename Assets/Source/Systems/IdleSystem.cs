@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -7,7 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class IdleSystem : JobComponentSystem
+    public class IdleSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Idle>

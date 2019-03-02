@@ -1,4 +1,6 @@
 ﻿using Game.Components;
+using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -7,50 +9,93 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    // TODO: use Burst.
-    public class MaxDistanceReachedSystem : JobComponentSystem
+    public class MaxDistanceReachedSystem : JobComponentSystem, IDisposable
     {
+        [BurstCompile]
         [RequireSubtractiveComponent(typeof(Destroy))]
-        private struct Job : IJobProcessComponentDataWithEntity<Position, MaxSqrDistance>
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Position, MaxSqrDistance>
         {
-            public EntityCommandBuffer.Concurrent EntityCommandBuffer;
-
-            public EntityArchetype Archetype;
+            public NativeQueue<MaxDistanceReached>.Concurrent MaxDistanceReachedQueue;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaxSqrDistance maxSqrDistance)
             {
                 if (math.distancesq(position.Value, maxSqrDistance.Origin) < maxSqrDistance.Value) return;
 
-                var maxDistanceReached = EntityCommandBuffer.CreateEntity(index, Archetype);
-                EntityCommandBuffer.SetComponent(index, maxDistanceReached, new MaxDistanceReached
+                MaxDistanceReachedQueue.Enqueue(new MaxDistanceReached
                 {
                     This = entity
                 });
             }
         }
 
+        private struct ApplyJob : IJob
+        {
+            public NativeQueue<MaxDistanceReached> MaxDistanceReachedQueue;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            [ReadOnly]
+            public EntityArchetype Archetype;
+
+            public void Execute()
+            {
+                while (MaxDistanceReachedQueue.TryDequeue(out var maxDistanceReachedComponent))
+                {
+                    var maxDistanceReached = CommandBuffer.CreateEntity(Archetype);
+                    CommandBuffer.SetComponent(maxDistanceReached, maxDistanceReachedComponent);
+                }
+            }
+        }
+
         private EntityArchetype m_Archetype;
+
+        private NativeQueue<MaxDistanceReached> m_MaxDistanceReachedQueue;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<MaxDistanceReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<MaxDistanceReached>());
+
+            m_MaxDistanceReachedQueue = new NativeQueue<MaxDistanceReached>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var barrier = World.GetExistingManager<EventBarrier>();
+            m_MaxDistanceReachedQueue.Clear();
 
-            inputDeps = new Job
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
+
+            inputDeps = new ConsolidateJob
             {
-                EntityCommandBuffer = barrier.CreateCommandBuffer().ToConcurrent(),
-                Archetype = m_Archetype
+                MaxDistanceReachedQueue = m_MaxDistanceReachedQueue.ToConcurrent(),
             }.Schedule(this, inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            inputDeps = new ApplyJob
+            {
+                MaxDistanceReachedQueue = m_MaxDistanceReachedQueue,
+                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                Archetype = m_Archetype
+            }.Schedule(inputDeps);
+
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_MaxDistanceReachedQueue.IsCreated)
+            {
+                m_MaxDistanceReachedQueue.Dispose();
+            }
         }
     }
 }

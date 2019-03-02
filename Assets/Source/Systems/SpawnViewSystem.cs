@@ -133,25 +133,32 @@ namespace Game.Systems
             }
         }
 
-        private struct ApplyJob : IJob
+        private struct AddInitializedJob : IJob
         {
             public NativeQueue<Entity> AddInitializedEntityQueue;
 
-            public NativeQueue<Entity> RemoveInitializedEntityQueue;
-
-            [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
                 while (AddInitializedEntityQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.AddComponent(entity, new Initialized());
+                    CommandBuffer.AddComponent(entity, new Initialized());
                 }
+            }
+        }
 
+        private struct RemoveInitializedJob : IJob
+        {
+            public NativeQueue<Entity> RemoveInitializedEntityQueue;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
                 while (RemoveInitializedEntityQueue.TryDequeue(out var entity))
                 {
-                    EntityCommandBuffer.RemoveComponent<Initialized>(entity);
+                    CommandBuffer.RemoveComponent<Initialized>(entity);
                 }
             }
         }
@@ -218,7 +225,8 @@ namespace Game.Systems
         {
             if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -232,12 +240,19 @@ namespace Game.Systems
                 SkeletonType = GetArchetypeChunkComponentType<Skeleton>(true)
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps = new ApplyJob
+            var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
+
+            var removeInitializedDeps = new RemoveInitializedJob
+            {
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
+                CommandBuffer = removeBarrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
 
             inputDeps.Complete();
 
@@ -303,10 +318,11 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                EntityCommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            setBarrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

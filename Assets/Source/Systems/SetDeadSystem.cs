@@ -88,7 +88,10 @@ namespace Game.Systems
                     var entity = entityArray[entityIndex];
 
                     CommandBuffer.AddComponent(entity, SetMap[entity]);
-                    HealthFromEntity[entity] = new Health { Value = 0 };
+                    if (HealthFromEntity.Exists(entity))
+                    {
+                        HealthFromEntity[entity] = new Health { Value = 0 };
+                    }
                 }
 
                 entityArray.Dispose();
