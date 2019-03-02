@@ -120,7 +120,7 @@ namespace Game.Systems
         {
             m_OwnerQueue.Clear();
 
-            var barrier = World.GetExistingManager<DestroyBarrier>();
+            var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {

@@ -97,7 +97,7 @@ namespace Game.Systems
 
             m_SetDestroyMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {

@@ -3,8 +3,8 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(SetBarrier))]
     [AlwaysUpdateSystem]
+    [UpdateBefore(typeof(EndFrameBarrier))]
     public class EventBarrier : BarrierSystem
     {
         private ComponentGroup m_Group;

@@ -4,7 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(DestroyBarrier))]
+    [UpdateInGroup(typeof(SetBarrier))]
     public class SetDestroySystem : ComponentSystem
     {
         private ComponentGroup m_Group;

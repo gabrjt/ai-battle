@@ -2,7 +2,6 @@
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(DeadBarrier))]
-    [UpdateBefore(typeof(EndFrameBarrier))]
+    [UpdateAfter(typeof(EventBarrier))]
     public class DestroyBarrier : BarrierSystem { }
 }

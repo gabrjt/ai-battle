@@ -2,6 +2,6 @@
 
 namespace Game.Systems
 {
-    [UpdateBefore(typeof(RemoveBarrier))]
+    [UpdateAfter(typeof(DeadBarrier))]
     public class SetBarrier : BarrierSystem { }
 }
