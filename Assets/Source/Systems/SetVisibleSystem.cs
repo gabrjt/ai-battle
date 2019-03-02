@@ -66,15 +66,14 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-                        var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex];
-                        var owner = ownerArray[entityIndex];
+                        var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex].Value;
+                        var owner = ownerArray[entityIndex].Value;
 
-                        var healthExists = HealthFromEntity.Exists(owner.Value);
-                        var maxHealthExists = MaxHealthFromEntity.Exists(owner.Value);
+                        var health = HealthFromEntity[owner].Value;
+                        var maxHealth = MaxHealthFromEntity[owner].Value;
 
-                        var isVisible = PositionFromEntity.Exists(owner.Value) && math.distancesq(CameraPosition, PositionFromEntity[owner.Value].Value) < maxSqrDistanceFromCamera.Value &&
-                            healthExists && HealthFromEntity[owner.Value].Value > 0 &&
-                            maxHealthExists && HealthFromEntity[owner.Value].Value < MaxHealthFromEntity[owner.Value].Value;
+                        var isVisible = math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera &&
+                                        health > 0 && health < maxHealth;
 
                         SetVisible(hasVisible, entity, isVisible);
                     }
@@ -84,10 +83,10 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-                        var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex];
-                        var owner = ownerArray[entityIndex];
+                        var maxSqrDistanceFromCamera = maxSqrDistanceFromCameraArray[entityIndex].Value;
+                        var owner = ownerArray[entityIndex].Value;
 
-                        var isVisible = PositionFromEntity.Exists(owner.Value) && math.distancesq(CameraPosition, PositionFromEntity[owner.Value].Value) < maxSqrDistanceFromCamera.Value;
+                        var isVisible = math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera;
 
                         SetVisible(hasVisible, entity, isVisible);
                     }
@@ -193,6 +192,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_AddQueue.IsCreated)
             {
                 m_AddQueue.Dispose();
