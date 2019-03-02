@@ -77,7 +77,6 @@ namespace Game.Systems
 
             public EntityCommandBuffer CommandBuffer;
 
-            [ReadOnly]
             public ComponentDataFromEntity<Health> HealthFromEntity;
 
             public void Execute()
@@ -89,10 +88,7 @@ namespace Game.Systems
                     var entity = entityArray[entityIndex];
 
                     CommandBuffer.AddComponent(entity, SetMap[entity]);
-                    if (HealthFromEntity.Exists(entity))
-                    {
-                        CommandBuffer.SetComponent(entity, new Health { Value = 0 });
-                    }
+                    HealthFromEntity[entity] = new Health { Value = 0 };
                 }
 
                 entityArray.Dispose();
@@ -140,7 +136,7 @@ namespace Game.Systems
             {
                 SetMap = m_SetMap,
                 CommandBuffer = deadBarrier.CreateCommandBuffer(),
-                HealthFromEntity = GetComponentDataFromEntity<Health>(true)
+                HealthFromEntity = GetComponentDataFromEntity<Health>()
             }.Schedule(inputDeps);
 
             deadBarrier.AddJobHandleForProducer(inputDeps);
