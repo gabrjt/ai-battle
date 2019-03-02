@@ -316,7 +316,7 @@ namespace Game.Systems
             m_SpawnDataQueue.Clear();
             m_ApplyAttackingQueue.Clear();
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<SetBarrier>();
             var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
