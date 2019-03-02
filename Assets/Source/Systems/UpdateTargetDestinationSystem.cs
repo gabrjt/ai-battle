@@ -11,7 +11,7 @@ namespace Game.Systems
     public class UpdateTargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        struct Job : IJobProcessComponentDataWithEntity<Target, Position, AttackDistance, Destination>
+        private struct Job : IJobProcessComponentDataWithEntity<Target, Position, AttackDistance, Destination>
         {
             [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;

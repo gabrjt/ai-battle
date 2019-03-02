@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    
     public class PlayDyingAnimationSystem : ComponentSystem
     {
         protected override void OnUpdate()

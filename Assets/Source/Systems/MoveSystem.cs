@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    
     public class MoveSystem : JobComponentSystem
     {
         [BurstCompile]

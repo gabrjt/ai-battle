@@ -145,7 +145,7 @@ namespace Game.Systems
 
                     if (DestinationFromEntity.Exists(entity))
                     {
-                        EntityCommandBuffer.SetComponent(entity, destination);                        
+                        EntityCommandBuffer.SetComponent(entity, destination);
                     }
                     else
                     {

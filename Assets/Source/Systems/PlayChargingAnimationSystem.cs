@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    
     public class PlayChargingAnimationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

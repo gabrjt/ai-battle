@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    
     public class PlayWalkingAnimationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
