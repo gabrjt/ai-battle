@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,7 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class SetOwnedDestroySystem : JobComponentSystem
+    public class SetOwnedDestroySystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -54,7 +55,7 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Owner> OwnerFromEntity;
 
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -83,8 +84,8 @@ namespace Game.Systems
 
                         if (!OwnerFromEntity.Exists(owned) || owner != OwnerFromEntity[owned].Value) continue;
 
-                        EntityCommandBuffer.AddComponent(owned, new Destroy());
-                        EntityCommandBuffer.AddComponent(owned, new Disabled());
+                        CommandBuffer.AddComponent(owned, new Destroy());
+                        CommandBuffer.AddComponent(owned, new Disabled());
                     }
                 }
 
@@ -133,7 +134,7 @@ namespace Game.Systems
             {
                 OwnerQueue = m_OwnerQueue,
                 OwnedQueue = m_OwnedQueue,
-                EntityCommandBuffer = setBarrier.CreateCommandBuffer(),
+                CommandBuffer = setBarrier.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
 
@@ -146,6 +147,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_OwnerQueue.IsCreated)
             {
                 m_OwnerQueue.Dispose();
