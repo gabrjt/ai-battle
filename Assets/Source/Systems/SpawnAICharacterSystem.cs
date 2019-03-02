@@ -5,14 +5,17 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.AI;
+using Object = UnityEngine.Object;
 using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
+    [UpdateAfter(typeof(SetCharacterCountInputFieldSingletonSystem))]
     public class SpawnAICharacterSystem : ComponentSystem
     {
         [BurstCompile]
@@ -134,7 +137,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 50; // TODO: externalize count;
+        internal int m_TotalCount = 100; // TODO: externalize count;
 
         private Random m_Random;
 
@@ -164,9 +167,18 @@ namespace Game.Systems
 
         private void SpawnAICharacters(Terrain terrain, int count)
         {
+            if (HasSingleton<CharacterCountInputField>())
+            {
+                if (int.TryParse(EntityManager.GetComponentObject<TMPro.TMP_InputField>(GetSingleton<CharacterCountInputField>().Owner).text, out var inputFieldCount) &&
+                    inputFieldCount > 0)
+                {
+                    m_TotalCount = inputFieldCount;
+                }
+            }
+
             var entityCount = m_TotalCount - count;
 
-            if (entityCount == 0) return;
+            if (entityCount <= 0) return;
 
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);

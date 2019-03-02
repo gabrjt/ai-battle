@@ -12,6 +12,7 @@ namespace Game.Systems
     public class DestinationReachedSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
+        [RequireSubtractiveComponent(typeof(Target))]
         private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Destination, Position>
         {
             public NativeQueue<DestinationReached>.Concurrent DestinationReachedQueue;
@@ -58,7 +59,9 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var barrier = World.GetExistingManager<EventBarrier>();
+            m_DestinationReachedQueue.Clear();
+
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -68,11 +71,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 DestinationReachedQueue = m_DestinationReachedQueue,
-                CommandBuffer = barrier.CreateCommandBuffer(),
+                CommandBuffer = eventBarrier.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

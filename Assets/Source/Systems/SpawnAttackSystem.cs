@@ -262,7 +262,7 @@ namespace Game.Systems
                     ComponentType.ReadOnly<AttackDuration>(),
                     ComponentType.ReadOnly<AttackSpeed>()
                 },
-                None = new[] { ComponentType.Create<Cooldown>(), ComponentType.Create<Attacking>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attacking>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(
@@ -308,8 +308,8 @@ namespace Game.Systems
 
             m_Random = new Random((uint)System.Environment.TickCount);
 
-            m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
             m_ApplyAttackingQueue = new NativeQueue<ApplyAttackingData>(Allocator.Persistent);
+            m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

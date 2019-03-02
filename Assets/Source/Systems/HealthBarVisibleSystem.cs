@@ -1,5 +1,4 @@
 ﻿using Game.Components;
-using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -9,7 +8,7 @@ using UnityEngine.UI;
 
 namespace Game.Systems
 {
-    public class HealthBarVisibleSystem : JobComponentSystem, IDisposable
+    public class HealthBarVisibleSystem : JobComponentSystem
     {
         private struct Initialized : ISystemStateComponentData { }
 
@@ -48,31 +47,38 @@ namespace Game.Systems
             }
         }
 
-        private struct ApplyJob : IJob
+        private struct AddInitializedJob : IJob
         {
             public NativeQueue<Entity> AddInitializedEntityQueue;
 
-            public NativeQueue<Entity> RemoveInitializedEntityQueue;
-
             public NativeList<Entity> SetEnabledTrueEntityList;
 
-            public NativeList<Entity> SetEnabledFalseEntityList;
-
-            [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
                 while (AddInitializedEntityQueue.TryDequeue(out var entity))
                 {
                     SetEnabledTrueEntityList.Add(entity);
-                    EntityCommandBuffer.AddComponent(entity, new Initialized());
+                    CommandBuffer.AddComponent(entity, new Initialized());
                 }
+            }
+        }
 
+        private struct RemoveInitializedJob : IJob
+        {
+            public NativeQueue<Entity> RemoveInitializedEntityQueue;
+
+            public NativeList<Entity> SetEnabledFalseEntityList;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
                 while (RemoveInitializedEntityQueue.TryDequeue(out var entity))
                 {
                     SetEnabledFalseEntityList.Add(entity);
-                    EntityCommandBuffer.RemoveComponent<Initialized>(entity);
+                    CommandBuffer.RemoveComponent<Initialized>(entity);
                 }
             }
         }
@@ -109,7 +115,11 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var barrier = World.GetExistingManager<SetBarrier>();
+            m_AddInitializedEntityQueue.Clear();
+            m_RemoveInitializedEntityQueue.Clear();
+
+            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -119,14 +129,21 @@ namespace Game.Systems
                 InitializedType = GetArchetypeChunkComponentType<Initialized>()
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps = new ApplyJob
+            var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
                 SetEnabledTrueEntityList = m_SetEnabledTrueEntityList,
-                SetEnabledFalseEntityList = m_SetEnabledFalseEntityList,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
+
+            var removeInitializedDeps = new RemoveInitializedJob
+            {
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
+                SetEnabledFalseEntityList = m_SetEnabledFalseEntityList,
+                CommandBuffer = removeBarrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
 
             inputDeps.Complete();
 
@@ -144,7 +161,8 @@ namespace Game.Systems
 
             m_SetEnabledFalseEntityList.Clear();
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            setBarrier.AddJobHandleForProducer(inputDeps);
+            removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

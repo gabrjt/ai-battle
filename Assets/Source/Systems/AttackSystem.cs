@@ -54,7 +54,7 @@ namespace Game.Systems
         {
             m_EntityQueue.Clear();
 
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var barrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -65,10 +65,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 EntityQueue = m_EntityQueue,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = barrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            barrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

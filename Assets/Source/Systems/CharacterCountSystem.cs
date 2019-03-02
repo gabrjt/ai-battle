@@ -34,7 +34,7 @@ namespace Game.Systems
             SetSingleton(characterCount);
 
             var characterCountText = EntityManager.GetComponentObject<TextMeshProUGUI>(characterCount.Owner);
-            characterCountText.text = $"{count:#0} Entities";
+            characterCountText.text = $"{count:#0} Characters";
         }
     }
 }

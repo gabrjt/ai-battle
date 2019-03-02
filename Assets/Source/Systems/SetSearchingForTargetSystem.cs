@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -31,6 +32,9 @@ namespace Game.Systems
             [ReadOnly]
             public float Time;
 
+            [ReadOnly]
+            public Random Random;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
@@ -39,7 +43,7 @@ namespace Game.Systems
                 {
                     SetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
                     {
-                        Radius = 5,
+                        Radius = Random.NextInt(5, 25),
                         Interval = 1,
                         StartTime = Time
                     });
@@ -73,6 +77,8 @@ namespace Game.Systems
 
         private NativeHashMap<Entity, SearchingForTarget> m_SetMap;
 
+        private Random m_Random;
+
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
@@ -83,6 +89,8 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
                 None = new[] { ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>(), ComponentType.ReadOnly<Destroy>() }
             });
+
+            m_Random = new Random((uint)Environment.TickCount);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -97,13 +105,14 @@ namespace Game.Systems
             {
                 SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                Time = Time.time
+                Time = Time.time,
+                Random = m_Random
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = barrier.CreateCommandBuffer()
+                CommandBuffer = barrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);

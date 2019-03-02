@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -7,7 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    public class ViewVisibleSystem : JobComponentSystem
+    public class ViewVisibleSystem : JobComponentSystem, IDisposable
     {
         private struct Initialized : ISystemStateComponentData { }
 
@@ -46,32 +47,38 @@ namespace Game.Systems
             }
         }
 
-        private struct ApplyJob : IJob
+        private struct AddInitializedJob : IJob
         {
             public NativeQueue<Entity> AddInitializedEntityQueue;
 
-            public NativeQueue<Entity> RemoveInitializedEntityQueue;
-
             public NativeList<Entity> SetEnabledTrueEntityList;
 
-            public NativeList<Entity> SetEnabledFalseEntityList;
-
-            public EntityCommandBuffer SetCommandBuffer;
-
-            public EntityCommandBuffer RemoveCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
                 while (AddInitializedEntityQueue.TryDequeue(out var entity))
                 {
                     SetEnabledTrueEntityList.Add(entity);
-                    SetCommandBuffer.AddComponent(entity, new Initialized());
+                    CommandBuffer.AddComponent(entity, new Initialized());
                 }
+            }
+        }
 
+        private struct RemoveInitializedJob : IJob
+        {
+            public NativeQueue<Entity> RemoveInitializedEntityQueue;
+
+            public NativeList<Entity> SetEnabledFalseEntityList;
+
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
                 while (RemoveInitializedEntityQueue.TryDequeue(out var entity))
                 {
                     SetEnabledFalseEntityList.Add(entity);
-                    RemoveCommandBuffer.RemoveComponent<Initialized>(entity);
+                    CommandBuffer.RemoveComponent<Initialized>(entity);
                 }
             }
         }
@@ -108,6 +115,9 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            m_AddInitializedEntityQueue.Clear();
+            m_RemoveInitializedEntityQueue.Clear();
+
             var setBarrier = World.GetExistingManager<SetBarrier>();
             var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
@@ -119,15 +129,21 @@ namespace Game.Systems
                 InitializedType = GetArchetypeChunkComponentType<Initialized>()
             }.Schedule(m_Group, inputDeps);
 
-            inputDeps = new ApplyJob
+            var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
                 SetEnabledTrueEntityList = m_SetEnabledTrueEntityList,
-                SetEnabledFalseEntityList = m_SetEnabledFalseEntityList,
-                SetCommandBuffer = setBarrier.CreateCommandBuffer(),
-                RemoveCommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer(),
             }.Schedule(inputDeps);
+
+            var removeInitializedDeps = new RemoveInitializedJob
+            {
+                RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
+                SetEnabledFalseEntityList = m_SetEnabledFalseEntityList,
+                CommandBuffer = removeBarrier.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
 
             inputDeps.Complete();
 
@@ -170,6 +186,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_AddInitializedEntityQueue.IsCreated)
             {
                 m_AddInitializedEntityQueue.Dispose();
