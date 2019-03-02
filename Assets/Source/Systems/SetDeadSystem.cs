@@ -75,8 +75,10 @@ namespace Game.Systems
             [ReadOnly]
             public NativeHashMap<Entity, Dead> SetMap;
 
-            [ReadOnly]
             public EntityCommandBuffer CommandBuffer;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Health> HealthFromEntity;
 
             public void Execute()
             {
@@ -87,7 +89,10 @@ namespace Game.Systems
                     var entity = entityArray[entityIndex];
 
                     CommandBuffer.AddComponent(entity, SetMap[entity]);
-                    CommandBuffer.SetComponent(entity, new Health { Value = 0 });
+                    if (HealthFromEntity.Exists(entity))
+                    {
+                        CommandBuffer.SetComponent(entity, new Health { Value = 0 });
+                    }
                 }
 
                 entityArray.Dispose();
@@ -134,7 +139,8 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = deadBarrier.CreateCommandBuffer()
+                CommandBuffer = deadBarrier.CreateCommandBuffer(),
+                HealthFromEntity = GetComponentDataFromEntity<Health>(true)
             }.Schedule(inputDeps);
 
             deadBarrier.AddJobHandleForProducer(inputDeps);
