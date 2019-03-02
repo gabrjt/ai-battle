@@ -11,17 +11,15 @@ namespace Game.Systems
     public class DeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Dead, Health>
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Dead>
         {
             public NativeQueue<Died>.Concurrent DiedQueue;
 
             [ReadOnly]
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead, ref Health health)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead)
             {
-                health.Value = 0;
-
                 if (dead.StartTime + dead.Duration > Time) return;
 
                 DiedQueue.Enqueue(new Died { This = entity });

@@ -13,7 +13,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Dead>.Concurrent SetDeadMap;
+            public NativeHashMap<Entity, Dead>.Concurrent SetMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -43,7 +43,7 @@ namespace Game.Systems
 
                         if (health.Value > 0) continue;
 
-                        SetDeadMap.TryAdd(entity, new Dead
+                        SetMap.TryAdd(entity, new Dead
                         {
                             Duration = 5,
                             StartTime = Time
@@ -60,7 +60,7 @@ namespace Game.Systems
 
                         if (DeadFromEntity.Exists(entity)) continue;
 
-                        SetDeadMap.TryAdd(entity, new Dead
+                        SetMap.TryAdd(entity, new Dead
                         {
                             Duration = 5,
                             StartTime = Time
@@ -73,20 +73,21 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, Dead> SetDeadMap;
+            public NativeHashMap<Entity, Dead> SetMap;
 
             [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                var entityArray = SetDeadMap.GetKeyArray(Allocator.Temp);
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
 
-                    EntityCommandBuffer.AddComponent(entity, SetDeadMap[entity]);
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
+                    CommandBuffer.SetComponent(entity, new Health { Value = 0 });
                 }
 
                 entityArray.Dispose();
@@ -95,7 +96,7 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, Dead> m_SetDeadMap;
+        private NativeHashMap<Entity, Dead> m_SetMap;
 
         protected override void OnCreateManager()
         {
@@ -116,13 +117,13 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_SetDeadMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var barrier = World.GetExistingManager<DeadBarrier>();
+            var deadBarrier = World.GetExistingManager<DeadBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SetDeadMap = m_SetDeadMap.ToConcurrent(),
+                SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 HealthType = GetArchetypeChunkComponentType<Health>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
@@ -132,11 +133,11 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                SetDeadMap = m_SetDeadMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                SetMap = m_SetMap,
+                CommandBuffer = deadBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            deadBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }
@@ -157,9 +158,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetDeadMap.IsCreated)
+            if (m_SetMap.IsCreated)
             {
-                m_SetDeadMap.Dispose();
+                m_SetMap.Dispose();
             }
         }
     }
