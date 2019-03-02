@@ -262,7 +262,7 @@ namespace Game.Systems
                     ComponentType.ReadOnly<AttackDuration>(),
                     ComponentType.ReadOnly<AttackSpeed>()
                 },
-                None = new[] { ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Attacking>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.Create<Cooldown>(), ComponentType.Create<Attacking>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(
