@@ -12,7 +12,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Destination>.Concurrent RemoveDestinationMap;
+            public NativeHashMap<Entity, Destination>.Concurrent RemoveMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -49,7 +49,7 @@ namespace Game.Systems
 
                         if (!DeadFromEntity.Exists(target.Value) && !DestroyFromEntity.Exists(target.Value)) continue;
 
-                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                        RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
                 }
                 else
@@ -64,7 +64,7 @@ namespace Game.Systems
 
                             if (!DestinationFromEntity.Exists(entity)) continue;
 
-                            RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                            RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                         }
                     }
                     else if (chunk.Has(KilledType))
@@ -77,7 +77,7 @@ namespace Game.Systems
 
                             if (!DestinationFromEntity.Exists(entity)) continue;
 
-                            RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                            RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                         }
                     }
 
@@ -88,7 +88,7 @@ namespace Game.Systems
 
                         if (!DeadFromEntity.Exists(entity)) continue;
 
-                        RemoveDestinationMap.TryAdd(entity, DestinationFromEntity[entity]);
+                        RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
                 }
             }
@@ -97,14 +97,14 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, Destination> RemoveDestinationMap;
+            public NativeHashMap<Entity, Destination> RemoveMap;
 
             [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
 
             public void Execute()
             {
-                var entityArray = RemoveDestinationMap.GetKeyArray(Allocator.Temp);
+                var entityArray = RemoveMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
@@ -117,7 +117,7 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, Destination> m_RemoveDestinationMap;
+        private NativeHashMap<Entity, Destination> m_RemoveMap;
 
         protected override void OnCreateManager()
         {
@@ -125,7 +125,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destination>() },
+                All = new[] { ComponentType.Create<Destination>() },
                 Any = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
@@ -138,13 +138,13 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_RemoveDestinationMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_RemoveMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var removeBarrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                RemoveDestinationMap = m_RemoveDestinationMap.ToConcurrent(),
+                RemoveMap = m_RemoveMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
@@ -156,7 +156,7 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                RemoveDestinationMap = m_RemoveDestinationMap,
+                RemoveMap = m_RemoveMap,
                 EntityCommandBuffer = removeBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
@@ -181,9 +181,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_RemoveDestinationMap.IsCreated)
+            if (m_RemoveMap.IsCreated)
             {
-                m_RemoveDestinationMap.Dispose();
+                m_RemoveMap.Dispose();
             }
         }
     }
