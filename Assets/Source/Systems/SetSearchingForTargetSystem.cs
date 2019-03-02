@@ -23,7 +23,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, SearchingForTarget>.Concurrent SetSearchingForTargetMap;
+            public NativeHashMap<Entity, SearchingForTarget>.Concurrent SetMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -37,7 +37,7 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    SetSearchingForTargetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
+                    SetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
                     {
                         Radius = 5,
                         Interval = 1,
@@ -50,19 +50,19 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, SearchingForTarget> SetSearchingForTargetMap;
+            public NativeHashMap<Entity, SearchingForTarget> SetMap;
 
             [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                var entityArray = SetSearchingForTargetMap.GetKeyArray(Allocator.Temp);
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-                    EntityCommandBuffer.AddComponent(entity, SetSearchingForTargetMap[entity]);
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
                 }
 
                 entityArray.Dispose();
@@ -71,7 +71,7 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, SearchingForTarget> m_SetSearchingForTargetMap;
+        private NativeHashMap<Entity, SearchingForTarget> m_SetMap;
 
         protected override void OnCreateManager()
         {
@@ -89,21 +89,21 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_SetSearchingForTargetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SetSearchingForTargetMap = m_SetSearchingForTargetMap.ToConcurrent(),
+                SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                SetSearchingForTargetMap = m_SetSearchingForTargetMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                SetMap = m_SetMap,
+                CommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
@@ -127,9 +127,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetSearchingForTargetMap.IsCreated)
+            if (m_SetMap.IsCreated)
             {
-                m_SetSearchingForTargetMap.Dispose();
+                m_SetMap.Dispose();
             }
         }
     }

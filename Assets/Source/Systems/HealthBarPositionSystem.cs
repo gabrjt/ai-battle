@@ -37,10 +37,8 @@ namespace Game.Systems
 
             ForEach((RectTransform rectTransform, ref Owner owner) =>
             {
-                if (!positionFromEntity.Exists(owner.Value)) return;
-
                 var transform = rectTransform.parent;
-                transform.position = m_Camera.WorldToScreenPoint(positionFromEntity[owner.Value].Value + math.up());
+                transform.position = m_Camera.WorldToScreenPoint(positionFromEntity[owner.Value].Value + math.up()); // TODO: consolidate...
             }, m_Group);
         }
     }
