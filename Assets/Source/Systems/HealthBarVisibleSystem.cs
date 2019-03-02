@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -8,8 +9,7 @@ using UnityEngine.UI;
 
 namespace Game.Systems
 {
-    
-    public class HealthBarVisibleSystem : JobComponentSystem
+    public class HealthBarVisibleSystem : JobComponentSystem, IDisposable
     {
         private struct Initialized : ISystemStateComponentData { }
 
@@ -109,7 +109,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -166,6 +166,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_AddInitializedEntityQueue.IsCreated)
             {
                 m_AddInitializedEntityQueue.Dispose();
