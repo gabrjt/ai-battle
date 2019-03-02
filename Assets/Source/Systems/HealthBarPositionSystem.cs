@@ -20,7 +20,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<RectTransform>(), ComponentType.ReadOnly<Owner>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.Create<RectTransform>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();

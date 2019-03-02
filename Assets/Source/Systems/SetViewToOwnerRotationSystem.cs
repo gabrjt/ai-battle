@@ -10,7 +10,7 @@ namespace Game.Systems
     public class SetViewToOwnerRotationSystem : JobComponentSystem
     {
         [BurstCompile]
-        [RequireComponentTag(typeof(Rotation), typeof(View))]
+        [RequireComponentTag(typeof(Rotation), typeof(View), typeof(Visible))]
         private struct Job : IJobProcessComponentDataWithEntity<Owner>
         {
             [NativeDisableParallelForRestriction]

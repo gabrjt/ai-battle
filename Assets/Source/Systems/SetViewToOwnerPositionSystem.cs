@@ -10,7 +10,7 @@ namespace Game.Systems
     public class SetViewToOwnerPositionSystem : JobComponentSystem
     {
         [BurstCompile]
-        [RequireComponentTag(typeof(Position), typeof(View))]
+        [RequireComponentTag(typeof(Position), typeof(View), typeof(Visible))]
         private struct Job : IJobProcessComponentDataWithEntity<Owner, Offset>
         {
             [NativeDisableParallelForRestriction]

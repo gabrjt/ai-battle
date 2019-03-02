@@ -15,7 +15,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Image>(), ComponentType.ReadOnly<Owner>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.Create<Image>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<Visible>() }
             });
         }
 
