@@ -12,7 +12,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Destroy>.Concurrent SetDestroyMap;
+            public NativeHashMap<Entity, Destroy>.Concurrent SetMap;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Collided> CollidedType;
@@ -30,18 +30,18 @@ namespace Game.Systems
                     {
                         var entity = collidedArray[entityIndex].This;
 
-                        SetDestroyMap.TryAdd(entity, new Destroy());
+                        SetMap.TryAdd(entity, default);
                     }
                 }
                 else if (chunk.Has(MaxDistanceReachedType))
                 {
-                    var maxDistanceArray = chunk.GetNativeArray(MaxDistanceReachedType);
+                    var maxDistanceReachedArray = chunk.GetNativeArray(MaxDistanceReachedType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = maxDistanceArray[entityIndex].This;
+                        var entity = maxDistanceReachedArray[entityIndex].This;
 
-                        SetDestroyMap.TryAdd(entity, new Destroy());
+                        SetMap.TryAdd(entity, default);
                     }
                 }
             }
@@ -50,25 +50,19 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, Destroy> SetDestroyMap;
+            public NativeHashMap<Entity, Destroy> SetMap;
 
-            [ReadOnly]
             public EntityCommandBuffer EntityCommandBuffer;
-
-            [ReadOnly]
-            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
 
             public void Execute()
             {
-                var entityArray = SetDestroyMap.GetKeyArray(Allocator.Temp);
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
 
-                    if (DestroyFromEntity.Exists(entity)) continue;
-
-                    EntityCommandBuffer.AddComponent(entity, SetDestroyMap[entity]);
+                    EntityCommandBuffer.AddComponent(entity, SetMap[entity]);
                     EntityCommandBuffer.AddComponent(entity, new Disabled());
                 }
 
@@ -78,7 +72,9 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, Destroy> m_SetDestroyMap;
+        private NativeQueue<Entity> m_SetQueue;
+
+        private NativeHashMap<Entity, Destroy> m_SetMap;
 
         protected override void OnCreateManager()
         {
@@ -87,30 +83,32 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
-                Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaxDistanceReached>() }
+                Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaxDistanceReached>() },
+                None = new[] { ComponentType.Create<Destroy>() }
             });
+
+            m_SetQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             Dispose();
 
-            m_SetDestroyMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SetDestroyMap = m_SetDestroyMap.ToConcurrent(),
+                SetMap = m_SetMap.ToConcurrent(),
                 CollidedType = GetArchetypeChunkComponentType<Collided>(true),
-                MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true)
+                MaxDistanceReachedType = GetArchetypeChunkComponentType<MaxDistanceReached>(true),
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                SetDestroyMap = m_SetDestroyMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
+                SetMap = m_SetMap,
+                EntityCommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
@@ -134,9 +132,14 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetDestroyMap.IsCreated)
+            if (m_SetQueue.IsCreated)
             {
-                m_SetDestroyMap.Dispose();
+                m_SetQueue.Dispose();
+            }
+
+            if (m_SetMap.IsCreated)
+            {
+                m_SetMap.Dispose();
             }
         }
     }
