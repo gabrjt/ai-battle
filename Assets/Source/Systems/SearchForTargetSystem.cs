@@ -1,27 +1,47 @@
-﻿using Game.Components;
+﻿using Game.Comparers;
+using Game.Components;
 using System;
-using System.Collections.Generic;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
+using Unity.Jobs;
 using Unity.Transforms;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    public class SearchForTargetSystem : ComponentSystem
+    [UpdateInGroup(typeof(SetBarrier))]
+    public partial class SearchForTargetSystem : JobComponentSystem, IDisposable
     {
-        private class Comparer : IComparer<Collider>
+        [BurstCompile]
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Position>
         {
-            public float3 Position;
+            public NativeQueue<SearchForTargetData>.Concurrent DataQueue;
 
-            public int Compare(Collider lhs, Collider rhs)
+            [ReadOnly]
+            public float Time;
+
+            public void Execute(Entity entity, int index, [ReadOnly] ref SearchingForTarget searchingForTarget, [ReadOnly] ref Position position)
             {
-                var lhsSqrDistance = math.distancesq(lhs.transform.position, Position);
-                var rhsSqrDistance = math.distancesq(rhs.transform.position, Position);
+                if (searchingForTarget.StartTime + searchingForTarget.Interval > Time) return;
 
-                return lhsSqrDistance.CompareTo(rhsSqrDistance);
+                DataQueue.Enqueue(new SearchForTargetData
+                {
+                    Entity = entity,
+                    SearchingForTarget = searchingForTarget,
+                    Position = position
+                });
             }
+        }
+
+        private struct SearchForTargetData
+        {
+            public Entity Entity;
+
+            public SearchingForTarget SearchingForTarget;
+
+            public Position Position;
         }
 
         private ComponentGroup m_Group;
@@ -34,24 +54,15 @@ namespace Game.Systems
 
         private Random m_Random;
 
-        private readonly Comparer m_Comparer = new Comparer();
+        private readonly ColliderDistanceComparer m_Comparer = new ColliderDistanceComparer();
+
+        private NativeQueue<SearchForTargetData> m_DataQueue;
 
         private Collider[] m_CachedColliderArray = new Collider[10];
-
-        private EntityCommandBuffer m_EntityCommandBuffer;
-
-        private F_EDD<SearchingForTarget, Position> m_OnUpdate;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
-
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.Create<SearchingForTarget>() },
-                Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
-            });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<TargetFound>());
 
@@ -59,26 +70,38 @@ namespace Game.Systems
             m_Layer = 1 << m_LayerMask;
 
             m_Random = new Random((uint)System.Environment.TickCount);
-            m_OnUpdate = OnUpdate;
+
+            m_DataQueue = new NativeQueue<SearchForTargetData>(Allocator.Persistent);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            m_EntityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            m_DataQueue.Clear();
 
-            ForEach(m_OnUpdate, m_Group);
-        }
-
-        private void OnUpdate(Entity entity, ref SearchingForTarget searchForTarget, ref Position position)
-        {
-            if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
+            inputDeps = new ConsolidateJob
             {
-                var positionValue = position.Value;
-                var count = Physics.OverlapSphereNonAlloc(position.Value, searchForTarget.Radius, m_CachedColliderArray, m_Layer);
+                DataQueue = m_DataQueue.ToConcurrent(),
+                Time = Time.time
+            }.Schedule(this, inputDeps);
+
+            inputDeps.Complete();
+
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
+
+            var foundTarget = false;
+
+            while (m_DataQueue.TryDequeue(out var data))
+            {
+                var entity = data.Entity;
+                var position = data.Position.Value;
+                var searchingForTarget = data.SearchingForTarget;
+
+                var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 
                 if (count > 0)
                 {
-                    m_Comparer.Position = positionValue;
+                    m_Comparer.Position = position;
 
                     Array.Sort(m_CachedColliderArray, 0, count, m_Comparer);
 
@@ -91,13 +114,14 @@ namespace Game.Systems
 
                         if (entity == targetEntity || EntityManager.HasComponent<Dead>(targetEntity) || EntityManager.HasComponent<Destroy>(targetEntity)) continue;
 
-                        var targetFound = m_EntityCommandBuffer.CreateEntity(m_Archetype);
-
-                        m_EntityCommandBuffer.SetComponent(targetFound, new TargetFound
+                        var targetFound = eventCommandBuffer.CreateEntity(m_Archetype);
+                        eventCommandBuffer.SetComponent(targetFound, new TargetFound
                         {
                             This = entity,
                             Other = targetEntity
                         });
+
+                        foundTarget = true;
 
                         break;
                     }
@@ -107,8 +131,31 @@ namespace Game.Systems
                 }
                 else
                 {
-                    searchForTarget.StartTime = Time.time;
+                    searchingForTarget.StartTime = Time.time;
+                    EntityManager.SetComponentData(entity, searchingForTarget);
                 }
+            }
+
+            if (foundTarget)
+            {
+                eventBarrier.AddJobHandleForProducer(inputDeps);
+            }
+
+            return inputDeps;
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_DataQueue.IsCreated)
+            {
+                m_DataQueue.Dispose();
             }
         }
     }
