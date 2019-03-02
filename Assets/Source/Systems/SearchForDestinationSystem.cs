@@ -7,7 +7,6 @@ using UnityEngine.AI;
 
 namespace Game.Systems
 {
-    
     public class SearchForDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -29,7 +28,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var entityCommandBuffer = World.GetExistingManager<EndFrameBarrier>().CreateCommandBuffer();
+            var entityCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
 
             var terrain = Terrain.activeTerrain;
 

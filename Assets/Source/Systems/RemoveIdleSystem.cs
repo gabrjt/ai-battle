@@ -17,8 +17,8 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Idle>() },
-                Any = new[] { ComponentType.ReadOnly<SearchingForDestination>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
+                All = new[] { ComponentType.Create<Idle>() },
+                Any = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<IdleTimeExpired>() }
@@ -31,14 +31,14 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var entityType = GetArchetypeChunkEntityType();
-            var characterType = GetArchetypeChunkComponentType<Character>(true);
+            var idleType = GetArchetypeChunkComponentType<Idle>(true);
             var idleTimeExpiredType = GetArchetypeChunkComponentType<IdleTimeExpired>(true);
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
 
-                if (chunk.Has(characterType))
+                if (chunk.Has(idleType))
                 {
                     var entityArray = chunk.GetNativeArray(entityType);
 

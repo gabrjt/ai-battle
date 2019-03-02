@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [DisableAutoCreation]
     public class DebugDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

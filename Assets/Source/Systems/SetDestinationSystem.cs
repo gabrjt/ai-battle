@@ -151,12 +151,13 @@ namespace Game.Systems
                     if (DestinationFromEntity.Exists(entity))
                     {
                         EntityCommandBuffer.SetComponent(entity, destination);
-
+                        /*
                         if (destination.Value.Equals(DestinationFromEntity[entity].Value))
                         {
                             var destinationReached = EventCommandBuffer.CreateEntity(Archetype);
                             EventCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
                         }
+                        */
                     }
                     else
                     {

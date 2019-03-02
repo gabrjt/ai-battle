@@ -9,7 +9,6 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    
     public class SearchForTargetSystem : ComponentSystem
     {
         private class Comparer : IComparer<Collider>
@@ -35,13 +34,13 @@ namespace Game.Systems
 
         private Random m_Random;
 
-        readonly Comparer m_Comparer = new Comparer();
+        private readonly Comparer m_Comparer = new Comparer();
 
         private Collider[] m_CachedColliderArray = new Collider[10];
 
-        EntityCommandBuffer m_EntityCommandBuffer;
+        private EntityCommandBuffer m_EntityCommandBuffer;
 
-        F_EDD<SearchingForTarget, Position> m_OnUpdate;
+        private F_EDD<SearchingForTarget, Position> m_OnUpdate;
 
         protected override void OnCreateManager()
         {
@@ -70,7 +69,7 @@ namespace Game.Systems
             ForEach(m_OnUpdate, m_Group);
         }
 
-        void OnUpdate(Entity entity, ref SearchingForTarget searchForTarget, ref Position position)
+        private void OnUpdate(Entity entity, ref SearchingForTarget searchForTarget, ref Position position)
         {
             if (searchForTarget.StartTime + searchForTarget.Interval <= Time.time)
             {
