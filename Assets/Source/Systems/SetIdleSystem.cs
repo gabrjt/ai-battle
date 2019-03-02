@@ -26,6 +26,9 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<DestinationReached> DestinationReachedType;
 
             [ReadOnly]
+            public ComponentDataFromEntity<Idle> IdleFromEntity;
+
+            [ReadOnly]
             public Random Random;
 
             [ReadOnly]
@@ -50,6 +53,8 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = destinationReachedArray[entityIndex].This;
+
+                        if (IdleFromEntity.Exists(entity)) continue;
 
                         SetIdle(entity);
                     }
@@ -131,6 +136,7 @@ namespace Game.Systems
                 EntityType = GetArchetypeChunkEntityType(),
                 CharacterType = GetArchetypeChunkComponentType<Character>(true),
                 DestinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true),
+                IdleFromEntity = GetComponentDataFromEntity<Idle>(true),
                 Random = m_Random,
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
