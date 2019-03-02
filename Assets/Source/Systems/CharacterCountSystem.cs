@@ -1,6 +1,5 @@
 ﻿using Game.Components;
 using TMPro;
-using Unity.Collections;
 using Unity.Entities;
 
 namespace Game.Systems
@@ -29,16 +28,7 @@ namespace Game.Systems
 
             if (!EntityManager.HasComponent<TextMeshProUGUI>(characterCount.Owner)) return;
 
-            var count = 0;
-
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
-            {
-                count += chunkArray[chunkIndex].Count;
-            }
-
-            chunkArray.Dispose();
+            var count = m_Group.CalculateLength();
 
             characterCount.Value = count;
             SetSingleton(characterCount);

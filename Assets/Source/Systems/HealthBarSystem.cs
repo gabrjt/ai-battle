@@ -1,35 +1,87 @@
 ﻿using Game.Components;
+using System;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine.UI;
 
 namespace Game.Systems
 {
-    
-    public class HealthBarSystem : ComponentSystem
+    public class HealthBarSystem : JobComponentSystem, IDisposable
     {
-        private ComponentGroup m_Group;
+        [RequireComponentTag(typeof(HealthBar), typeof(Visible))]
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Owner>
+        {
+            public NativeQueue<HealthBarData>.Concurrent DataQueue;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Health> HealthFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
+
+            public void Execute(Entity entity, int index, [ReadOnly] ref Owner owner)
+            {
+                var ownerEntity = owner.Value;
+
+                DataQueue.Enqueue(new HealthBarData
+                {
+                    Entity = entity,
+                    FillAmount = HealthFromEntity[ownerEntity].Value / MaxHealthFromEntity[ownerEntity].Value
+                });
+            }
+        }
+
+        private struct HealthBarData
+        {
+            public Entity Entity;
+
+            public float FillAmount;
+        }
+
+        private NativeQueue<HealthBarData> m_DataQueue;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.Create<Image>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<Visible>() }
-            });
+            m_DataQueue = new NativeQueue<HealthBarData>(Allocator.TempJob);
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var healthFromOwner = GetComponentDataFromEntity<Health>(true);
-            var maxHealthFromOwner = GetComponentDataFromEntity<MaxHealth>(true);
+            m_DataQueue.Clear();
 
-            ForEach((Image image, ref Owner owner) =>
+            inputDeps = new ConsolidateJob
             {
-                if (!healthFromOwner.Exists(owner.Value) || !maxHealthFromOwner.Exists(owner.Value)) return;
+                DataQueue = m_DataQueue.ToConcurrent(),
+                HealthFromEntity = GetComponentDataFromEntity<Health>(true),
+                MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true)
+            }.Schedule(this, inputDeps);
 
-                image.fillAmount = healthFromOwner[owner.Value].Value / maxHealthFromOwner[owner.Value].Value;
-            }, m_Group);
+            inputDeps.Complete();
+
+            while (m_DataQueue.TryDequeue(out var data))
+            {
+                EntityManager.GetComponentObject<Image>(data.Entity).fillAmount = data.FillAmount;
+            }
+
+            return inputDeps;
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (m_DataQueue.IsCreated)
+            {
+                m_DataQueue.Dispose();
+            }
         }
     }
 }
