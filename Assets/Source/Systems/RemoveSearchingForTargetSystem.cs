@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,12 +7,12 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    public class RemoveSearchingForTargetSystem : JobComponentSystem
+    public class RemoveSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, SearchingForTarget>.Concurrent RemoveSearchingForTargetMap;
+            public NativeHashMap<Entity, SearchingForTarget>.Concurrent RemoveMap;
 
             [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
@@ -38,7 +39,7 @@ namespace Game.Systems
                     {
                         var entity = entityArray[entityIndex];
 
-                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                        RemoveMap.TryAdd(entity, new SearchingForTarget());
                     }
                 }
                 else if (chunk.Has(DeadType))
@@ -49,7 +50,7 @@ namespace Game.Systems
                     {
                         var entity = entityArray[entityIndex];
 
-                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                        RemoveMap.TryAdd(entity, new SearchingForTarget());
                     }
                 }
                 else if (chunk.Has(TargetFoundType))
@@ -62,7 +63,7 @@ namespace Game.Systems
 
                         if (!SearchingForTargetFromEntity.Exists(entity)) continue;
 
-                        RemoveSearchingForTargetMap.TryAdd(entity, new SearchingForTarget());
+                        RemoveMap.TryAdd(entity, new SearchingForTarget());
                     }
                 }
             }
@@ -72,7 +73,7 @@ namespace Game.Systems
         {
             public NativeHashMap<Entity, SearchingForTarget> RemoveSearchingForTargetMap;
 
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -82,7 +83,7 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    EntityCommandBuffer.RemoveComponent<SearchingForTarget>(entity);
+                    CommandBuffer.RemoveComponent<SearchingForTarget>(entity);
                 }
 
                 entityArray.Dispose();
@@ -91,7 +92,7 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, SearchingForTarget> m_RemoveSearchingForTargetMap;
+        private NativeHashMap<Entity, SearchingForTarget> m_RemoveMap;
 
         protected override void OnCreateManager()
         {
@@ -117,13 +118,13 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_RemoveSearchingForTargetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_RemoveMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var barrier = World.GetExistingManager<RemoveBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                RemoveSearchingForTargetMap = m_RemoveSearchingForTargetMap.ToConcurrent(),
+                RemoveMap = m_RemoveMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 DeadType = GetArchetypeChunkComponentType<Dead>(true),
@@ -133,8 +134,8 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                RemoveSearchingForTargetMap = m_RemoveSearchingForTargetMap,
-                EntityCommandBuffer = barrier.CreateCommandBuffer()
+                RemoveSearchingForTargetMap = m_RemoveMap,
+                CommandBuffer = barrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             barrier.AddJobHandleForProducer(inputDeps);
@@ -158,9 +159,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_RemoveSearchingForTargetMap.IsCreated)
+            if (m_RemoveMap.IsCreated)
             {
-                m_RemoveSearchingForTargetMap.Dispose();
+                m_RemoveMap.Dispose();
             }
         }
     }
