@@ -39,7 +39,7 @@ namespace Game.Systems
                 {
                     SetSearchingForTargetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
                     {
-                        Radius = 5,
+                        Radius = 10,
                         Interval = 1,
                         StartTime = Time
                     });

@@ -60,7 +60,7 @@ namespace Game.Systems
             {
                 SetMap.TryAdd(entity, new Idle
                 {
-                    Duration = Random.NextFloat(2, 10),
+                    Duration = Random.NextFloat(2, 5),
                     StartTime = Time
                 });
             }
