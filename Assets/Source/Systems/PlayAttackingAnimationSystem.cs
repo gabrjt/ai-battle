@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    
     public class PlayAttackingAnimationSystem : ComponentSystem
     {
         protected override void OnUpdate()
