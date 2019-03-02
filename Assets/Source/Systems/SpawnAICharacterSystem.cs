@@ -134,7 +134,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 50; // TODO: externalize count;
+        internal int m_TotalCount = 100; // TODO: externalize count;
 
         private Random m_Random;
 

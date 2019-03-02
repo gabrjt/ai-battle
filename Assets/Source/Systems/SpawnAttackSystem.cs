@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -11,7 +12,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    public class SpawnAttackSystem : JobComponentSystem
+    public class SpawnAttackSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
@@ -316,7 +317,7 @@ namespace Game.Systems
             m_SpawnDataQueue.Clear();
             m_ApplyAttackingQueue.Clear();
 
-            var barrier = World.GetExistingManager<EndFrameBarrier>();
+            var setBarrier = World.GetExistingManager<SetBarrier>();
             var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
@@ -338,7 +339,7 @@ namespace Game.Systems
             {
                 ApplyAttackingQueue = m_ApplyAttackingQueue,
                 AttackedArchetype = m_AttackedArchetype,
-                EntityCommandBuffer = barrier.CreateCommandBuffer(),
+                EntityCommandBuffer = setBarrier.CreateCommandBuffer(),
                 EventCommandBuffer = eventBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
@@ -369,7 +370,7 @@ namespace Game.Systems
                 VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),
             }.Schedule(entityArray.Length, 64, inputDeps);
 
-            barrier.AddJobHandleForProducer(inputDeps);
+            setBarrier.AddJobHandleForProducer(inputDeps);
             eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
@@ -379,6 +380,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_SpawnDataQueue.IsCreated)
             {
                 m_SpawnDataQueue.Dispose();

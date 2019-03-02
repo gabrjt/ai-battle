@@ -18,8 +18,6 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Owner owner, [ReadOnly] ref Offset offset)
             {
-                if (!PositionFromEntity.Exists(owner.Value)) return;
-
                 PositionFromEntity[entity] = new Position { Value = PositionFromEntity[owner.Value].Value + offset.Value };
             }
         }
