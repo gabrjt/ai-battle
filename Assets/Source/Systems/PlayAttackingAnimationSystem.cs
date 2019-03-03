@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(SetBarrier))]
     public class PlayAttackingAnimationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

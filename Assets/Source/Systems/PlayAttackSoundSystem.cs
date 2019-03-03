@@ -19,7 +19,7 @@ namespace Game.Systems
             public NativeQueue<PlayAttackSoundData>.Concurrent PlayAttackSoundQueue;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Damaged> DamagedType;
+            public ArchetypeChunkComponentType<Attacked> AttackedType;
 
             [ReadOnly]
             public ComponentDataFromEntity<ViewReference> ViewReferenceFromEntity;
@@ -32,11 +32,11 @@ namespace Game.Systems
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                var damagedArray = chunk.GetNativeArray(DamagedType);
+                var attackedArray = chunk.GetNativeArray(AttackedType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    var entity = damagedArray[entityIndex].This;
+                    var entity = attackedArray[entityIndex].This;
 
                     if (!ViewReferenceFromEntity.Exists(entity)) continue;
 
@@ -70,7 +70,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Damaged>() }
+                All = new[] { ComponentType.ReadOnly<Attacked>() }
             });
 
             m_PlayAttackSoundQueue = new NativeQueue<PlayAttackSoundData>(Allocator.Persistent);
@@ -81,7 +81,7 @@ namespace Game.Systems
             inputDeps = new ConsolidateJob
             {
                 PlayAttackSoundQueue = m_PlayAttackSoundQueue.ToConcurrent(),
-                DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
+                AttackedType = GetArchetypeChunkComponentType<Attacked>(true),
                 ViewReferenceFromEntity = GetComponentDataFromEntity<ViewReference>(true),
                 VisibleFromEntity = GetComponentDataFromEntity<Visible>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true)
