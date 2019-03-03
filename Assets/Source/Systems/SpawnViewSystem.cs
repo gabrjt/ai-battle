@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Game.Enums;
 using System;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -101,6 +102,9 @@ namespace Game.Systems
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Rotation> RotationFromEntity;
 
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<View> ViewFromEntity;
+
             public void Execute(int index)
             {
                 var entity = EntityArray[index];
@@ -109,6 +113,7 @@ namespace Game.Systems
                 OwnerFromEntity[entity] = setData.Owner;
                 PositionFromEntity[entity] = setData.Position;
                 RotationFromEntity[entity] = setData.Rotation;
+                ViewFromEntity[entity] = setData.View;
             }
         }
 
@@ -177,6 +182,8 @@ namespace Game.Systems
             public Position Position;
 
             public Rotation Rotation;
+
+            public View View;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -259,6 +266,8 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
+            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+
             var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
@@ -267,25 +276,41 @@ namespace Game.Systems
                 var position = EntityManager.GetComponentData<Position>(owner).Value;
                 var rotation = EntityManager.GetComponentData<Rotation>(owner).Value;
 
-                GameObject view;
+                GameObject view = null;
+
+                var knightPool = destroyBarrier.m_KnightPool;
+                var orcWolfRiderPool = destroyBarrier.m_OrcWolfRiderPool;
+                var skeletonPool = destroyBarrier.m_SkeletonPool;
+                var instantiated = false;
 
                 switch (spawnData.ViewType)
                 {
                     case ViewType.Knight:
-                        view = Object.Instantiate(m_KnightPrefab, position, rotation);
+                        while (!instantiated)
+                        {
+                            Instantiate(ref view, knightPool, ref instantiated);
+                        }
                         break;
 
                     case ViewType.OrcWolfRider:
-                        view = Object.Instantiate(m_OrvWolfRiderPrefab, position, rotation);
+                        while (!instantiated)
+                        {
+                            Instantiate(ref view, orcWolfRiderPool, ref instantiated);
+                        }
                         break;
 
                     case ViewType.Skeleton:
-                        view = Object.Instantiate(m_SkeletonPrefab, position, rotation);
+                        while (!instantiated)
+                        {
+                            Instantiate(ref view, skeletonPool, ref instantiated);
+                        }
                         break;
 
                     default:
                         continue;
                 }
+
+                view.SetActive(true);
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
 
@@ -297,12 +322,11 @@ namespace Game.Systems
                 {
                     Owner = new Owner { Value = spawnData.Owner },
                     Position = new Position { Value = position },
-                    Rotation = new Rotation { Value = rotation }
+                    Rotation = new Rotation { Value = rotation },
+                    View = new View { Value = spawnData.ViewType }
                 };
 
-                setDataArray[entityIndex] = setData;
-
-                ++entityIndex;
+                setDataArray[entityIndex++] = setData;
             }
 
             inputDeps = new SetDataJob
@@ -311,7 +335,8 @@ namespace Game.Systems
                 SetDataArray = setDataArray,
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(),
-                RotationFromEntity = GetComponentDataFromEntity<Rotation>()
+                RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
+                ViewFromEntity = GetComponentDataFromEntity<View>()
             }.Schedule(entityArray.Length, 64, inputDeps);
 
             inputDeps = new AddViewReferenceJob
@@ -325,6 +350,24 @@ namespace Game.Systems
             removeBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        private void Instantiate(ref GameObject view, Queue<DestroyBarrier.PoolData> pool, ref bool instantiated)
+        {
+            if (pool.Count > 0)
+            {
+                var poolData = pool.Dequeue();
+                if (poolData.IsValid)
+                {
+                    view = poolData.GameObject;
+                    instantiated = true;
+                }
+            }
+            else
+            {
+                view = Object.Instantiate(m_KnightPrefab);
+                instantiated = true;
+            }
         }
 
         protected override void OnDestroyManager()

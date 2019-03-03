@@ -16,6 +16,7 @@ namespace Game.Systems
 {
     [AlwaysUpdateSystem]
     [UpdateAfter(typeof(SetCharacterCountInputFieldSingletonSystem))]
+    [UpdateAfter(typeof(DestroyBarrier))]
     public class SpawnAICharacterSystem : ComponentSystem
     {
         [BurstCompile]
@@ -84,22 +85,41 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer CommandBuffer;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Knight> KnightFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<OrcWolfRider> OrcWolfRiderFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Skeleton> SkeletonFromEntity;
+
             public void Execute()
             {
                 for (var index = 0; index < EntityArray.Length; index++)
                 {
+                    var entity = EntityArray[index];
                     switch (SetDataArray[index].ViewType)
                     {
                         case ViewType.Knight:
-                            CommandBuffer.AddComponent(EntityArray[index], new Knight());
+                            if (!KnightFromEntity.Exists(entity))
+                            {
+                                CommandBuffer.AddComponent(entity, new Knight());
+                            }
                             break;
 
                         case ViewType.OrcWolfRider:
-                            CommandBuffer.AddComponent(EntityArray[index], new OrcWolfRider());
+                            if (!OrcWolfRiderFromEntity.Exists(entity))
+                            {
+                                CommandBuffer.AddComponent(entity, new OrcWolfRider());
+                            }
                             break;
 
                         case ViewType.Skeleton:
-                            CommandBuffer.AddComponent(EntityArray[index], new Skeleton());
+                            if (!SkeletonFromEntity.Exists(entity))
+                            {
+                                CommandBuffer.AddComponent(entity, new Skeleton());
+                            }
                             break;
                     }
                 }
@@ -137,7 +157,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 100; // TODO: externalize count;
+        internal int m_TotalCount = 100;
 
         private Random m_Random;
 
@@ -180,12 +200,42 @@ namespace Game.Systems
 
             if (entityCount <= 0) return;
 
+            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
 
             for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
             {
-                var navMeshAgent = Object.Instantiate(m_Prefab).GetComponent<NavMeshAgent>();
+                GameObject gameObject = null;
+
+                var characterPool = destroyBarrier.m_CharacterPool;
+                var instantiated = false;
+
+                while (!instantiated)
+                {
+                    if (characterPool.Count > 0)
+                    {
+                        var poolData = characterPool.Dequeue();
+                        if (poolData.IsValid)
+                        {
+                            gameObject = poolData.GameObject;
+                            instantiated = true;
+                        }
+                    }
+                    else
+                    {
+                        gameObject = Object.Instantiate(m_Prefab);
+                        instantiated = true;
+                    }
+                }
+
+                gameObject.SetActive(true);
+
+                gameObject.GetComponent<CapsuleCollider>().enabled = true;
+
+                var navMeshAgent = gameObject.GetComponent<NavMeshAgent>();
+                navMeshAgent.enabled = true;
                 navMeshAgent.Warp(terrain.GetRandomPosition());
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
 
@@ -270,7 +320,10 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                KnightFromEntity = GetComponentDataFromEntity<Knight>(true),
+                OrcWolfRiderFromEntity = GetComponentDataFromEntity<OrcWolfRider>(true),
+                SkeletonFromEntity = GetComponentDataFromEntity<Skeleton>(true)
             }.Schedule(inputDeps);
 
             inputDeps.Complete();
