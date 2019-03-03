@@ -200,7 +200,7 @@ namespace Game.Systems
 
             if (entityCount <= 0) return;
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+            var characterPool = World.GetExistingManager<DestroyBarrier>().m_CharacterPool;
 
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
@@ -209,25 +209,13 @@ namespace Game.Systems
             {
                 GameObject gameObject = null;
 
-                var characterPool = destroyBarrier.m_CharacterPool;
-                var instantiated = false;
-
-                while (!instantiated)
+                if (characterPool.Count > 0)
                 {
-                    if (characterPool.Count > 0)
-                    {
-                        var poolData = characterPool.Dequeue();
-                        if (poolData.IsValid)
-                        {
-                            gameObject = poolData.GameObject;
-                            instantiated = true;
-                        }
-                    }
-                    else
-                    {
-                        gameObject = Object.Instantiate(m_Prefab);
-                        instantiated = true;
-                    }
+                    gameObject = characterPool.Dequeue();
+                }
+                else
+                {
+                    gameObject = Object.Instantiate(m_Prefab);
                 }
 
                 gameObject.SetActive(true);

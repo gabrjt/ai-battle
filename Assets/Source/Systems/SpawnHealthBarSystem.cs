@@ -195,32 +195,20 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
             var ownerArray = new NativeArray<Owner>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+            var healthBarPool = World.GetExistingManager<DestroyBarrier>().m_HealthBarPool;
 
             var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
                 GameObject healthBar = null;
 
-                var healthBarPool = destroyBarrier.m_HealthBarPool;
-                var instantiated = false;
-
-                while (!instantiated)
+                if (healthBarPool.Count > 0)
                 {
-                    if (healthBarPool.Count > 0)
-                    {
-                        var poolData = healthBarPool.Dequeue();
-                        if (poolData.IsValid)
-                        {
-                            healthBar = poolData.GameObject;
-                            instantiated = true;
-                        }
-                    }
-                    else
-                    {
-                        healthBar = Object.Instantiate(m_Prefab, canvasTransform);
-                        instantiated = true;
-                    }
+                    healthBar = healthBarPool.Dequeue();
+                }
+                else
+                {
+                    healthBar = Object.Instantiate(m_Prefab, canvasTransform);
                 }
 
                 healthBar.SetActive(true);

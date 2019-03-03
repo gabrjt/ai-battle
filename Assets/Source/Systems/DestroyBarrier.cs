@@ -12,26 +12,17 @@ namespace Game.Systems
     [UpdateAfter(typeof(EventBarrier))]
     public class DestroyBarrier : BarrierSystem
     {
-        internal class PoolData
-        {
-            public bool IsValid;
-
-            public GameObject GameObject;
-        }
-
         private ComponentGroup m_Group;
 
-        internal Queue<PoolData> m_CharacterPool;
+        internal Queue<GameObject> m_CharacterPool;
 
-        internal Queue<PoolData> m_KnightPool;
+        internal Queue<GameObject> m_KnightPool;
 
-        internal Queue<PoolData> m_OrcWolfRiderPool;
+        internal Queue<GameObject> m_OrcWolfRiderPool;
 
-        internal Queue<PoolData> m_SkeletonPool;
+        internal Queue<GameObject> m_SkeletonPool;
 
-        internal Queue<PoolData> m_HealthBarPool;
-
-        private List<GameObject> m_DestroyGarbageList;
+        internal Queue<GameObject> m_HealthBarPool;
 
         protected override void OnCreateManager()
         {
@@ -49,11 +40,11 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<View>() },
             });
 
-            m_CharacterPool = new Queue<PoolData>();
-            m_KnightPool = new Queue<PoolData>();
-            m_OrcWolfRiderPool = new Queue<PoolData>();
-            m_SkeletonPool = new Queue<PoolData>();
-            m_HealthBarPool = new Queue<PoolData>();
+            m_CharacterPool = new Queue<GameObject>();
+            m_KnightPool = new Queue<GameObject>();
+            m_OrcWolfRiderPool = new Queue<GameObject>();
+            m_SkeletonPool = new Queue<GameObject>();
+            m_HealthBarPool = new Queue<GameObject>();
         }
 
         protected override void OnUpdate()
@@ -73,14 +64,7 @@ namespace Game.Systems
                 {
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = entityArray[entityIndex];
-                        var gameObject = EntityManager.GetComponentObject<NavMeshAgent>(entity).gameObject;
-
-                        m_CharacterPool.Enqueue(new PoolData
-                        {
-                            IsValid = true,
-                            GameObject = gameObject
-                        });
+                        m_CharacterPool.Enqueue(EntityManager.GetComponentObject<NavMeshAgent>(entityArray[entityIndex]).gameObject);
                     }
                 }
                 else if (chunk.Has(viewType))
@@ -96,27 +80,15 @@ namespace Game.Systems
                         switch (view.Value)
                         {
                             case ViewType.Knight:
-                                m_KnightPool.Enqueue(new PoolData
-                                {
-                                    IsValid = true,
-                                    GameObject = gameObject
-                                });
+                                m_KnightPool.Enqueue(gameObject);
                                 break;
 
                             case ViewType.OrcWolfRider:
-                                m_OrcWolfRiderPool.Enqueue(new PoolData
-                                {
-                                    IsValid = true,
-                                    GameObject = gameObject
-                                });
+                                m_OrcWolfRiderPool.Enqueue(gameObject);
                                 break;
 
                             case ViewType.Skeleton:
-                                m_SkeletonPool.Enqueue(new PoolData
-                                {
-                                    IsValid = true,
-                                    GameObject = gameObject
-                                });
+                                m_SkeletonPool.Enqueue(gameObject);
                                 break;
                         }
                     }
@@ -125,14 +97,7 @@ namespace Game.Systems
                 {
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = entityArray[entityIndex];
-                        var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
-
-                        m_HealthBarPool.Enqueue(new PoolData
-                        {
-                            IsValid = true,
-                            GameObject = gameObject
-                        });
+                        m_HealthBarPool.Enqueue(EntityManager.GetComponentObject<RectTransform>(entityArray[entityIndex]).parent.gameObject);
                     }
                 }
                 else
@@ -146,38 +111,65 @@ namespace Game.Systems
 
             chunkArray.Dispose();
 
-            foreach (var poolData in m_CharacterPool)
+            foreach (var gameObject in m_CharacterPool)
             {
-                ApplyToPool(poolData);
+                ApplyToPool(gameObject);
             }
 
-            foreach (var poolData in m_KnightPool)
+            foreach (var gameObject in m_KnightPool)
             {
-                ApplyToPool(poolData);
+                ApplyToPool(gameObject);
             }
 
-            foreach (var poolData in m_OrcWolfRiderPool)
+            foreach (var gameObject in m_OrcWolfRiderPool)
             {
-                ApplyToPool(poolData);
+                ApplyToPool(gameObject);
             }
 
-            foreach (var poolData in m_SkeletonPool)
+            foreach (var gameObject in m_SkeletonPool)
             {
-                ApplyToPool(poolData);
+                ApplyToPool(gameObject);
             }
 
-            foreach (var poolData in m_HealthBarPool)
+            foreach (var gameObject in m_HealthBarPool)
             {
-                ApplyToPool(poolData);
+                ApplyToPool(gameObject);
+            }
+
+            var spawnAICharacterSystem = World.GetExistingManager<SpawnAICharacterSystem>();
+
+            var maxPoolCount = spawnAICharacterSystem.m_TotalCount + spawnAICharacterSystem.m_TotalCount / 2;
+
+            while (m_CharacterPool.Count > maxPoolCount)
+            {
+                Object.Destroy(m_CharacterPool.Dequeue());
+            }
+
+            while (m_KnightPool.Count > maxPoolCount)
+            {
+                Object.Destroy(m_KnightPool.Dequeue());
+            }
+
+            while (m_OrcWolfRiderPool.Count > maxPoolCount)
+            {
+                Object.Destroy(m_OrcWolfRiderPool.Dequeue());
+            }
+
+            while (m_SkeletonPool.Count > maxPoolCount)
+            {
+                Object.Destroy(m_SkeletonPool.Dequeue());
+            }
+
+            while (m_HealthBarPool.Count > maxPoolCount)
+            {
+                Object.Destroy(m_HealthBarPool.Dequeue());
             }
 
             base.OnUpdate();
         }
 
-        private void ApplyToPool(PoolData poolData)
+        private void ApplyToPool(GameObject gameObject)
         {
-            var gameObject = poolData.GameObject;
-
             if (gameObject.activeInHierarchy)
             {
                 gameObject.SetActive(false);

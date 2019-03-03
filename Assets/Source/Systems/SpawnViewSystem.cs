@@ -267,6 +267,9 @@ namespace Game.Systems
             var setDataArray = new NativeArray<SetData>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
             var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+            var knightPool = destroyBarrier.m_KnightPool;
+            var orcWolfRiderPool = destroyBarrier.m_OrcWolfRiderPool;
+            var skeletonPool = destroyBarrier.m_SkeletonPool;
 
             var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
@@ -278,32 +281,18 @@ namespace Game.Systems
 
                 GameObject view = null;
 
-                var knightPool = destroyBarrier.m_KnightPool;
-                var orcWolfRiderPool = destroyBarrier.m_OrcWolfRiderPool;
-                var skeletonPool = destroyBarrier.m_SkeletonPool;
-                var instantiated = false;
-
                 switch (spawnData.ViewType)
                 {
                     case ViewType.Knight:
-                        while (!instantiated)
-                        {
-                            Instantiate(ref view, knightPool, ref instantiated);
-                        }
+                        Instantiate(ref view, knightPool, m_KnightPrefab);
                         break;
 
                     case ViewType.OrcWolfRider:
-                        while (!instantiated)
-                        {
-                            Instantiate(ref view, orcWolfRiderPool, ref instantiated);
-                        }
+                        Instantiate(ref view, orcWolfRiderPool, m_OrvWolfRiderPrefab);
                         break;
 
                     case ViewType.Skeleton:
-                        while (!instantiated)
-                        {
-                            Instantiate(ref view, skeletonPool, ref instantiated);
-                        }
+                        Instantiate(ref view, skeletonPool, m_SkeletonPrefab);
                         break;
 
                     default:
@@ -352,21 +341,15 @@ namespace Game.Systems
             return inputDeps;
         }
 
-        private void Instantiate(ref GameObject view, Queue<DestroyBarrier.PoolData> pool, ref bool instantiated)
+        private void Instantiate(ref GameObject view, Queue<GameObject> pool, GameObject prefab)
         {
             if (pool.Count > 0)
             {
-                var poolData = pool.Dequeue();
-                if (poolData.IsValid)
-                {
-                    view = poolData.GameObject;
-                    instantiated = true;
-                }
+                view = pool.Dequeue();
             }
             else
             {
-                view = Object.Instantiate(m_KnightPrefab);
-                instantiated = true;
+                view = Object.Instantiate(prefab);
             }
         }
 
