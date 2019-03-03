@@ -71,7 +71,7 @@ namespace Game.Systems
             }
         }
 
-        private struct AddViewTypeJob : IJob
+        private struct AddGroupJob : IJob
         {
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -89,19 +89,23 @@ namespace Game.Systems
                 for (var index = 0; index < EntityArray.Length; index++)
                 {
                     var entity = EntityArray[index];
+                    var viewType = SetDataArray[index].ViewType;
 
-                    switch (SetDataArray[index].ViewType)
+                    switch (viewType)
                     {
                         case ViewType.Knight:
                             CommandBuffer.AddComponent(entity, new Knight());
+                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
                             break;
 
                         case ViewType.OrcWolfRider:
                             CommandBuffer.AddComponent(entity, new OrcWolfRider());
+                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
                             break;
 
                         case ViewType.Skeleton:
                             CommandBuffer.AddComponent(entity, new Skeleton());
+                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
                             break;
                     }
                 }
@@ -281,7 +285,7 @@ namespace Game.Systems
                 AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>()
             }.Schedule(setDataArray.Length, 64, inputDeps);
 
-            inputDeps = new AddViewTypeJob
+            inputDeps = new AddGroupJob
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,

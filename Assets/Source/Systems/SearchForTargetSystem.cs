@@ -11,18 +11,17 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(SetBarrier))]
     public partial class SearchForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Position>
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Position, Group>
         {
             public NativeQueue<SearchForTargetData>.Concurrent DataQueue;
 
             [ReadOnly]
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref SearchingForTarget searchingForTarget, [ReadOnly] ref Position position)
+            public void Execute(Entity entity, int index, [ReadOnly] ref SearchingForTarget searchingForTarget, [ReadOnly] ref Position position, [ReadOnly] ref Group group)
             {
                 if (searchingForTarget.StartTime + searchingForTarget.Interval > Time) return;
 
@@ -30,7 +29,8 @@ namespace Game.Systems
                 {
                     Entity = entity,
                     SearchingForTarget = searchingForTarget,
-                    Position = position
+                    Position = position,
+                    Group = group
                 });
             }
         }
@@ -42,6 +42,8 @@ namespace Game.Systems
             public SearchingForTarget SearchingForTarget;
 
             public Position Position;
+
+            public Group Group;
         }
 
         private ComponentGroup m_Group;
@@ -110,7 +112,10 @@ namespace Game.Systems
                         var target = m_CachedColliderArray[colliderIndex];
                         var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
 
-                        if (entity == targetEntity || EntityManager.HasComponent<Dead>(targetEntity) || EntityManager.HasComponent<Destroy>(targetEntity)) continue;
+                        if (entity == targetEntity ||
+                            !EntityManager.HasComponent<Group>(targetEntity) ||
+                            data.Group.Value == EntityManager.GetComponentData<Group>(targetEntity).Value ||
+                            EntityManager.HasComponent<Dead>(targetEntity) || EntityManager.HasComponent<Destroy>(targetEntity)) continue;
 
                         var targetFound = eventCommandBuffer.CreateEntity(m_Archetype);
                         eventCommandBuffer.SetComponent(targetFound, new TargetFound

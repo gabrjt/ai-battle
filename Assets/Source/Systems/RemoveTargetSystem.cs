@@ -30,9 +30,6 @@ namespace Game.Systems
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
-
-            [ReadOnly]
             public ComponentDataFromEntity<Target> TargetFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -58,7 +55,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        if (target.Value != default && !DeadFromEntity.Exists(target.Value) && !DestroyFromEntity.Exists(target.Value)) continue; // TODO: check != default.
+                        if (!DeadFromEntity.Exists(target.Value)) continue;
 
                         RemoveMap.TryAdd(entity, target);
                     }
@@ -141,7 +138,6 @@ namespace Game.Systems
                 DeadType = GetArchetypeChunkComponentType<Dead>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(m_Group, inputDeps);
 
