@@ -26,14 +26,26 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<Initialized> InitializedType;
 
+            [ReadOnly]
+            public ArchetypeChunkComponentType<ViewReference> ViewReferenceType;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Visible> VisibleFromEntity;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
 
-                if (!chunk.Has(InitializedType))
+                if (!chunk.Has(InitializedType) && chunk.Has(ViewReferenceType))
                 {
+                    var viewReferenceArray = chunk.GetNativeArray(ViewReferenceType);
+
                     for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                     {
+                        var view = viewReferenceArray[entityIndex].Value;
+
+                        if (!VisibleFromEntity.Exists(view)) continue;
+
                         AddInitializedEntityMap.TryAdd(entityArray[entityIndex], new Initialized());
                     }
                 }
@@ -119,7 +131,9 @@ namespace Game.Systems
                 AddInitializedEntityMap = m_AddInitializedEntityMap.ToConcurrent(),
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                InitializedType = GetArchetypeChunkComponentType<Initialized>(true)
+                InitializedType = GetArchetypeChunkComponentType<Initialized>(true),
+                ViewReferenceType = GetArchetypeChunkComponentType<ViewReference>(true),
+                VisibleFromEntity = GetComponentDataFromEntity<Visible>(true)
             }.Schedule(m_Group, inputDeps);
 
             var addInitializedDeps = new AddInitializedJob

@@ -269,21 +269,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Knight
       objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.z
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_Avatar
       value: 
@@ -510,6 +495,36 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2854799919406906500, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 13454ca9d4907334eb3d66520e515a60, type: 3}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7076341306189578503, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 616698099092189165, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 616698099092188266, guid: 80afb8f52d27bae4f8ff4cf083945861,
         type: 3}
       propertyPath: m_audioClip
       value: 
