@@ -85,41 +85,24 @@ namespace Game.Systems
             [ReadOnly]
             public EntityCommandBuffer CommandBuffer;
 
-            [ReadOnly]
-            public ComponentDataFromEntity<Knight> KnightFromEntity;
-
-            [ReadOnly]
-            public ComponentDataFromEntity<OrcWolfRider> OrcWolfRiderFromEntity;
-
-            [ReadOnly]
-            public ComponentDataFromEntity<Skeleton> SkeletonFromEntity;
-
             public void Execute()
             {
                 for (var index = 0; index < EntityArray.Length; index++)
                 {
                     var entity = EntityArray[index];
+
                     switch (SetDataArray[index].ViewType)
                     {
                         case ViewType.Knight:
-                            if (!KnightFromEntity.Exists(entity))
-                            {
-                                CommandBuffer.AddComponent(entity, new Knight());
-                            }
+                            CommandBuffer.AddComponent(entity, new Knight());
                             break;
 
                         case ViewType.OrcWolfRider:
-                            if (!OrcWolfRiderFromEntity.Exists(entity))
-                            {
-                                CommandBuffer.AddComponent(entity, new OrcWolfRider());
-                            }
+                            CommandBuffer.AddComponent(entity, new OrcWolfRider());
                             break;
 
                         case ViewType.Skeleton:
-                            if (!SkeletonFromEntity.Exists(entity))
-                            {
-                                CommandBuffer.AddComponent(entity, new Skeleton());
-                            }
+                            CommandBuffer.AddComponent(entity, new Skeleton());
                             break;
                     }
                 }
@@ -309,9 +292,6 @@ namespace Game.Systems
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
                 CommandBuffer = setBarrier.CreateCommandBuffer(),
-                KnightFromEntity = GetComponentDataFromEntity<Knight>(true),
-                OrcWolfRiderFromEntity = GetComponentDataFromEntity<OrcWolfRider>(true),
-                SkeletonFromEntity = GetComponentDataFromEntity<Skeleton>(true)
             }.Schedule(inputDeps);
 
             inputDeps.Complete();
