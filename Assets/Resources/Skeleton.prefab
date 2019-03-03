@@ -499,6 +499,16 @@ PrefabInstance:
       propertyPath: m_LocalRotation.w
       value: 0.5997357
       objectReference: {fileID: 0}
+    - target: {fileID: 8033246727625139384, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854799919406906500, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 572c467eb7881b749af8f7864e917923, type: 3}
     m_RemovedComponents:
     - {fileID: 2234129494868116802, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
