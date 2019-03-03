@@ -157,7 +157,7 @@ namespace Game.Systems
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 100;
+        internal int m_TotalCount = 2500;
 
         private Random m_Random;
 

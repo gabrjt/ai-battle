@@ -1162,6 +1162,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66755c468d012454da6fb72d7348f9e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SerializedData:
+    Value: 0
 --- !u!114 &2234129494868116802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1220,7 +1222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    Value: 625
+    Value: 10000
 --- !u!1 &153408
 GameObject:
   m_ObjectHideFlags: 0
