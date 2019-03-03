@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -9,7 +10,7 @@ using UnityEngine;
 namespace Game.Systems
 {
     [UpdateBefore(typeof(DamageSystem))]
-    public class AttackCollisionSystem : ComponentSystem
+    public class AttackCollisionSystem : ComponentSystem, IDisposable
     {
         private struct ConsolidateJob : IJobParallelFor
         {
@@ -171,6 +172,11 @@ namespace Game.Systems
         {
             base.OnDestroyManager();
 
+            Dispose();
+        }
+
+        public void Dispose()
+        {
             if (m_SpherecastCommandDataArray.IsCreated)
             {
                 m_SpherecastCommandDataArray.Dispose();
