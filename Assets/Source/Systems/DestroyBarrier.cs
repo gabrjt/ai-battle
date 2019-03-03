@@ -138,7 +138,7 @@ namespace Game.Systems
 
             var spawnAICharacterSystem = World.GetExistingManager<SpawnAICharacterSystem>();
 
-            var maxPoolCount = spawnAICharacterSystem.m_TotalCount + spawnAICharacterSystem.m_TotalCount / 2;
+            var maxPoolCount = spawnAICharacterSystem.m_TotalCount * 2;
 
             while (m_CharacterPool.Count > maxPoolCount)
             {
