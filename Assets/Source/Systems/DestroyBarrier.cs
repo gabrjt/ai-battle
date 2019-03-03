@@ -40,6 +40,17 @@ namespace Game.Systems
             var rectTransformType = GetArchetypeChunkComponentType<HealthBar>(true);
             var transformType = GetArchetypeChunkComponentType<View>(true);
 
+            // TODO: Problems arise when jobified :(
+
+            Consolidate(chunkArray, entityType, rectTransformType, transformType);
+
+            Apply();
+
+            base.OnUpdate();
+        }
+
+        private void Consolidate(NativeArray<ArchetypeChunk> chunkArray, ArchetypeChunkEntityType entityType, ArchetypeChunkComponentType<HealthBar> rectTransformType, ArchetypeChunkComponentType<View> transformType)
+        {
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
                 var chunk = chunkArray[chunkIndex];
@@ -66,21 +77,22 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-                        PostUpdateCommands.DestroyEntity(entity);
+                        PostUpdateCommands.DestroyEntity(entity); // should be in Apply, but since this is a classic Chunk Iteration...
                     }
                 }
             }
 
             chunkArray.Dispose();
+        }
 
+        private void Apply()
+        {
             foreach (var gameObject in m_GameObjectList)
             {
                 Object.Destroy(gameObject);
             }
 
             m_GameObjectList.Clear();
-
-            base.OnUpdate();
         }
     }
 }
