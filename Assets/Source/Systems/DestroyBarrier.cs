@@ -3,6 +3,7 @@ using Game.Enums;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,7 +13,84 @@ namespace Game.Systems
     [UpdateAfter(typeof(EventBarrier))]
     public class DestroyBarrier : BarrierSystem
     {
+        private struct ConsolidateJob : IJobParallelFor
+        {
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            public NativeQueue<Entity>.Concurrent CharacterQueue;
+
+            public NativeQueue<Entity>.Concurrent KnightQueue;
+
+            public NativeQueue<Entity>.Concurrent OrcWolfRiderQueue;
+
+            public NativeQueue<Entity>.Concurrent SkeletonQueue;
+
+            public NativeQueue<Entity>.Concurrent HealthBarQueue;
+
+            public NativeQueue<Entity>.Concurrent PureEntityQueue;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<Character> CharacterFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<View> ViewFromEntity;
+
+            [ReadOnly]
+            public ComponentDataFromEntity<HealthBar> HealthBarFromEntity;
+
+            public void Execute(int index)
+            {
+                var entity = EntityArray[index];
+
+                if (CharacterFromEntity.Exists(entity))
+                {
+                    CharacterQueue.Enqueue(entity);
+                }
+                else if (ViewFromEntity.Exists(entity))
+                {
+                    var view = ViewFromEntity[entity];
+
+                    switch (view.Value)
+                    {
+                        case ViewType.Knight:
+                            KnightQueue.Enqueue(entity);
+                            break;
+
+                        case ViewType.OrcWolfRider:
+                            OrcWolfRiderQueue.Enqueue(entity);
+                            break;
+
+                        case ViewType.Skeleton:
+                            SkeletonQueue.Enqueue(entity);
+                            break;
+                    }
+                }
+                else if (HealthBarFromEntity.Exists(entity))
+                {
+                    HealthBarQueue.Enqueue(entity);
+                }
+                else
+                {
+                    PureEntityQueue.Enqueue(entity);
+                }
+            }
+        }
+
         private ComponentGroup m_Group;
+
+        private NativeQueue<Entity> m_PureEntityQueue;
+
+        private NativeQueue<Entity> m_CharacterQueue;
+
+        private NativeQueue<Entity> m_KnightQueue;
+
+        private NativeQueue<Entity> m_OrcWolfRiderQueue;
+
+        private NativeQueue<Entity> m_SkeletonQueue;
+
+        private NativeQueue<Entity> m_HealthBarQueue;
 
         internal Queue<GameObject> m_CharacterPool;
 
@@ -40,6 +118,13 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<View>() },
             });
 
+            m_PureEntityQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_CharacterQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_KnightQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_OrcWolfRiderQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_SkeletonQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_HealthBarQueue = new NativeQueue<Entity>(Allocator.Persistent);
+
             m_CharacterPool = new Queue<GameObject>();
             m_KnightPool = new Queue<GameObject>();
             m_OrcWolfRiderPool = new Queue<GameObject>();
@@ -49,96 +134,61 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-            var characterType = GetArchetypeChunkComponentType<Character>(true);
-            var viewType = GetArchetypeChunkComponentType<View>(true);
-            var healthBarType = GetArchetypeChunkComponentType<HealthBar>(true);
-
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            new ConsolidateJob
             {
-                var chunk = chunkArray[chunkIndex];
-                var entityArray = chunk.GetNativeArray(entityType);
+                EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
+                PureEntityQueue = m_PureEntityQueue.ToConcurrent(),
+                CharacterQueue = m_CharacterQueue.ToConcurrent(),
+                KnightQueue = m_KnightQueue.ToConcurrent(),
+                OrcWolfRiderQueue = m_OrcWolfRiderQueue.ToConcurrent(),
+                SkeletonQueue = m_SkeletonQueue.ToConcurrent(),
+                HealthBarQueue = m_HealthBarQueue.ToConcurrent(),
+                CharacterFromEntity = GetComponentDataFromEntity<Character>(true),
+                ViewFromEntity = GetComponentDataFromEntity<View>(true),
+                HealthBarFromEntity = GetComponentDataFromEntity<HealthBar>(true)
+            }.Schedule(m_Group.CalculateLength(), 64).Complete();
 
-                if (chunk.Has(characterType))
-                {
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        m_CharacterPool.Enqueue(EntityManager.GetComponentObject<NavMeshAgent>(entityArray[entityIndex]).gameObject);
-                    }
-                }
-                else if (chunk.Has(viewType))
-                {
-                    var viewArray = chunk.GetNativeArray(viewType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        var view = viewArray[entityIndex];
-                        var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
-
-                        switch (view.Value)
-                        {
-                            case ViewType.Knight:
-                                m_KnightPool.Enqueue(gameObject);
-                                break;
-
-                            case ViewType.OrcWolfRider:
-                                m_OrcWolfRiderPool.Enqueue(gameObject);
-                                break;
-
-                            case ViewType.Skeleton:
-                                m_SkeletonPool.Enqueue(gameObject);
-                                break;
-                        }
-                    }
-                }
-                else if (chunk.Has(healthBarType))
-                {
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        m_HealthBarPool.Enqueue(EntityManager.GetComponentObject<RectTransform>(entityArray[entityIndex]).parent.gameObject);
-                    }
-                }
-                else
-                {
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        PostUpdateCommands.DestroyEntity(entityArray[entityIndex]); // should be in Apply, but since this is a classic Chunk Iteration...
-                    }
-                }
+            while (m_PureEntityQueue.TryDequeue(out var entity))
+            {
+                EntityManager.DestroyEntity(entity);
             }
 
-            chunkArray.Dispose();
-
-            foreach (var gameObject in m_CharacterPool)
+            while (m_CharacterQueue.TryDequeue(out var entity))
             {
+                var gameObject = EntityManager.GetComponentObject<NavMeshAgent>(entity).gameObject;
+                m_CharacterPool.Enqueue(gameObject);
                 ApplyToPool(gameObject);
             }
 
-            foreach (var gameObject in m_KnightPool)
+            while (m_KnightQueue.TryDequeue(out var entity))
             {
+                var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
+                m_KnightPool.Enqueue(gameObject);
                 ApplyToPool(gameObject);
             }
 
-            foreach (var gameObject in m_OrcWolfRiderPool)
+            while (m_OrcWolfRiderQueue.TryDequeue(out var entity))
             {
+                var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
+                m_OrcWolfRiderPool.Enqueue(gameObject);
                 ApplyToPool(gameObject);
             }
 
-            foreach (var gameObject in m_SkeletonPool)
+            while (m_SkeletonQueue.TryDequeue(out var entity))
             {
+                var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
+                m_SkeletonPool.Enqueue(gameObject);
                 ApplyToPool(gameObject);
             }
 
-            foreach (var gameObject in m_HealthBarPool)
+            while (m_HealthBarQueue.TryDequeue(out var entity))
             {
+                var gameObject = EntityManager.GetComponentObject<RectTransform>(entity).parent.gameObject;
+                m_HealthBarPool.Enqueue(gameObject);
                 ApplyToPool(gameObject);
             }
 
-            var spawnAICharacterSystem = World.GetExistingManager<SpawnAICharacterSystem>();
-
-            var maxPoolCount = spawnAICharacterSystem.m_TotalCount * 2;
+            var maxPoolCount = World.GetExistingManager<SpawnAICharacterSystem>().m_TotalCount * 2;
 
             while (m_CharacterPool.Count > maxPoolCount)
             {
@@ -185,6 +235,36 @@ namespace Game.Systems
 
         public void Dispose()
         {
+            if (m_PureEntityQueue.IsCreated)
+            {
+                m_PureEntityQueue.Dispose();
+            }
+
+            if (m_CharacterQueue.IsCreated)
+            {
+                m_CharacterQueue.Dispose();
+            }
+
+            if (m_KnightQueue.IsCreated)
+            {
+                m_KnightQueue.Dispose();
+            }
+
+            if (m_OrcWolfRiderQueue.IsCreated)
+            {
+                m_OrcWolfRiderQueue.Dispose();
+            }
+
+            if (m_SkeletonQueue.IsCreated)
+            {
+                m_SkeletonQueue.Dispose();
+            }
+
+            if (m_HealthBarQueue.IsCreated)
+            {
+                m_HealthBarQueue.Dispose();
+            }
+
             m_CharacterPool.Clear();
             m_KnightPool.Clear();
             m_OrcWolfRiderPool.Clear();
