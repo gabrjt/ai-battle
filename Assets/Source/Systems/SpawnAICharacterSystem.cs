@@ -141,6 +141,8 @@ namespace Game.Systems
 
         internal int m_TotalCount = 500;
 
+        internal int m_LastTotalCount;
+
         private Random m_Random;
 
         protected override void OnCreateManager()
@@ -153,6 +155,8 @@ namespace Game.Systems
             });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Attach>());
+
+            m_LastTotalCount = m_TotalCount;
 
             m_Random = new Random((uint)System.Environment.TickCount);
 

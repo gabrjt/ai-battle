@@ -18,7 +18,14 @@ namespace Game.Behaviours
         {
             if (int.TryParse(m_CharacterCountInputField.text, out var inputFieldCount) && inputFieldCount > 0)
             {
-                World.Active.GetExistingManager<SpawnAICharacterSystem>().m_TotalCount = math.min(inputFieldCount, m_MaxTotalCount);
+                var count = math.min(inputFieldCount, m_MaxTotalCount);
+
+                m_CharacterCountInputField.text = count.ToString();
+
+                var spawnAICharacterSystem = World.Active.GetExistingManager<SpawnAICharacterSystem>();
+
+                spawnAICharacterSystem.m_LastTotalCount = spawnAICharacterSystem.m_TotalCount;
+                spawnAICharacterSystem.m_TotalCount = count;
             }
         }
     }

@@ -5,6 +5,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -190,7 +191,9 @@ namespace Game.Systems
                 ApplyToPool(gameObject);
             }
 
-            var maxPoolCount = World.GetExistingManager<SpawnAICharacterSystem>().m_TotalCount * 2;
+            var spawnAICharacterSystem = World.GetExistingManager<SpawnAICharacterSystem>();
+
+            var maxPoolCount = math.max(spawnAICharacterSystem.m_LastTotalCount, spawnAICharacterSystem.m_TotalCount);
 
             while (m_CharacterPool.Count > maxPoolCount)
             {
