@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [DisableAutoCreation]
     public class DisableColliderSystem : ComponentSystem
     {
         protected override void OnUpdate()

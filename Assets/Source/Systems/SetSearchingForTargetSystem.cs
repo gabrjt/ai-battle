@@ -20,6 +20,7 @@ namespace Game.Systems
     [UpdateBefore(typeof(SetIdleSystem))]
     [UpdateBefore(typeof(RemoveSearchingForDestinationSystem))]
     [UpdateBefore(typeof(RemoveIdleSystem))]
+    [UpdateBefore(typeof(SetDestroySystem))]
     public class SetSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

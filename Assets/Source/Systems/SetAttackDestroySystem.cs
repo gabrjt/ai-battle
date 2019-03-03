@@ -52,7 +52,7 @@ namespace Game.Systems
             [ReadOnly]
             public NativeHashMap<Entity, Destroy> SetMap;
 
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -62,8 +62,8 @@ namespace Game.Systems
                 {
                     var entity = entityArray[entityIndex];
 
-                    EntityCommandBuffer.AddComponent(entity, SetMap[entity]);
-                    EntityCommandBuffer.AddComponent(entity, new Disabled());
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
+                    CommandBuffer.AddComponent(entity, new Disabled());
                 }
 
                 entityArray.Dispose();
@@ -96,7 +96,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -108,10 +108,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                EntityCommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = destroyBarrier.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
+            destroyBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -7,7 +7,6 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(SetBarrier))]
     public class SetDestroySystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -48,7 +47,7 @@ namespace Game.Systems
                 for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-                    CommandBuffer.AddComponent(entity, new Destroy());
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
                     CommandBuffer.AddComponent(entity, new Disabled());
                 }
 
@@ -105,11 +104,8 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var setCommandBuffer = setBarrier.CreateCommandBuffer();
-
+            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
             var eventBarrier = World.GetExistingManager<EventBarrier>();
-            var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
 
             var consolidateDeps = new ConsolidateJob
             {
@@ -121,7 +117,7 @@ namespace Game.Systems
             var applyDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                CommandBuffer = destroyBarrier.CreateCommandBuffer(),
             }.Schedule(consolidateDeps);
 
             var destroyedDeps = new DispatchDestroyedJob
@@ -133,7 +129,7 @@ namespace Game.Systems
 
             inputDeps = JobHandle.CombineDependencies(applyDeps, destroyedDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
+            destroyBarrier.AddJobHandleForProducer(inputDeps);
             eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
