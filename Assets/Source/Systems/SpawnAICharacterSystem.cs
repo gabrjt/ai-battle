@@ -210,7 +210,7 @@ namespace Game.Systems
                 navMeshAgent.Warp(terrain.GetRandomPosition());
                 navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
 
-                var entity = navMeshAgent.GetComponent<GameObjectEntity>().Entity;
+                var entity = gameObject.GetComponent<GameObjectEntity>().Entity;
 
                 navMeshAgent.name = $"Character AI {entity.Index}";
 

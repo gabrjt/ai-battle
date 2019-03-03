@@ -34,7 +34,7 @@ namespace Game.Systems
             {
                 var damagedArray = chunk.GetNativeArray(DamagedType);
 
-                for (var entityIndex = 0; entityIndex < damagedArray.Length; entityIndex++)
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = damagedArray[entityIndex].This;
 

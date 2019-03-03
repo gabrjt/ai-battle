@@ -272,6 +272,7 @@ namespace Game.Systems
             var skeletonPool = destroyBarrier.m_SkeletonPool;
 
             var entityIndex = 0;
+
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
             {
                 var owner = spawnData.Owner;
@@ -300,6 +301,9 @@ namespace Game.Systems
                 }
 
                 view.SetActive(true);
+
+                view.transform.position = position;
+                view.transform.rotation = rotation;
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
 
