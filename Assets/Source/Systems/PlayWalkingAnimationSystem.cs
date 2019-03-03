@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Game.Systems
 {
@@ -21,11 +22,19 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((ref ViewReference viewReference) =>
+            ForEach((NavMeshAgent navMeshAgent, ref ViewReference viewReference) =>
             {
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
                 animator.speed = 1;
-                animator.Play("Walking");
+
+                if (navMeshAgent.pathPending)
+                {
+                    animator.Play("Idle");
+                }
+                else
+                {
+                    animator.Play("Walking");
+                }
             }, m_Group);
         }
     }

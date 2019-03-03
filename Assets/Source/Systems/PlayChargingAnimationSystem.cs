@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Game.Systems
 {
@@ -23,24 +24,18 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((ref ViewReference viewReference, ref Position position, ref Target target, ref AttackDistance attackDistance) =>
+            ForEach((NavMeshAgent navMeshAgent, ref ViewReference viewReference, ref Position position, ref Target target, ref AttackDistance attackDistance) =>
             {
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
                 animator.speed = 1;
-                if (EntityManager.HasComponent<Position>(target.Value))
+
+                if (navMeshAgent.pathPending || math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Max)
                 {
-                    if (math.distance(position.Value, EntityManager.GetComponentData<Position>(target.Value).Value) <= attackDistance.Max)
-                    {
-                        animator.Play("Idle");
-                    }
-                    else
-                    {
-                        animator.Play("Charging");
-                    }
+                    animator.Play("Idle");
                 }
                 else
                 {
-                    animator.Play("Idle");
+                    animator.Play("Charging");
                 }
             }, m_Group);
         }

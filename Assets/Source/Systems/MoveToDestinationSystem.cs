@@ -6,6 +6,19 @@ namespace Game.Systems
 {
     public class MoveToDestinationSystem : ComponentSystem
     {
+        private ComponentGroup m_Group;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.Create<NavMeshAgent>(), ComponentType.ReadOnly<Destination>() },
+                None = new[] { ComponentType.ReadOnly<Dead>() }
+            });
+        }
+
         protected override void OnUpdate()
         {
             ForEach((NavMeshAgent navMeshAgent, ref Destination destination) =>
@@ -17,7 +30,7 @@ namespace Game.Systems
                 {
                     navMeshAgent.SetDestination(destination.Value);
                 }
-            });
+            }, m_Group);
         }
     }
 }
