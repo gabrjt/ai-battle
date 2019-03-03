@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Game.Enums;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -13,6 +14,7 @@ namespace Game.Systems
     [UpdateAfter(typeof(EventBarrier))]
     public class DestroyBarrier : BarrierSystem
     {
+        [BurstCompile]
         private struct ConsolidateJob : IJobParallelFor
         {
             [ReadOnly]
