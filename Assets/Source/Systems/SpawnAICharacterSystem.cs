@@ -5,7 +5,6 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.AI;
@@ -170,15 +169,6 @@ namespace Game.Systems
 
         private void SpawnAICharacters(Terrain terrain, int count)
         {
-            if (HasSingleton<CharacterCountInputField>())
-            {
-                if (int.TryParse(EntityManager.GetComponentObject<TMPro.TMP_InputField>(GetSingleton<CharacterCountInputField>().Owner).text, out var inputFieldCount) &&
-                    inputFieldCount > 0)
-                {
-                    m_TotalCount = math.min(inputFieldCount, 10000);
-                }
-            }
-
             var entityCount = m_TotalCount - count;
 
             if (entityCount <= 0) return;
