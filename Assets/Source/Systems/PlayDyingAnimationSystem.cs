@@ -24,6 +24,7 @@ namespace Game.Systems
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var viewReferenceArray = chunk.GetNativeArray(ViewReferenceType);
+
                 for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = viewReferenceArray[entityIndex].Value;
