@@ -20,15 +20,31 @@ namespace Game.Systems
             [ReadOnly]
             public ArchetypeChunkComponentType<Dead> DeadType;
 
+            [ReadOnly]
+            public ArchetypeChunkBufferType<TargetBuffer> TargetBufferType;
+
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
+                var entityArray = chunk.GetNativeArray(EntityType);
+
                 if (chunk.Has(DeadType))
                 {
-                    var entityArray = chunk.GetNativeArray(EntityType);
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+
+                        RemoveMap.TryAdd(entity, new SearchingForTarget());
+                    }
+                }
+                else
+                {
+                    var targetBufferArray = chunk.GetBufferAccessor(TargetBufferType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
+
+                        if (targetBufferArray[entityIndex].Length < TargetBufferProxy.InternalBufferCapacity) continue;
 
                         RemoveMap.TryAdd(entity, new SearchingForTarget());
                     }
@@ -84,6 +100,7 @@ namespace Game.Systems
                 RemoveMap = m_RemoveMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 DeadType = GetArchetypeChunkComponentType<Dead>(true),
+                TargetBufferType = GetArchetypeChunkBufferType<TargetBuffer>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

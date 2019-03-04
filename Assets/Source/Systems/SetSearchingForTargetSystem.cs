@@ -32,6 +32,9 @@ namespace Game.Systems
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
+            public ArchetypeChunkBufferType<TargetBuffer> TargetBufferType;
+
+            [ReadOnly]
             public float Time;
 
             [ReadOnly]
@@ -40,9 +43,12 @@ namespace Game.Systems
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
+                var targetBufferArray = chunk.GetBufferAccessor(TargetBufferType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
+                    if (targetBufferArray[entityIndex].Length > 0) continue;
+
                     SetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
                     {
                         Radius = Random.NextInt(5, 11),
@@ -87,9 +93,8 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>() },
-                Any = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>(), ComponentType.ReadOnly<Destroy>() }
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<TargetBuffer>() },
+                None = new[] { ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Random = new Random((uint)Environment.TickCount);
@@ -107,6 +112,7 @@ namespace Game.Systems
             {
                 SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
+                TargetBufferType = GetArchetypeChunkBufferType<TargetBuffer>(true),
                 Time = Time.time,
                 Random = m_Random
             }.Schedule(m_Group, inputDeps);
