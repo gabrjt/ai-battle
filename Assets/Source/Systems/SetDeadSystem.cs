@@ -16,10 +16,17 @@ namespace Game.Systems
             public NativeHashMap<Entity, Dead>.Concurrent SetMap;
 
             [ReadOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Health> HealthType;
+
+            [ReadOnly]
+            public ArchetypeChunkComponentType<KillAllCharacters> KillAllCharacterType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Killed> KilledType;
@@ -44,6 +51,17 @@ namespace Game.Systems
                         if (health.Value > 0) continue;
 
                         SetMap.TryAdd(entity, new Dead
+                        {
+                            Duration = 5,
+                            StartTime = Time
+                        });
+                    }
+                }
+                else if (chunk.Has(KillAllCharacterType))
+                {
+                    for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
+                    {
+                        SetMap.TryAdd(EntityArray[entityIndex], new Dead
                         {
                             Duration = 5,
                             StartTime = Time
@@ -100,6 +118,8 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
+        private ComponentGroup m_CharacterGroup;
+
         private NativeHashMap<Entity, Dead> m_SetMap;
 
         protected override void OnCreateManager()
@@ -113,7 +133,14 @@ namespace Game.Systems
             },
             new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<Killed>() }
+                All = new[] { ComponentType.ReadOnly<Components.Event>() },
+                Any = new[] { ComponentType.ReadOnly<KillAllCharacters>(), ComponentType.ReadOnly<Killed>() }
+            });
+
+            m_CharacterGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>() },
+                None = new[] { ComponentType.ReadOnly<Dead>() }
             });
         }
 
@@ -129,7 +156,9 @@ namespace Game.Systems
             {
                 SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
+                EntityArray = m_CharacterGroup.ToEntityArray(Allocator.TempJob),
                 HealthType = GetArchetypeChunkComponentType<Health>(true),
+                KillAllCharacterType = GetArchetypeChunkComponentType<KillAllCharacters>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 Time = Time.time
