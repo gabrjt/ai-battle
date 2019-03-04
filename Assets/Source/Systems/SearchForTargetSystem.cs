@@ -101,22 +101,25 @@ namespace Game.Systems
                 {
                     var targetList = new NativeList<Entity>(Allocator.Temp);
 
-                    var colliderIndex = 0;
+                    var targetFromEntity = GetComponentDataFromEntity<Target>(true);
+                    var groupFromEntity = GetComponentDataFromEntity<Group>(true);
+                    var deadFromEntity = GetComponentDataFromEntity<Dead>(true);
 
+                    var colliderIndex = 0;
                     do
                     {
                         var target = m_CachedColliderArray[colliderIndex];
                         var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
 
-                        if (EntityManager.HasComponent<Target>(entity) && EntityManager.GetComponentData<Target>(entity).Value == targetEntity)
+                        if (targetFromEntity.Exists(entity) && targetFromEntity[entity].Value == targetEntity)
                         {
                             break;
                         }
 
                         if (entity == targetEntity ||
-                            !EntityManager.HasComponent<Group>(targetEntity) ||
-                            data.Group.Value == EntityManager.GetComponentData<Group>(targetEntity).Value ||
-                            EntityManager.HasComponent<Dead>(targetEntity)) continue;
+                            !groupFromEntity.Exists(targetEntity) ||
+                            data.Group.Value == groupFromEntity[targetEntity].Value ||
+                            deadFromEntity.Exists(targetEntity)) continue;
 
                         targetList.Add(targetEntity);
                     }
@@ -156,6 +159,7 @@ namespace Game.Systems
                 {
                     var setBarrier = World.GetExistingManager<SetBarrier>();
                     searchingForTarget.StartTime = Time.time;
+
                     setBarrier.CreateCommandBuffer().SetComponent(entity, searchingForTarget);
 
                     setBarrier.AddJobHandleForProducer(inputDeps);
