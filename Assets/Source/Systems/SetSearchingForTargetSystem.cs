@@ -45,7 +45,7 @@ namespace Game.Systems
                 {
                     SetMap.TryAdd(entityArray[entityIndex], new SearchingForTarget
                     {
-                        Radius = Random.NextInt(5, 25),
+                        Radius = Random.NextInt(5, 11),
                         Interval = 1,
                         StartTime = Time
                     });

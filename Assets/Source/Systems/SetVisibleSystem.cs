@@ -51,6 +51,9 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Position> PositionFromEntity;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Dead> DeadFromEntity;
+
             [NativeSetThreadIndex]
             private readonly int m_ThreadIndex;
 
@@ -73,7 +76,7 @@ namespace Game.Systems
                         var health = HealthFromEntity[owner].Value;
                         var maxHealth = MaxHealthFromEntity[owner].Value;
 
-                        var isVisible = IsVisible(maxSqrDistanceFromCamera, owner) && health > 0 && health < maxHealth;
+                        var isVisible = IsVisible(maxSqrDistanceFromCamera, owner) && !DeadFromEntity.Exists(owner) && health > 0 && health < maxHealth;
 
                         SetVisible(hasVisible, entity, isVisible);
                     }
@@ -185,7 +188,8 @@ namespace Game.Systems
                 ViewType = GetArchetypeChunkComponentType<View>(true),
                 HealthFromEntity = GetComponentDataFromEntity<Health>(true),
                 MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true)
+                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true)
             }.Schedule(m_Group, inputDeps);
 
             var addVisibleDeps = new AddVisibleJob
