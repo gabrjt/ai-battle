@@ -11,7 +11,7 @@ namespace Game.Systems
 {
     public class TargetBufferSystem : JobComponentSystem
     {
-        //[BurstCompile]
+        //[BurstCompile] // ;_;
         private struct ConsolidateJob : IJobChunk
         {
             [ReadOnly]
@@ -49,8 +49,8 @@ namespace Game.Systems
                     {
                         var target = targetBufferArray[targetBufferIndex].Value;
                         var targetPostion = PositionFromEntity[target].Value;
-
-                        if (DeadFromEntity.Exists(target) || math.distance(position, targetPostion) > AttackDistanceFromEntity[entity].Max) continue;
+                        var attackDistance = AttackDistanceFromEntity[entity];
+                        if (DeadFromEntity.Exists(target) || math.distance(position, targetPostion) > attackDistance.Min + 0.1f * attackDistance.Max) continue;
 
                         threatTargetList.Add(target);
                     }
