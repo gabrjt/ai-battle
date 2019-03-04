@@ -57,7 +57,9 @@ namespace Game.Systems
 
         private Random m_Random;
 
-        private readonly ColliderDistanceComparer m_Comparer = new ColliderDistanceComparer();
+        private readonly ColliderDistanceComparer m_ColliderComparer = new ColliderDistanceComparer();
+
+        private readonly EntityDistanceComparer m_TargetDistanceComparer = new EntityDistanceComparer();
 
         private NativeQueue<SearchForTargetData> m_DataQueue;
 
@@ -88,9 +90,6 @@ namespace Game.Systems
             inputDeps.Complete();
 
             var eventBarrier = World.GetExistingManager<EventBarrier>();
-            var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
-
-            var foundTarget = false;
 
             while (m_DataQueue.TryDequeue(out var data))
             {
@@ -98,13 +97,18 @@ namespace Game.Systems
                 var position = data.Position.Value;
                 var searchingForTarget = data.SearchingForTarget;
 
+                var targetBuffer = EntityManager.GetBuffer<TargetBufferElement>(entity);
+
+                if (targetBuffer.Length > TargetBufferProxy.InternalBufferCapacity) continue;
+
                 var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 
                 if (count > 0)
                 {
-                    m_Comparer.Position = position;
+                    var targetList = new NativeList<Entity>(Allocator.Temp);
+                    m_ColliderComparer.Position = position;
 
-                    Array.Sort(m_CachedColliderArray, 0, count, m_Comparer);
+                    Array.Sort(m_CachedColliderArray, 0, count, m_ColliderComparer);
 
                     var colliderIndex = 0;
 
@@ -121,7 +125,20 @@ namespace Game.Systems
                         if (entity == targetEntity ||
                             !EntityManager.HasComponent<Group>(targetEntity) ||
                             data.Group.Value == EntityManager.GetComponentData<Group>(targetEntity).Value ||
-                            EntityManager.HasComponent<Dead>(targetEntity) || EntityManager.HasComponent<Destroy>(targetEntity)) continue;
+                            EntityManager.HasComponent<Dead>(targetEntity)) continue;
+
+                        targetList.Add(targetEntity);
+                    }
+                    while (++colliderIndex < count);
+
+                    if (targetList.Length > 0)
+                    {
+                        m_TargetDistanceComparer.Position = position;
+                        m_TargetDistanceComparer.PositionFromEntity = GetComponentDataFromEntity<Position>(true);
+
+                        var targetEntity = targetList[0];
+
+                        var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
 
                         var targetFound = eventCommandBuffer.CreateEntity(m_Archetype);
                         eventCommandBuffer.SetComponent(targetFound, new TargetFound
@@ -130,12 +147,34 @@ namespace Game.Systems
                             Other = targetEntity
                         });
 
-                        foundTarget = true;
+                        eventBarrier.AddJobHandleForProducer(inputDeps);
 
-                        break;
+                        if (targetBuffer.Length == 0)
+                        {
+                            for (var targetIndex = 0; targetIndex < targetList.Length; targetIndex++)
+                            {
+                                targetBuffer.Add(new TargetBufferElement { Value = targetList[targetIndex] });
+                            }
+                        }
+                        else
+                        {
+                            for (var targetIndex = 0; targetIndex < targetList.Length; targetIndex++)
+                            {
+                                var target = targetList[targetIndex];
+
+                                for (var bufferIndex = 0; bufferIndex < targetBuffer.Length; bufferIndex++)
+                                {
+                                    if (targetBuffer[bufferIndex].Value == target) continue;
+
+                                    targetBuffer.Add(new TargetBufferElement { Value = target });
+
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    while (++colliderIndex < count);
 
+                    targetList.Dispose();
                     Array.Clear(m_CachedColliderArray, 0, count);
                 }
                 else
@@ -143,11 +182,6 @@ namespace Game.Systems
                     searchingForTarget.StartTime = Time.time;
                     EntityManager.SetComponentData(entity, searchingForTarget);
                 }
-            }
-
-            if (foundTarget)
-            {
-                eventBarrier.AddJobHandleForProducer(inputDeps);
             }
 
             return inputDeps;

@@ -15,6 +15,9 @@ namespace Game.Systems
             public NativeHashMap<Entity, Target>.Concurrent SetMap;
 
             [ReadOnly]
+            public ArchetypeChunkEntityType EntityType;
+
+            [ReadOnly]
             public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
 
             [ReadOnly]
@@ -25,6 +28,9 @@ namespace Game.Systems
 
             [ReadOnly]
             public ComponentDataFromEntity<Target> TargetFromEntity;
+
+            [ReadOnly]
+            public BufferFromEntity<TargetBufferElement> TargetBufferFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -58,6 +64,25 @@ namespace Game.Systems
                         if (DeadFromEntity.Exists(newTarget) || hasCurrentTarget && !DeadFromEntity.Exists(currentTarget)) continue;
 
                         SetMap.TryAdd(damagedEntity, new Target { Value = newTarget });
+                    }
+                }
+                else
+                {
+                    var entityArray = chunk.GetNativeArray(EntityType);
+
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                    {
+                        var entity = entityArray[entityIndex];
+                        var targetBuffer = TargetBufferFromEntity[entity];
+
+                        if (targetBuffer.Length == 0) continue;
+
+                        var hasTarget = TargetFromEntity.Exists(entity);
+                        var targetEntity = targetBuffer[0];
+
+                        if (hasTarget && targetEntity.Value == TargetFromEntity[entity].Value) continue;
+
+                        SetMap.TryAdd(entity, new Target { Value = targetEntity });
                     }
                 }
             }
@@ -97,13 +122,17 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private NativeHashMap<Entity, Target> m_SetTargetMap;
+        private NativeHashMap<Entity, Target> m_SetMap;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<TargetBufferElement>() },
+                None = new[] { ComponentType.ReadOnly<Dead>() },
+            }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<TargetFound>(), ComponentType.ReadOnly<Damaged>() },
@@ -114,22 +143,24 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_SetTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var setBarrier = World.GetExistingManager<SetBarrier>();
 
             inputDeps = new ConsolidateJob
             {
-                SetMap = m_SetTargetMap.ToConcurrent(),
+                SetMap = m_SetMap.ToConcurrent(),
+                EntityType = GetArchetypeChunkEntityType(),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true),
+                TargetBufferFromEntity = GetBufferFromEntity<TargetBufferElement>(true),
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                SetMap = m_SetTargetMap,
+                SetMap = m_SetMap,
                 CommandBuffer = setBarrier.CreateCommandBuffer(),
                 TargetFromEntity = GetComponentDataFromEntity<Target>()
             }.Schedule(inputDeps);
@@ -155,9 +186,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetTargetMap.IsCreated)
+            if (m_SetMap.IsCreated)
             {
-                m_SetTargetMap.Dispose();
+                m_SetMap.Dispose();
             }
         }
     }
