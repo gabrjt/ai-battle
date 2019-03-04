@@ -17,6 +17,6 @@ namespace Game.Components
 
     public class TargetBufferProxy : DynamicBufferProxy<TargetBufferElement>
     {
-        public const int InternalBufferCapacity = 5;
+        public const int InternalBufferCapacity = 10;
     }
 }
