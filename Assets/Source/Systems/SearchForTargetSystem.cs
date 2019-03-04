@@ -85,13 +85,15 @@ namespace Game.Systems
 
             inputDeps.Complete();
 
+            var targetBufferFromEntity = GetBufferFromEntity<TargetBuffer>();
+
             while (m_DataQueue.TryDequeue(out var data))
             {
                 var entity = data.Entity;
                 var position = data.Position.Value;
                 var searchingForTarget = data.SearchingForTarget;
 
-                var targetBuffer = EntityManager.GetBuffer<TargetBuffer>(entity);
+                var targetBuffer = targetBufferFromEntity[entity];
 
                 if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity) continue;
 
