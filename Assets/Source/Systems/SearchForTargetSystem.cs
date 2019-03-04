@@ -1,5 +1,4 @@
-﻿using Game.Comparers;
-using Game.Components;
+﻿using Game.Components;
 using System;
 using Unity.Burst;
 using Unity.Collections;
@@ -58,10 +57,6 @@ namespace Game.Systems
 
         private Random m_Random;
 
-        private readonly ColliderDistanceComparer m_ColliderComparer = new ColliderDistanceComparer();
-
-        private readonly EntityDistanceComparer m_TargetDistanceComparer = new EntityDistanceComparer();
-
         private NativeQueue<SearchForTargetData> m_DataQueue;
 
         private Collider[] m_CachedColliderArray = new Collider[TargetBufferProxy.InternalBufferCapacity];
@@ -96,18 +91,15 @@ namespace Game.Systems
                 var position = data.Position.Value;
                 var searchingForTarget = data.SearchingForTarget;
 
-                var targetBuffer = EntityManager.GetBuffer<TargetBufferElement>(entity);
+                var targetBuffer = EntityManager.GetBuffer<TargetBuffer>(entity);
 
-                if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity * 5) continue;
+                if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity) continue;
 
                 var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 
                 if (count > 0)
                 {
                     var targetList = new NativeList<Entity>(Allocator.Temp);
-                    m_ColliderComparer.Position = position;
-
-                    Array.Sort(m_CachedColliderArray, 0, count, m_ColliderComparer);
 
                     var colliderIndex = 0;
 
@@ -128,29 +120,15 @@ namespace Game.Systems
 
                         targetList.Add(targetEntity);
                     }
-                    while (++colliderIndex < count && targetBuffer.Length < TargetBufferProxy.InternalBufferCapacity);
+                    while (++colliderIndex < count && targetBuffer.Length + targetList.Length < TargetBufferProxy.InternalBufferCapacity);
 
                     if (targetList.Length > 0)
                     {
-                        var targetEntity = targetList[0];
-
-                        var eventBarrier = World.GetExistingManager<EventBarrier>();
-                        var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
-
-                        var targetFound = eventCommandBuffer.CreateEntity(m_Archetype);
-                        eventCommandBuffer.SetComponent(targetFound, new TargetFound
-                        {
-                            This = entity,
-                            Other = targetEntity
-                        });
-
-                        eventBarrier.AddJobHandleForProducer(inputDeps);
-
                         if (targetBuffer.Length == 0)
                         {
                             for (var targetIndex = 0; targetIndex < targetList.Length; targetIndex++)
                             {
-                                targetBuffer.Add(new TargetBufferElement { Value = targetList[targetIndex] });
+                                targetBuffer.Add(new TargetBuffer { Value = targetList[targetIndex] });
                             }
                         }
                         else
@@ -163,7 +141,7 @@ namespace Game.Systems
                                 {
                                     if (targetBuffer[bufferIndex].Value == target) continue;
 
-                                    targetBuffer.Add(new TargetBufferElement { Value = target });
+                                    targetBuffer.Add(new TargetBuffer { Value = target });
 
                                     break;
                                 }

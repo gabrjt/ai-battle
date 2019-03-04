@@ -5,18 +5,18 @@ namespace Game.Components
 {
     [Serializable]
     [InternalBufferCapacity(TargetBufferProxy.InternalBufferCapacity)]
-    public struct TargetBufferElement : IBufferElementData
+    public struct TargetBuffer : IBufferElementData
     {
         // These implicit conversions are optional, but can help reduce typing.
-        public static implicit operator Entity(TargetBufferElement e) { return e.Value; }
+        public static implicit operator Entity(TargetBuffer e) { return e.Value; }
 
-        public static implicit operator TargetBufferElement(Entity e) { return new TargetBufferElement { Value = e }; }
+        public static implicit operator TargetBuffer(Entity e) { return new TargetBuffer { Value = e }; }
 
         public Entity Value;
     }
 
-    public class TargetBufferProxy : DynamicBufferProxy<TargetBufferElement>
+    public class TargetBufferProxy : DynamicBufferProxy<TargetBuffer>
     {
-        public const int InternalBufferCapacity = 10;
+        public const int InternalBufferCapacity = 5;
     }
 }

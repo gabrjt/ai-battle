@@ -30,7 +30,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Target> TargetFromEntity;
 
             [ReadOnly]
-            public BufferFromEntity<TargetBufferElement> TargetBufferFromEntity;
+            public BufferFromEntity<TargetBuffer> TargetBufferFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -130,7 +130,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<TargetBufferElement>() },
+                All = new[] { ComponentType.ReadOnly<TargetBuffer>() },
                 None = new[] { ComponentType.ReadOnly<Dead>() },
             }, new EntityArchetypeQuery
             {
@@ -155,7 +155,7 @@ namespace Game.Systems
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 TargetFromEntity = GetComponentDataFromEntity<Target>(true),
-                TargetBufferFromEntity = GetBufferFromEntity<TargetBufferElement>(true),
+                TargetBufferFromEntity = GetBufferFromEntity<TargetBuffer>(true),
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

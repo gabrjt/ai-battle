@@ -7,14 +7,14 @@ using Unity.Transforms;
 
 namespace Game.Comparers
 {
-    public class TargetBufferComparer : IComparer<TargetBufferElement>
+    public class TargetBufferComparer : IComparer<TargetBuffer>
     {
         public float3 Position;
 
         [ReadOnly]
         public ComponentDataFromEntity<Position> PositionFromEntity;
 
-        public int Compare(TargetBufferElement lhs, TargetBufferElement rhs)
+        public int Compare(TargetBuffer lhs, TargetBuffer rhs)
         {
             var lhsSqrDistance = math.distancesq(PositionFromEntity[lhs.Value].Value, Position);
             var rhsSqrDistance = math.distancesq(PositionFromEntity[rhs.Value].Value, Position);

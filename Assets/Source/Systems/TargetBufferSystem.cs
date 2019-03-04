@@ -1,6 +1,5 @@
 ﻿using Game.Components;
 using System.Linq;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -27,7 +26,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<AttackDistance> AttackDistanceFromEntity;
 
             [NativeDisableParallelForRestriction]
-            public BufferFromEntity<TargetBufferElement> TargetBufferFromEntity;
+            public BufferFromEntity<TargetBuffer> TargetBufferFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -43,14 +42,14 @@ namespace Game.Systems
                     if (targetBuffer.Length == 0) continue;
 
                     var targetBufferArray = targetBuffer.AsNativeArray();
-                    var threatTargetList = new NativeList<TargetBufferElement>(Allocator.Temp);
+                    var threatTargetList = new NativeList<TargetBuffer>(Allocator.Temp);
 
                     for (var targetBufferIndex = 0; targetBufferIndex < targetBufferArray.Length; targetBufferIndex++)
                     {
                         var target = targetBufferArray[targetBufferIndex].Value;
                         var targetPostion = PositionFromEntity[target].Value;
                         var attackDistance = AttackDistanceFromEntity[entity];
-                        if (DeadFromEntity.Exists(target) || math.distance(position, targetPostion) > attackDistance.Min + 0.1f * attackDistance.Max) continue;
+                        if (DeadFromEntity.Exists(target) || math.distance(position, targetPostion) > attackDistance.Max * TargetBufferProxy.InternalBufferCapacity) continue;
 
                         threatTargetList.Add(target);
                     }
@@ -71,8 +70,8 @@ namespace Game.Systems
 
                     targetBuffer.Clear();
 
-                    // TODO: Burst compliant sort algorithm 
-                    var targetBufferRange = new NativeArray<TargetBufferElement>(targetBufferSort.OrderBy((data) => math.distancesq(data.Position, position)).Select((data) => data.Target).ToArray(), Allocator.Temp);
+                    // TODO: Burst compliant sort algorithm
+                    var targetBufferRange = new NativeArray<TargetBuffer>(targetBufferSort.OrderBy((data) => math.distancesq(data.Position, position)).Select((data) => data.Target).ToArray(), Allocator.Temp);
 
                     targetBuffer.AddRange(targetBufferRange);
 
@@ -83,7 +82,7 @@ namespace Game.Systems
 
         private struct SortData
         {
-            public TargetBufferElement Target;
+            public TargetBuffer Target;
 
             public float3 Position;
         }
@@ -96,7 +95,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<TargetBufferElement>() },
+                All = new[] { ComponentType.ReadOnly<TargetBuffer>() },
                 None = new[] { ComponentType.ReadOnly<Dead>() },
             });
         }
@@ -109,7 +108,7 @@ namespace Game.Systems
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 AttackDistanceFromEntity = GetComponentDataFromEntity<AttackDistance>(true),
-                TargetBufferFromEntity = GetBufferFromEntity<TargetBufferElement>()
+                TargetBufferFromEntity = GetBufferFromEntity<TargetBuffer>()
             }.Schedule(m_Group, inputDeps);
         }
     }
