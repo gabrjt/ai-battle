@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(TextMeshProUGUI))]
     public class FrameRate : MonoBehaviour

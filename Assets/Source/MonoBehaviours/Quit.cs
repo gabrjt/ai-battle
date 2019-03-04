@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     public class Quit : MonoBehaviour
     {

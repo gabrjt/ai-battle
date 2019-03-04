@@ -2,7 +2,7 @@
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(AudioSource))]
     public class PlayAttackSound : MonoBehaviour

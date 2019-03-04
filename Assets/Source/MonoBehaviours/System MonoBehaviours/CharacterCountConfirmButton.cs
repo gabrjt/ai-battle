@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     public class CharacterCountConfirmButton : MonoBehaviour
     {

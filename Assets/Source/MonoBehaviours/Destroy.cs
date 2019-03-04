@@ -2,7 +2,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(GameObjectEntity))]
     public class Destroy : MonoBehaviour

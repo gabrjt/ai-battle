@@ -1,7 +1,7 @@
 ﻿using Unity.Mathematics;
 using UnityEngine;
 
-namespace Game.Behaviours
+namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(AudioSource))]
     public class PlaySpawnedSound : MonoBehaviour

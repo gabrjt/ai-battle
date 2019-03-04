@@ -1,4 +1,4 @@
-﻿using Game.Behaviours;
+﻿using Game.MonoBehaviours;
 using Game.Components;
 using System;
 using Unity.Burst;
