@@ -18,50 +18,17 @@ namespace Game.Systems
             public ArchetypeChunkEntityType EntityType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Target> TargetType;
-
-            [ReadOnly]
             public ArchetypeChunkComponentType<Dead> DeadType;
-
-            [ReadOnly]
-            public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
-
-            [ReadOnly]
-            public ComponentDataFromEntity<SearchingForTarget> SearchingForTargetFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (chunk.Has(TargetType))
+                if (chunk.Has(DeadType))
                 {
                     var entityArray = chunk.GetNativeArray(EntityType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-
-                        RemoveMap.TryAdd(entity, new SearchingForTarget());
-                    }
-                }
-                else if (chunk.Has(DeadType))
-                {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-
-                        RemoveMap.TryAdd(entity, new SearchingForTarget());
-                    }
-                }
-                else if (chunk.Has(TargetFoundType))
-                {
-                    var targetFoundArray = chunk.GetNativeArray(TargetFoundType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = targetFoundArray[entityIndex].This;
-
-                        if (!SearchingForTargetFromEntity.Exists(entity)) continue;
 
                         RemoveMap.TryAdd(entity, new SearchingForTarget());
                     }
@@ -100,17 +67,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Target>(), ComponentType.Create<SearchingForTarget>() },
-                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() }
-            },
-            new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() },
-                None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>() }
-            },
-            new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<TargetFound>() }
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
             });
         }
 
@@ -126,10 +83,7 @@ namespace Game.Systems
             {
                 RemoveMap = m_RemoveMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                TargetType = GetArchetypeChunkComponentType<Target>(true),
                 DeadType = GetArchetypeChunkComponentType<Dead>(true),
-                TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
-                SearchingForTargetFromEntity = GetComponentDataFromEntity<SearchingForTarget>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

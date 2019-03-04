@@ -14,6 +14,7 @@ namespace Game.Systems
     public partial class SearchForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
+        [RequireSubtractiveComponent(typeof(Dead))]
         private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Position, Group>
         {
             public NativeQueue<SearchForTargetData>.Concurrent DataQueue;
@@ -111,6 +112,11 @@ namespace Game.Systems
                     {
                         var target = m_CachedColliderArray[colliderIndex];
                         var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
+
+                        if (EntityManager.HasComponent<Target>(entity) && EntityManager.GetComponentData<Target>(entity).Value == targetEntity)
+                        {
+                            break;
+                        }
 
                         if (entity == targetEntity ||
                             !EntityManager.HasComponent<Group>(targetEntity) ||

@@ -38,7 +38,7 @@ namespace Game.Systems
                         var entity = targetFound.This;
                         var target = targetFound.Other;
 
-                        if (DeadFromEntity.Exists(target)) continue;
+                        if (DeadFromEntity.Exists(target) || (TargetFromEntity.Exists(entity) && target == TargetFromEntity[entity].Value)) continue;
 
                         SetMap.TryAdd(entity, new Target { Value = target });
                     }

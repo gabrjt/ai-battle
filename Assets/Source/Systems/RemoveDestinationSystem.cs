@@ -32,9 +32,6 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
-            [ReadOnly]
-            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
-
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 if (chunk.Has(TargetType))
@@ -47,7 +44,7 @@ namespace Game.Systems
                         var entity = entityArray[entityIndex];
                         var target = targetArray[entityIndex];
 
-                        if (!DeadFromEntity.Exists(target.Value) && !DestroyFromEntity.Exists(target.Value)) continue;
+                        if (!DeadFromEntity.Exists(target.Value)) continue;
 
                         RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                     }
@@ -151,7 +148,6 @@ namespace Game.Systems
                 DestinationReachedType = GetArchetypeChunkComponentType<DestinationReached>(true),
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

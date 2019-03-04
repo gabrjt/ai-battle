@@ -124,10 +124,11 @@ namespace Game.Systems
         private struct ApplyJob : IJob
         {
             [ReadOnly]
-            public NativeHashMap<Entity, Destination> SetDestinationMap;
+            public NativeHashMap<Entity, Destination> SetMap;
 
-            [ReadOnly]
-            public EntityCommandBuffer EntityCommandBuffer;
+            public EntityCommandBuffer CommandBuffer;
+
+            public EntityCommandBuffer EventCommandBuffer;
 
             [ReadOnly]
             public EntityArchetype Archetype;
@@ -136,20 +137,26 @@ namespace Game.Systems
 
             public void Execute()
             {
-                var entityArray = SetDestinationMap.GetKeyArray(Allocator.Temp);
+                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-                    var destination = SetDestinationMap[entity];
+                    var destination = SetMap[entity];
 
                     if (DestinationFromEntity.Exists(entity))
                     {
-                        EntityCommandBuffer.SetComponent(entity, destination);
+                        CommandBuffer.SetComponent(entity, destination);
+
+                        if (destination.Equals(DestinationFromEntity[entity]))
+                        {
+                            var destinationReached = EventCommandBuffer.CreateEntity(Archetype);
+                            EventCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
+                        }
                     }
                     else
                     {
-                        EntityCommandBuffer.AddComponent(entity, destination);
+                        CommandBuffer.AddComponent(entity, destination);
                     }
                 }
 
@@ -187,6 +194,7 @@ namespace Game.Systems
             m_SetMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
             var setBarrier = World.GetExistingManager<SetBarrier>();
+            var eventBarrier = World.GetExistingManager<EventBarrier>();
 
             inputDeps = new ConsolidateJob
             {
@@ -202,13 +210,15 @@ namespace Game.Systems
 
             inputDeps = new ApplyJob
             {
-                SetDestinationMap = m_SetMap,
-                EntityCommandBuffer = setBarrier.CreateCommandBuffer(),
+                SetMap = m_SetMap,
+                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                EventCommandBuffer = eventBarrier.CreateCommandBuffer(),
                 Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
 
             setBarrier.AddJobHandleForProducer(inputDeps);
+            eventBarrier.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -38,6 +38,7 @@ namespace Game.Systems
                 {
                     var entityArray = chunk.GetNativeArray(EntityType);
                     var targetArray = chunk.GetNativeArray(TargetType);
+
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
@@ -50,6 +51,7 @@ namespace Game.Systems
                 {
                     var entityArray = chunk.GetNativeArray(EntityType);
                     var targetArray = chunk.GetNativeArray(TargetType);
+
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
