@@ -3,6 +3,8 @@ using Game.Components;
 using System;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
 using Unity.Transforms;
 
 namespace Game.Systems
@@ -10,6 +12,14 @@ namespace Game.Systems
     [UpdateInGroup(typeof(SetBarrier))]
     public class TargetBufferSystem : ComponentSystem
     {
+        private struct ConsolidateJob : IJobChunk
+        {
+            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         private ComponentGroup m_Group;
 
         private TargetBufferComparer m_TargetBufferComparer; // TODO: make it blitable and thread safe
@@ -25,6 +35,8 @@ namespace Game.Systems
             });
 
             m_TargetBufferComparer = new TargetBufferComparer();
+
+            RequireForUpdate(m_Group);
         }
 
         protected override void OnUpdate()
@@ -32,6 +44,7 @@ namespace Game.Systems
             var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
             var positionFromEntity = GetComponentDataFromEntity<Position>(true);
             var deadFromEntity = GetComponentDataFromEntity<Dead>(true);
+            var attackDistanceFromEntity = GetComponentDataFromEntity<AttackDistance>(true);
 
             for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
             {
@@ -43,7 +56,9 @@ namespace Game.Systems
 
                 var targetBufferArray = targetBuffer.AsNativeArray().ToArray();
 
-                m_TargetBufferComparer.Position = positionFromEntity[entity].Value;
+                var position = positionFromEntity[entity].Value;
+
+                m_TargetBufferComparer.Position = position;
                 m_TargetBufferComparer.PositionFromEntity = positionFromEntity;
 
                 Array.Sort(targetBufferArray, 0, targetBufferArray.Length, m_TargetBufferComparer);
@@ -54,7 +69,10 @@ namespace Game.Systems
                 do
                 {
                     var target = targetBufferArray[count++].Value;
-                    if (deadFromEntity.Exists(target)) continue; // TODO: max distance from target.
+                    var targetPostion = positionFromEntity[target].Value;
+
+                    if (deadFromEntity.Exists(target) || math.distance(position, targetPostion) > attackDistanceFromEntity[entity].Max) continue;
+
                     targetBuffer.Add(target);
                 } while (count < targetBufferArray.Length);
             }

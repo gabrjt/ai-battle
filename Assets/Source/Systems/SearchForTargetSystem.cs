@@ -63,7 +63,7 @@ namespace Game.Systems
 
         private NativeQueue<SearchForTargetData> m_DataQueue;
 
-        private Collider[] m_CachedColliderArray = new Collider[10];
+        private Collider[] m_CachedColliderArray = new Collider[TargetBufferProxy.InternalBufferCapacity];
 
         protected override void OnCreateManager()
         {
@@ -89,8 +89,6 @@ namespace Game.Systems
 
             inputDeps.Complete();
 
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
-
             while (m_DataQueue.TryDequeue(out var data))
             {
                 var entity = data.Entity;
@@ -99,7 +97,7 @@ namespace Game.Systems
 
                 var targetBuffer = EntityManager.GetBuffer<TargetBufferElement>(entity);
 
-                if (targetBuffer.Length > TargetBufferProxy.InternalBufferCapacity) continue;
+                if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity) continue;
 
                 var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 
@@ -129,15 +127,13 @@ namespace Game.Systems
 
                         targetList.Add(targetEntity);
                     }
-                    while (++colliderIndex < count);
+                    while (++colliderIndex < count && targetBuffer.Length < TargetBufferProxy.InternalBufferCapacity);
 
                     if (targetList.Length > 0)
                     {
-                        m_TargetDistanceComparer.Position = position;
-                        m_TargetDistanceComparer.PositionFromEntity = GetComponentDataFromEntity<Position>(true);
-
                         var targetEntity = targetList[0];
 
+                        var eventBarrier = World.GetExistingManager<EventBarrier>();
                         var eventCommandBuffer = eventBarrier.CreateCommandBuffer();
 
                         var targetFound = eventCommandBuffer.CreateEntity(m_Archetype);
@@ -179,8 +175,11 @@ namespace Game.Systems
                 }
                 else
                 {
+                    var setBarrier = World.GetExistingManager<SetBarrier>();
                     searchingForTarget.StartTime = Time.time;
-                    EntityManager.SetComponentData(entity, searchingForTarget);
+                    setBarrier.CreateCommandBuffer().SetComponent(entity, searchingForTarget);
+
+                    setBarrier.AddJobHandleForProducer(inputDeps);
                 }
             }
 

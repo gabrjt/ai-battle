@@ -4,7 +4,7 @@ using Unity.Entities;
 namespace Game.Components
 {
     [Serializable]
-    [InternalBufferCapacity(3)]
+    [InternalBufferCapacity(TargetBufferProxy.InternalBufferCapacity)]
     public struct TargetBufferElement : IBufferElementData
     {
         // These implicit conversions are optional, but can help reduce typing.
@@ -17,6 +17,6 @@ namespace Game.Components
 
     public class TargetBufferProxy : DynamicBufferProxy<TargetBufferElement>
     {
-        public const int InternalBufferCapacity = 3;
+        public const int InternalBufferCapacity = 5;
     }
 }
