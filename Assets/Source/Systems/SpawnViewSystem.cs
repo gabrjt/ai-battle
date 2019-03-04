@@ -302,10 +302,10 @@ namespace Game.Systems
 
                 view.SetActive(true);
 
+                var entity = view.GetComponent<GameObjectEntity>().Entity;
+
                 view.transform.position = position;
                 view.transform.rotation = rotation;
-
-                var entity = view.GetComponent<GameObjectEntity>().Entity;
 
                 view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
 

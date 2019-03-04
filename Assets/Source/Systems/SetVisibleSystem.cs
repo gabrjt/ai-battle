@@ -54,6 +54,9 @@ namespace Game.Systems
             [ReadOnly]
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
+            [ReadOnly]
+            public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+
             [NativeSetThreadIndex]
             private readonly int m_ThreadIndex;
 
@@ -96,7 +99,7 @@ namespace Game.Systems
 
             private bool IsVisible(float maxSqrDistanceFromCamera, Entity owner)
             {
-                return math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera;
+                return math.distancesq(CameraPosition, PositionFromEntity[owner].Value) < maxSqrDistanceFromCamera && !DestroyFromEntity.Exists(owner);
             }
 
             private void SetVisible(bool hasVisible, Entity entity, bool isVisible)
@@ -189,7 +192,8 @@ namespace Game.Systems
                 HealthFromEntity = GetComponentDataFromEntity<Health>(true),
                 MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true),
                 PositionFromEntity = GetComponentDataFromEntity<Position>(true),
-                DeadFromEntity = GetComponentDataFromEntity<Dead>(true)
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
+                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
 
             var addVisibleDeps = new AddVisibleJob

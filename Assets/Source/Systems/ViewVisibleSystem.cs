@@ -28,20 +28,20 @@ namespace Game.Systems
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
-
                 var initialized = chunk.Has(InitializedType);
 
-                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                if (!initialized)
                 {
-                    var entity = entityArray[entityIndex];
-
-                    if (!initialized)
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        AddInitializedEntityQueue.Enqueue(entity);
+                        AddInitializedEntityQueue.Enqueue(entityArray[entityIndex]);
                     }
-                    else
+                }
+                else
+                {
+                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        RemoveInitializedEntityQueue.Enqueue(entity);
+                        RemoveInitializedEntityQueue.Enqueue(entityArray[entityIndex]);
                     }
                 }
             }
@@ -99,8 +99,8 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<View>(), ComponentType.ReadOnly<Visible>() },
-                None = new[] { ComponentType.Create<Initialized>() }
+                All = new[] { ComponentType.ReadOnly<View>(), ComponentType.ReadOnly<Visible>(), ComponentType.ReadOnly<Owner>() },
+                None = new[] { ComponentType.Create<Initialized>(), ComponentType.ReadOnly<Destroy>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.Create<Initialized>() },
