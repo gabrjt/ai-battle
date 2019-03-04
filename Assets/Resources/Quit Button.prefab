@@ -92,7 +92,7 @@ GameObject:
   - component: {fileID: 4516572401284626084}
   - component: {fileID: 7364398963509496957}
   - component: {fileID: 209487886570947824}
-  - component: {fileID: 5059886663487831736}
+  - component: {fileID: 7817653619677877152}
   m_Layer: 5
   m_Name: Quit Button
   m_TagString: Untagged
@@ -202,8 +202,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5059886663487831736}
-        m_MethodName: Quit
+      - m_Target: {fileID: 7817653619677877152}
+        m_MethodName: Execute
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -215,7 +215,7 @@ MonoBehaviour:
         m_CallState: 2
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
---- !u!114 &5059886663487831736
+--- !u!114 &7817653619677877152
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -225,6 +225,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: a22f225b299ea2e4eb2ec2ab4aa6d065, type: 3}
+  m_Script: {fileID: 11500000, guid: b21299d1194366949aa35e15a8c78756, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

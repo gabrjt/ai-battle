@@ -13,7 +13,7 @@ using UnityEditor;
 using UnityEngine;
 using Random = Unity.Mathematics.Random;
 
-public class SpectatorCameraBehaviour : MonoBehaviour
+public class SpectatorCamera : MonoBehaviour
 {
     [SerializeField]
     private Camera m_Camera;

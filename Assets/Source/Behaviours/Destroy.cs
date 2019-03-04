@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Game.Behaviours
 {
     [RequireComponent(typeof(GameObjectEntity))]
-    public class DestroyBehaviour : MonoBehaviour
+    public class Destroy : MonoBehaviour
     {
         private GameObjectEntity m_GameObjectEntity;
 
@@ -19,7 +19,7 @@ namespace Game.Behaviours
             var entityManager = m_GameObjectEntity.EntityManager;
             var entity = m_GameObjectEntity.Entity;
 
-            if (!entityManager.HasComponent<Destroy>(entity)) return;
+            if (!entityManager.HasComponent<Components.Destroy>(entity)) return;
 
             Destroy(gameObject);
         }

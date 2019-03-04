@@ -143,7 +143,7 @@ public class PlaySpawnedSoundSystem : JobComponentSystem
             var entity = entityArray[entityIndex];
             var transform = EntityManager.GetComponentObject<Transform>(entity);
 
-            transform.GetComponentInChildren<PlaySpawnedSoundBehaviour>().PlayAtPoint(transform.position);
+            transform.GetComponentInChildren<PlaySpawnedSound>().PlayAtPoint(transform.position);
         }
 
         entityArray.Dispose();

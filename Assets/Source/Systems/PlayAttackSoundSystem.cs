@@ -91,7 +91,7 @@ namespace Game.Systems
 
             while (m_PlayAttackSoundQueue.TryDequeue(out var playAttackSoundData))
             {
-                EntityManager.GetComponentObject<Transform>(playAttackSoundData.Entity).GetComponentInChildren<PlayAttackSoundBehaviour>().PlayAtPoint(playAttackSoundData.Position);
+                EntityManager.GetComponentObject<Transform>(playAttackSoundData.Entity).GetComponentInChildren<PlayAttackSound>().PlayAtPoint(playAttackSoundData.Position);
             }
 
             return inputDeps;

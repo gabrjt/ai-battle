@@ -161,7 +161,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
                 var transform = EntityManager.GetComponentObject<Transform>(viewReferenceFromEntity[entity].Value);
 
-                transform.GetComponentInChildren<PlayDeadSoundBehaviour>().PlayAtPoint(transform.position);
+                transform.GetComponentInChildren<PlayDeadSound>().PlayAtPoint(transform.position);
             }
 
             entityArray.Dispose();

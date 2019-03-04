@@ -192,7 +192,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &5774701370343295368
+--- !u!114 &3068998908927614026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: fc266ed17fea1f0478bd182fc612241f, type: 3}
+  m_Script: {fileID: 11500000, guid: c87f8ee803d144348983c0e0217e385c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &7848669702294918158
@@ -279,6 +279,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 014149b4114fee5468b67b8335e9d8c4, type: 3}
     m_RemovedComponents:
     - {fileID: 3545496326514102158, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
+    - {fileID: 4488195579584775136, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
 --- !u!1 &6260809437104273925 stripped
 GameObject:

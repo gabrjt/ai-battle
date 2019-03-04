@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7490929776323332834}
   - component: {fileID: 3391415861377209054}
-  - component: {fileID: 3545496326514102158}
+  - component: {fileID: 4488195579584775136}
   m_Layer: 0
   m_Name: Dead Sound
   m_TagString: Untagged
@@ -128,7 +128,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &3545496326514102158
+--- !u!114 &4488195579584775136
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -138,6 +138,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 1361a7f9505914147a2d4b0543b1abf6, type: 3}
+  m_Script: {fileID: 11500000, guid: 411c4f376978da540ab3492eac2e2cb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

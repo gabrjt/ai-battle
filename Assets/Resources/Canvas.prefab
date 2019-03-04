@@ -565,7 +565,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 7117639305382488758}
+      objectReference: {fileID: 5225118589185525678}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bb1e82cf1d2ff6d4eb5b0f008fc73195, type: 3}
 --- !u!224 &5856178797246507358 stripped
@@ -587,9 +587,9 @@ MonoBehaviour:
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &7117639305382488758 stripped
+--- !u!114 &5225118589185525678 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5059886663487831736, guid: bb1e82cf1d2ff6d4eb5b0f008fc73195,
+  m_CorrespondingSourceObject: {fileID: 7817653619677877152, guid: bb1e82cf1d2ff6d4eb5b0f008fc73195,
     type: 3}
   m_PrefabInstance: {fileID: 2665773777312535566}
   m_PrefabAsset: {fileID: 0}
@@ -597,7 +597,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: a22f225b299ea2e4eb2ec2ab4aa6d065, type: 3}
+  m_Script: {fileID: 11500000, guid: b21299d1194366949aa35e15a8c78756, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &6160626387161234030
@@ -960,6 +960,11 @@ PrefabInstance:
       propertyPath: m_Pivot.y
       value: 0.5
       objectReference: {fileID: 0}
+    - target: {fileID: 7640033044232592256, guid: 8f38bd5324636d64890e1ea0ceb6ca12,
+        type: 3}
+      propertyPath: m_CharacterCountInputField
+      value: 
+      objectReference: {fileID: 4635341817407708475}
     - target: {fileID: 2442792504666633651, guid: 8f38bd5324636d64890e1ea0ceb6ca12,
         type: 3}
       propertyPath: m_TargetGraphic
@@ -970,11 +975,6 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 199215011704271574}
-    - target: {fileID: 7640033044232592256, guid: 8f38bd5324636d64890e1ea0ceb6ca12,
-        type: 3}
-      propertyPath: m_CharacterCountInputField
-      value: 
-      objectReference: {fileID: 4635341817407708475}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8f38bd5324636d64890e1ea0ceb6ca12, type: 3}
 --- !u!114 &5270218422260604134 stripped

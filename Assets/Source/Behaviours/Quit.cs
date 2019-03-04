@@ -2,9 +2,9 @@
 
 namespace Game.Behaviours
 {
-    public class QuitBehaviour : MonoBehaviour
+    public class Quit : MonoBehaviour
     {
-        public void Quit()
+        public void Execute()
         {
             Application.Quit();
         }

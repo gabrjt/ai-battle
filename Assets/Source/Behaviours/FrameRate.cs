@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Game.Behaviours
 {
     [RequireComponent(typeof(TextMeshProUGUI))]
-    public class FrameRateBehaviour : MonoBehaviour
+    public class FrameRate : MonoBehaviour
     {
         private TextMeshProUGUI m_FrameRateText;
 

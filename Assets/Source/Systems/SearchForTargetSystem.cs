@@ -11,6 +11,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(SetBarrier))]
     public partial class SearchForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -97,7 +98,7 @@ namespace Game.Systems
 
                 var targetBuffer = EntityManager.GetBuffer<TargetBufferElement>(entity);
 
-                if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity) continue;
+                if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity * 5) continue;
 
                 var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 

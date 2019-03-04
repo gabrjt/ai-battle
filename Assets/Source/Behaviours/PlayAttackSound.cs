@@ -5,7 +5,7 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Behaviours
 {
     [RequireComponent(typeof(AudioSource))]
-    public class PlayAttackSoundBehaviour : MonoBehaviour
+    public class PlayAttackSound : MonoBehaviour
     {
         private AudioSource[] m_AudioSourceArray;
 

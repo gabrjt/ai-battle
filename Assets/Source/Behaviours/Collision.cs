@@ -2,7 +2,7 @@
 
 namespace Game.Behaviours
 {
-    public class CollisionBehaviour : MonoBehaviour
+    public class Collision : MonoBehaviour
     {
         private void OnTriggerEnter(Collider other)
         {
