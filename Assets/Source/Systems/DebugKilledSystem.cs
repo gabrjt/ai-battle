@@ -29,7 +29,7 @@ namespace Game.Systems
                     var killer = entityArray[Random.NextInt(0, entityArray.Length)];
                     var killed = entityArray[Random.NextInt(0, entityArray.Length)];
 
-                    if (IdleFromEntity.Exists(killer) || DeadFromEntity.Exists(killer) || DeadFromEntity.Exists(killed)) continue;
+                    if (IdleFromEntity.Exists(killer) || DeadFromEntity.Exists(killer) || DeadFromEntity.Exists(killed)) continue; // suicide may occur.
 
                     KilledMap.TryAdd(killed, new Killed
                     {
