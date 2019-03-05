@@ -3,7 +3,6 @@ using Game.Extensions;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.AI;
 
 namespace Game.Systems
 {
@@ -41,16 +40,13 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
+                    var destinationFound = eventCommandBuffer.CreateEntity(m_Archetype);
 
-                    if (NavMesh.SamplePosition(terrain.GetRandomPosition(), out var hit, 1, NavMesh.AllAreas))
+                    eventCommandBuffer.SetComponent(destinationFound, new DestinationFound
                     {
-                        var destinationFound = eventCommandBuffer.CreateEntity(m_Archetype);
-                        eventCommandBuffer.SetComponent(destinationFound, new DestinationFound
-                        {
-                            This = entity,
-                            Value = hit.position
-                        });
-                    }
+                        This = entity,
+                        Value = terrain.GetRandomPosition()
+                    });
                 }
             }
 

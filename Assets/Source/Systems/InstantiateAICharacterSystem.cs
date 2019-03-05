@@ -121,8 +121,6 @@ namespace Game.Systems
         private ComponentGroup m_OrcWolfRiderGroup;
         private ComponentGroup m_SkeletonGroup;
         private EntityArchetype m_Archetype;
-        private GameObject m_Prefab;
-        private GameObject m_ViewPrefab;
         internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
         private Random m_Random;
@@ -172,7 +170,6 @@ namespace Game.Systems
 
             m_LastTotalCount = m_TotalCount;
             m_Random = new Random((uint)Environment.TickCount);
-            Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
