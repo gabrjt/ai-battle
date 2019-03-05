@@ -112,11 +112,6 @@ namespace Game.Systems
                         var target = m_CachedColliderArray[colliderIndex];
                         var targetEntity = target.GetComponent<GameObjectEntity>().Entity;
 
-                        if (targetFromEntity.Exists(entity) && targetFromEntity[entity].Value == targetEntity)
-                        {
-                            break;
-                        }
-
                         if (entity == targetEntity ||
                             !groupFromEntity.Exists(targetEntity) ||
                             data.Group.Value == groupFromEntity[targetEntity].Value ||
@@ -124,7 +119,7 @@ namespace Game.Systems
 
                         targetList.Add(targetEntity);
                     }
-                    while (++colliderIndex < count && targetBuffer.Length + targetList.Length < TargetBufferProxy.InternalBufferCapacity);
+                    while (++colliderIndex < count);
 
                     if (targetList.Length > 0)
                     {

@@ -49,7 +49,8 @@ namespace Game.Systems
                         var target = targetBufferArray[targetBufferIndex].Value;
                         var targetPostion = PositionFromEntity[target].Value;
                         var attackDistance = AttackDistanceFromEntity[entity];
-                        if (DeadFromEntity.Exists(target) || math.distance(translation, targetPostion) > attackDistance.Max * TargetBufferProxy.InternalBufferCapacity) continue;
+
+                        if (DeadFromEntity.Exists(target) || math.distance(translation, targetPostion) >= ((attackDistance.Min + attackDistance.Max) / 2) * 3) continue;
 
                         threatTargetList.Add(target);
                     }

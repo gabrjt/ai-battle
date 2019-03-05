@@ -1225,7 +1225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    Value: 2500
+    Value: 10000
 --- !u!1 &153408
 GameObject:
   m_ObjectHideFlags: 0

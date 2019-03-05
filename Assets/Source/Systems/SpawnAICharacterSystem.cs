@@ -1,6 +1,8 @@
-﻿using Game.Components;
+﻿using Game.Comparers;
+using Game.Components;
 using Game.Enums;
 using Game.Extensions;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -136,15 +138,23 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
+        private ComponentGroup m_KnightGroup;
+
+        private ComponentGroup m_OrcWolfRiderGroup;
+
+        private ComponentGroup m_SkeletonGroup;
+
         private GameObject m_Prefab;
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 1   ;
+        internal int m_TotalCount = 1;
 
         internal int m_LastTotalCount;
 
         private Random m_Random;
+
+        private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
 
         protected override void OnCreateManager()
         {
@@ -153,6 +163,21 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() }
+            });
+
+            m_KnightGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Knight>() }
+            });
+
+            m_OrcWolfRiderGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<OrcWolfRider>() }
+            });
+
+            m_SkeletonGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Skeleton>() }
             });
 
             m_LastTotalCount = m_TotalCount;
@@ -181,6 +206,10 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
 
+            var knightCount = m_KnightGroup.CalculateLength();
+            var orcWolfRiderCount = m_OrcWolfRiderGroup.CalculateLength();
+            var skeletonCount = m_SkeletonGroup.CalculateLength();
+
             for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
             {
                 GameObject gameObject = null;
@@ -207,33 +236,60 @@ namespace Game.Systems
 
                 navMeshAgent.name = $"Character AI {entity.Index}";
 
-                var maxHealth = m_Random.NextInt(100, 301);
-                var attack = m_Random.NextInt(10, 31);
-                var attackSpeed = m_Random.NextFloat(1, 3);
-                var healthRegeneration = m_Random.NextFloat(1, 6);
+                var sortArray = new CharacterCountSortData[]
+                {
+                     new CharacterCountSortData
+                     {
+                         ViewType = ViewType.Knight,
+                         Count = knightCount
+                     }, new CharacterCountSortData
+                     {
+                         ViewType = ViewType.OrcWolfRider,
+                         Count = orcWolfRiderCount
+                     }, new CharacterCountSortData
+                     {
+                         ViewType = ViewType.Skeleton,
+                         Count = skeletonCount
+                     }
+                };
 
-                var viewTypeIndex = m_Random.NextInt(0, 3);
-                var viewType = default(ViewType);
+                Array.Sort(sortArray, 0, sortArray.Length, m_CharacterCountComparer);
+                var viewType = sortArray[0].ViewType;
+                Array.Clear(sortArray, 0, sortArray.Length);
+
+                var maxHealth = 0;
+                var attack = 0;
+                var attackSpeed = 0f;
+                var healthRegeneration = 0f;
                 var attackDuration = 0f;
 
-                switch (viewTypeIndex)
+                switch (viewType)
                 {
-                    case 0:
-                        viewType = ViewType.Knight;
+                    case ViewType.Knight:
+                        maxHealth = m_Random.NextInt(300, 751);
+                        attack = m_Random.NextInt(25, 31);
+                        attackSpeed = m_Random.NextFloat(1, 3);
+                        healthRegeneration = m_Random.NextFloat(2, 4);
                         attackDuration = 1;
+                        ++knightCount;
                         break;
 
-                    case 1:
-                        viewType = ViewType.OrcWolfRider;
+                    case ViewType.OrcWolfRider:
+                        maxHealth = m_Random.NextInt(400, 1001);
+                        attack = m_Random.NextInt(30, 51);
+                        attackSpeed = m_Random.NextFloat(1, 2);
+                        healthRegeneration = m_Random.NextFloat(4, 6);
                         attackDuration = 1.333f;
+                        ++orcWolfRiderCount;
                         break;
 
-                    case 2:
-                        viewType = ViewType.Skeleton;
+                    case ViewType.Skeleton:
+                        maxHealth = m_Random.NextInt(150, 251);
+                        attack = m_Random.NextInt(40, 71);
+                        attackSpeed = m_Random.NextFloat(1, 4);
+                        healthRegeneration = m_Random.NextFloat(0.5f);
                         attackDuration = 2f;
-                        break;
-
-                    default:
+                        if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
                         break;
                 }
 
