@@ -10,11 +10,16 @@ namespace Game.Systems
     [UpdateInGroup(typeof(LogicGroup))]
     public class SetDestroySystem : JobComponentSystem, IDisposable
     {
+        private struct ConsolidateData
+        {
+            public Entity Entity;
+            public Destroy Destroy;
+        }
+
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeQueue<Entity>.Concurrent SetQueue;
-            [ReadOnly] public ArchetypeChunkEntityType EntityType;
+            public NativeQueue<ConsolidateData>.Concurrent SetQueue;
             [ReadOnly] public ArchetypeChunkComponentType<Died> DiedType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -23,29 +28,31 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    var entity = diedArray[entityIndex].This;
-
-                    SetQueue.Enqueue(entity);
+                    SetQueue.Enqueue(new ConsolidateData
+                    {
+                        Entity = diedArray[entityIndex].This,
+                        Destroy = new Destroy()
+                    });
                 }
             }
         }
 
         private struct ApplyJob : IJob
         {
-            public NativeQueue<Entity> SetQueue;
+            public NativeQueue<ConsolidateData> SetQueue;
             public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                while (SetQueue.TryDequeue(out var entity))
+                while (SetQueue.TryDequeue(out var data))
                 {
-                    CommandBuffer.AddComponent(entity, new Destroy());
+                    CommandBuffer.AddComponent(data.Entity, data.Destroy);
                 }
             }
         }
 
         private ComponentGroup m_Group;
-        private NativeQueue<Entity> m_SetQueue;
+        private NativeQueue<ConsolidateData> m_SetQueue;
 
         protected override void OnCreateManager()
         {
@@ -56,7 +63,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
-            m_SetQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_SetQueue = new NativeQueue<ConsolidateData>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -66,14 +73,13 @@ namespace Game.Systems
             inputDeps = new ConsolidateJob
             {
                 SetQueue = m_SetQueue.ToConcurrent(),
-                EntityType = GetArchetypeChunkEntityType(),
                 DiedType = GetArchetypeChunkComponentType<Died>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
                 SetQueue = m_SetQueue,
-                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);

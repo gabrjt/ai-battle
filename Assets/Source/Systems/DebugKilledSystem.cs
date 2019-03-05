@@ -1,5 +1,6 @@
 ﻿using Game.Components;
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -10,56 +11,53 @@ namespace Game.Systems
     [UpdateInGroup(typeof(LogicGroup))]
     public class DebugKilledSystem : JobComponentSystem, IDisposable
     {
+        [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeQueue<Killed>.Concurrent KilledQueue;
+            public NativeHashMap<Entity, Killed>.Concurrent KilledMap;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public Random Random;
+            [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
                 var entityArray = chunk.GetNativeArray(EntityType);
-
-                var killedList = new NativeList<Entity>(Allocator.Temp);
 
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var killer = entityArray[Random.NextInt(0, entityArray.Length)];
                     var killed = entityArray[Random.NextInt(0, entityArray.Length)];
 
-                    if (killer == killed || killedList.Contains(killed)) continue;
+                    if (DeadFromEntity.Exists(killer) || DeadFromEntity.Exists(killed)) continue;
 
-                    killedList.Add(killed);
-
-                    KilledQueue.Enqueue(new Killed
+                    KilledMap.TryAdd(killed, new Killed
                     {
                         This = killer,
                         Other = killed
                     });
                 }
-
-                killedList.Dispose();
             }
         }
 
         private struct ApplyJob : IJob
         {
-            public NativeQueue<Killed> KilledQueue;
+            [ReadOnly] public NativeHashMap<Entity, Killed> KilledMap;
             public EntityCommandBuffer CommandBuffer;
             [ReadOnly] public EntityArchetype Archetype;
 
             public void Execute()
             {
-                while (KilledQueue.TryDequeue(out var killedComponent))
+                var entityArray = KilledMap.GetKeyArray(Allocator.Temp);
+                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var killed = CommandBuffer.CreateEntity(Archetype);
-                    CommandBuffer.SetComponent(killed, killedComponent);
+                    CommandBuffer.SetComponent(killed, KilledMap[entityArray[entityIndex]]);
                 }
             }
         }
 
         private ComponentGroup m_Group;
-        private NativeQueue<Killed> m_KilledQueue;
+        private NativeHashMap<Entity, Killed> m_KilledMap;
         private EntityArchetype m_Archetype;
         private Random m_Random;
 
@@ -74,24 +72,27 @@ namespace Game.Systems
             });
 
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Killed>());
-            m_KilledQueue = new NativeQueue<Killed>(Allocator.Persistent);
             m_Random = new Random((uint)Environment.TickCount);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            Dispose();
+
+            m_KilledMap = new NativeHashMap<Entity, Killed>(m_Group.CalculateLength(), Allocator.TempJob);
             var eventCommandBufferSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
-                KilledQueue = m_KilledQueue.ToConcurrent(),
+                KilledMap = m_KilledMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 Random = m_Random
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                KilledQueue = m_KilledQueue,
+                KilledMap = m_KilledMap,
                 CommandBuffer = eventCommandBufferSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
@@ -99,6 +100,12 @@ namespace Game.Systems
             eventCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnStopRunning()
+        {
+            base.OnStopRunning();
+            Dispose();
         }
 
         protected override void OnDestroyManager()
@@ -109,9 +116,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_KilledQueue.IsCreated)
+            if (m_KilledMap.IsCreated)
             {
-                m_KilledQueue.Dispose();
+                m_KilledMap.Dispose();
             }
         }
     }

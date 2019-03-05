@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [DisableAutoCreation]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class DebugCharacterTranslationSystem : JobComponentSystem, IDisposable
     {

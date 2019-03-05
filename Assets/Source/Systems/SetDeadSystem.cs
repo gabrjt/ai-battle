@@ -15,16 +15,11 @@ namespace Game.Systems
         private struct ConsolidateJob : IJobChunk
         {
             public NativeHashMap<Entity, Dead>.Concurrent SetMap;
-
-            [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> EntityArray;
-
-            [ReadOnly] public ArchetypeChunkEntityType EntityType;
-            [ReadOnly] public ArchetypeChunkComponentType<Health> HealthType;
+            [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
             [ReadOnly] public ArchetypeChunkComponentType<KillAllCharacters> KillAllCharacterType;
             [ReadOnly] public ArchetypeChunkComponentType<Killed> KilledType;
             [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Health> HealthFromEntity;
             public float Time;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -35,14 +30,12 @@ namespace Game.Systems
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = killedArray[entityIndex].Other;
+                        var killed = killedArray[entityIndex];
+                        var entity = killed.Other;
 
-                        SetMap.TryAdd(entity, new Dead
-                        {
-                            Duration = 1,
-                            StartTime = Time,
-                            Expired = false
-                        });
+                        if (DeadFromEntity.Exists(entity)) continue;
+
+                        SetDead(entity);
                     }
                 }
                 else if (chunk.Has(KillAllCharacterType))
@@ -53,22 +46,28 @@ namespace Game.Systems
 
                         if (DeadFromEntity.Exists(entity)) continue;
 
-                        SetMap.TryAdd(entity, new Dead
-                        {
-                            Duration = 1,
-                            StartTime = Time,
-                            Expired = false
-                        });
+                        SetDead(entity);
                     }
                 }
+            }
+
+            private void SetDead(Entity entity)
+            {
+                SetMap.TryAdd(entity, new Dead
+                {
+                    Duration = 1,
+                    StartTime = Time,
+                    Expired = false
+                });
+
+                HealthFromEntity[entity] = new Health { Value = 0 };
             }
         }
 
         private struct ApplyJob : IJob
         {
-            [ReadOnly] public NativeHashMap<Entity, Dead> SetMap;
+            public NativeHashMap<Entity, Dead> SetMap;
             public EntityCommandBuffer CommandBuffer;
-            public ComponentDataFromEntity<Health> HealthFromEntity;
 
             public void Execute()
             {
@@ -77,12 +76,7 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-
                     CommandBuffer.AddComponent(entity, SetMap[entity]);
-                    if (HealthFromEntity.Exists(entity))
-                    {
-                        HealthFromEntity[entity] = new Health { Value = 0 };
-                    }
                 }
 
                 entityArray.Dispose();
@@ -126,20 +120,18 @@ namespace Game.Systems
             inputDeps = new ConsolidateJob
             {
                 SetMap = m_SetMap.ToConcurrent(),
-                EntityType = GetArchetypeChunkEntityType(),
                 EntityArray = m_AliveCharacterGroup.ToEntityArray(Allocator.TempJob),
-                HealthType = GetArchetypeChunkComponentType<Health>(true),
                 KillAllCharacterType = GetArchetypeChunkComponentType<KillAllCharacters>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
+                HealthFromEntity = GetComponentDataFromEntity<Health>(),
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
-                HealthFromEntity = GetComponentDataFromEntity<Health>()
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
