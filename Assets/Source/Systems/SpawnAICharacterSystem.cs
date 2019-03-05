@@ -255,7 +255,7 @@ namespace Game.Systems
 
             EntityManager.CreateEntity(m_Archetype, entityArray);
 
-            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
             var inputDeps = default(JobHandle);
 
             inputDeps = new SetDataJob
@@ -277,7 +277,7 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                CommandBuffer = setSystem.CreateCommandBuffer(),
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
             inputDeps.Complete();

@@ -7,6 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetDestroySystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -71,7 +72,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var destroyCommandBufferSystem = World.GetExistingManager<DestroyCommandBufferSystem>();
+            var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -83,10 +84,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = destroyCommandBufferSystem.CreateCommandBuffer(),
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            destroyCommandBufferSystem.AddJobHandleForProducer(inputDeps);
+            setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

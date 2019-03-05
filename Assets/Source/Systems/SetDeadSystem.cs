@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetDeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -42,7 +43,7 @@ namespace Game.Systems
 
                         SetMap.TryAdd(entity, new Dead
                         {
-                            Duration = 5,
+                            Duration = 1,
                             StartTime = Time,
                             Expired = false
                         });
@@ -58,7 +59,7 @@ namespace Game.Systems
 
                         SetMap.TryAdd(entity, new Dead
                         {
-                            Duration = 5,
+                            Duration = 1,
                             StartTime = Time,
                             Expired = false
                         });
@@ -76,7 +77,7 @@ namespace Game.Systems
 
                         SetMap.TryAdd(entity, new Dead
                         {
-                            Duration = 5,
+                            Duration = 1,
                             StartTime = Time,
                             Expired = false
                         });
@@ -141,7 +142,7 @@ namespace Game.Systems
             Dispose();
 
             m_SetMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
-            var deadCommandBufferSystem = World.GetExistingManager<DeadCommandBufferSystem>();
+            var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -158,11 +159,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = deadCommandBufferSystem.CreateCommandBuffer(),
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
                 HealthFromEntity = GetComponentDataFromEntity<Health>()
             }.Schedule(inputDeps);
 
-            deadCommandBufferSystem.AddJobHandleForProducer(inputDeps);
+            setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

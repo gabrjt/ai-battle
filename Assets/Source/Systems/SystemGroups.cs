@@ -2,36 +2,20 @@
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
-    public class DestroyGroup : ComponentSystemGroup { }
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public class PlaybackGroup : ComponentSystemGroup { }
 
-    [UpdateInGroup(typeof(DestroyGroup))]
-    public class DestroyCommandBufferSystem : EntityCommandBufferSystem { }
-
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
-    [UpdateAfter(typeof(DestroyGroup))]
-    public class EventGroup : ComponentSystemGroup { }
-
-    [UpdateInGroup(typeof(EventGroup))]
+    [UpdateInGroup(typeof(PlaybackGroup))]
     public class EventCommandBufferSystem : EntityCommandBufferSystem { }
 
-    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
-    public class DeadGroup : ComponentSystemGroup { }
-
-    [UpdateInGroup(typeof(DeadGroup))]
-    public class DeadCommandBufferSystem : EntityCommandBufferSystem { }
-
-    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
-    [UpdateAfter(typeof(DeadGroup))]
-    public class SetGroup : ComponentSystemGroup { }
-
-    [UpdateInGroup(typeof(SetGroup))]
+    [UpdateInGroup(typeof(PlaybackGroup))]
+    [UpdateAfter(typeof(EventCommandBufferSystem))]
     public class SetCommandBufferSystem : EntityCommandBufferSystem { }
 
-    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
-    [UpdateAfter(typeof(SetGroup))]
-    public class RemoveGroup : ComponentSystemGroup { }
-
-    [UpdateInGroup(typeof(RemoveGroup))]
+    [UpdateInGroup(typeof(PlaybackGroup))]
+    [UpdateAfter(typeof(SetCommandBufferSystem))]
     public class RemoveCommandBufferSystem : EntityCommandBufferSystem { }
+
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public class LogicGroup : ComponentSystemGroup { }
 }
