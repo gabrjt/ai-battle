@@ -10,8 +10,8 @@ namespace Game.MonoBehaviours
         private EntityManager m_EntityManager;
         private EntityArchetype m_Archetype;
 #if UNITY_EDITOR
-        private SpawnAICharacterSystem m_SpawnAICharacterSystem;
-        private bool m_DebugSpawnSystemEnabled;
+        private InstantiateAICharacterSystem m_InstantiateAICharacterSystem;
+        private bool m_InstantiateAICharacterSystemEnabled;
 #endif
 
         private void Start()
@@ -19,29 +19,28 @@ namespace Game.MonoBehaviours
             m_EntityManager = World.Active.GetExistingManager<EntityManager>();
             m_Archetype = m_EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<KillAllCharacters>());
 #if UNITY_EDITOR
-            m_SpawnAICharacterSystem = World.Active.GetExistingManager<SpawnAICharacterSystem>();
-            m_DebugSpawnSystemEnabled = m_SpawnAICharacterSystem != null ? m_SpawnAICharacterSystem.Enabled : false;
+            m_InstantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
+            m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem != null ? m_InstantiateAICharacterSystem.Enabled : false;
 #endif
         }
 
         public void KillAllCharacters()
         {
-            World.Active.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
-
 #if UNITY_EDITOR
-            if (m_DebugSpawnSystemEnabled)
+            if (m_InstantiateAICharacterSystemEnabled)
             {
-                m_DebugSpawnSystemEnabled = m_SpawnAICharacterSystem.Enabled = false;
-                Invoke("EnableSpawnCharacterAISystem", 3);
+                m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem.Enabled = false;
+                Invoke("EnableInstantiateAICharacterSystem", 5);
             }
 #endif
+            World.Active.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
         }
 
 #if UNITY_EDITOR
 
-        private void EnableSpawnCharacterAISystem()
+        private void EnableInstantiateAICharacterSystem()
         {
-            m_DebugSpawnSystemEnabled = m_SpawnAICharacterSystem.Enabled = true;
+            m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem.Enabled = true;
         }
 
 #endif

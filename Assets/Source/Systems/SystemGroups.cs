@@ -2,7 +2,24 @@
 
 namespace Game.Systems
 {
+    #region Instantiate
+
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    public class InstantiateGroup : ComponentSystemGroup { }
+
+    #endregion Instantiate
+
+    #region Logic
+
     [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public class LogicGroup : ComponentSystemGroup { }
+
+    #endregion Logic
+
+    #region Playback
+
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(LogicGroup))]
     public class PlaybackGroup : ComponentSystemGroup { }
 
     [UpdateInGroup(typeof(PlaybackGroup))]
@@ -16,9 +33,17 @@ namespace Game.Systems
     [UpdateAfter(typeof(SetCommandBufferSystem))]
     public class RemoveCommandBufferSystem : EntityCommandBufferSystem { }
 
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public class LogicGroup : ComponentSystemGroup { }
+    #endregion Playback
+
+    #region Destroy
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateBefore(typeof(LogicGroup))]
     public class DestroyGroup : ComponentSystemGroup { }
+
+    [UpdateInGroup(typeof(PlaybackGroup))]
+    [UpdateAfter(typeof(RemoveCommandBufferSystem))]
+    public class DestroyCommandBufferSystem : EntityCommandBufferSystem { }
+
+    #endregion Destroy
 }

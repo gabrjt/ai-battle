@@ -22,10 +22,10 @@ namespace Game.MonoBehaviours
 
                 m_CharacterCountInputField.text = count.ToString();
 
-                var spawnAICharacterSystem = World.Active.GetExistingManager<SpawnAICharacterSystem>();
+                var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
 
-                spawnAICharacterSystem.m_LastTotalCount = spawnAICharacterSystem.m_TotalCount;
-                spawnAICharacterSystem.m_TotalCount = count;
+                instantiateAICharacterSystem.m_LastTotalCount = instantiateAICharacterSystem.m_TotalCount;
+                instantiateAICharacterSystem.m_TotalCount = count;
             }
         }
     }

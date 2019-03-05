@@ -15,9 +15,23 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
-    public class SpawnAICharacterSystem : ComponentSystem
+    [UpdateInGroup(typeof(InstantiateGroup))]
+    public class InstantiateAICharacterSystem : ComponentSystem
     {
+        private struct SetData
+        {
+            public HomePosition HomePosition;
+            public Translation Translation;
+            public Rotation Rotation;
+            public MaxHealth MaxHealth;
+            public Health Health;
+            public Attack Attack;
+            public AttackSpeed AttackSpeed;
+            public HealthRegeneration HealthRegeneration;
+            public ViewType ViewType;
+            public AttackDuration AttackDuration;
+        }
+
         [BurstCompile]
         private struct SetDataJob : IJobParallelFor
         {
@@ -82,20 +96,6 @@ namespace Game.Systems
                     }
                 }
             }
-        }
-
-        private struct SetData
-        {
-            public HomePosition HomePosition;
-            public Translation Translation;
-            public Rotation Rotation;
-            public MaxHealth MaxHealth;
-            public Health Health;
-            public Attack Attack;
-            public AttackSpeed AttackSpeed;
-            public HealthRegeneration HealthRegeneration;
-            public ViewType ViewType;
-            public AttackDuration AttackDuration;
         }
 
         private ComponentGroup m_Group;

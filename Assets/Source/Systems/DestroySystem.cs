@@ -40,6 +40,20 @@ namespace Game.Systems
             }
         }
 
+        private struct ApplyJob : IJob
+        {
+            public NativeQueue<Entity> PureEntityQueue;
+            public EntityCommandBuffer CommandBuffer;
+
+            public void Execute()
+            {
+                while (PureEntityQueue.TryDequeue(out var entity))
+                {
+                    CommandBuffer.DestroyEntity(entity);
+                }
+            }
+        }
+
         private ComponentGroup m_Group;
         private NativeQueue<Entity> m_PureEntityQueue;
         private NativeQueue<Entity> m_HealthBarQueue;
@@ -68,18 +82,23 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            new ConsolidateJob
+            var destroyCommandBufferSystem = World.Active.GetExistingManager<DestroyCommandBufferSystem>();
+
+            inputDeps = new ConsolidateJob
             {
                 PureEntityQueue = m_PureEntityQueue.ToConcurrent(),
                 HealthBarQueue = m_HealthBarQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 HealthBarType = GetArchetypeChunkComponentType<HealthBar>(true)
-            }.Schedule(m_Group, inputDeps).Complete();
+            }.Schedule(m_Group, inputDeps);
 
-            while (m_PureEntityQueue.TryDequeue(out var entity))
+            inputDeps = new ApplyJob
             {
-                EntityManager.DestroyEntity(entity);
-            }
+                PureEntityQueue = m_PureEntityQueue,
+                CommandBuffer = destroyCommandBufferSystem.CreateCommandBuffer()
+            }.Schedule(inputDeps);
+
+            inputDeps.Complete();
 
             while (m_HealthBarQueue.TryDequeue(out var entity))
             {
@@ -88,13 +107,15 @@ namespace Game.Systems
                 m_HealthBarPool.Enqueue(gameObject);
             }
 
-            var spawnAICharacterSystem = World.GetExistingManager<SpawnAICharacterSystem>();
+            var spawnAICharacterSystem = World.GetExistingManager<InstantiateAICharacterSystem>();
             var maxPoolCount = math.max(spawnAICharacterSystem.m_LastTotalCount, spawnAICharacterSystem.m_TotalCount);
 
             while (m_HealthBarPool.Count > maxPoolCount)
             {
                 Object.Destroy(m_HealthBarPool.Dequeue());
             }
+
+            destroyCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }
