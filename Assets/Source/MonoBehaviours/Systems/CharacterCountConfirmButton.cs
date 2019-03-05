@@ -14,18 +14,27 @@ namespace Game.MonoBehaviours
         [SerializeField]
         private int m_MaxTotalCount = 0xFFFF;
 
+        private void Start()
+        {
+            m_CharacterCountInputField.text = World.Active.GetExistingManager<InstantiateAICharacterSystem>().m_TotalCount.ToString();
+        }
+
         public void Confirm()
         {
-            if (int.TryParse(m_CharacterCountInputField.text, out var inputFieldCount) && inputFieldCount > 0)
+            var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
+
+            if (int.TryParse(m_CharacterCountInputField.text, out var inputFieldCount) && inputFieldCount >= 0)
             {
                 var count = math.min(inputFieldCount, m_MaxTotalCount);
 
                 m_CharacterCountInputField.text = count.ToString();
 
-                var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
-
                 instantiateAICharacterSystem.m_LastTotalCount = instantiateAICharacterSystem.m_TotalCount;
                 instantiateAICharacterSystem.m_TotalCount = count;
+            }
+            else
+            {
+                m_CharacterCountInputField.text = instantiateAICharacterSystem.m_TotalCount.ToString();
             }
         }
     }
