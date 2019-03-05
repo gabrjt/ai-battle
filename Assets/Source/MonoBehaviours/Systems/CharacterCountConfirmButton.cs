@@ -23,6 +23,8 @@ namespace Game.MonoBehaviours
         {
             var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
 
+            if (instantiateAICharacterSystem == null) return;
+
             if (int.TryParse(m_CharacterCountInputField.text, out var inputFieldCount) && inputFieldCount >= 0)
             {
                 var count = math.min(inputFieldCount, m_MaxTotalCount);

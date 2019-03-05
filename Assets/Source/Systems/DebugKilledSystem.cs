@@ -17,6 +17,7 @@ namespace Game.Systems
             public NativeHashMap<Entity, Killed>.Concurrent KilledMap;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public Random Random;
+            [ReadOnly] public ComponentDataFromEntity<Idle> IdleFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -28,7 +29,7 @@ namespace Game.Systems
                     var killer = entityArray[Random.NextInt(0, entityArray.Length)];
                     var killed = entityArray[Random.NextInt(0, entityArray.Length)];
 
-                    if (DeadFromEntity.Exists(killer) || DeadFromEntity.Exists(killed)) continue;
+                    if (IdleFromEntity.Exists(killer) || DeadFromEntity.Exists(killer) || DeadFromEntity.Exists(killed)) continue;
 
                     KilledMap.TryAdd(killed, new Killed
                     {
@@ -86,6 +87,7 @@ namespace Game.Systems
             {
                 KilledMap = m_KilledMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
+                IdleFromEntity = GetComponentDataFromEntity<Idle>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 Random = m_Random
             }.Schedule(m_Group, inputDeps);

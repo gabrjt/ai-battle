@@ -10,7 +10,7 @@ namespace Game.Systems
     [UpdateInGroup(typeof(LogicGroup))]
     public class SetDestroySystem : JobComponentSystem, IDisposable
     {
-        private struct ConsolidateData
+        private struct SetData
         {
             public Entity Entity;
             public Destroy Destroy;
@@ -19,7 +19,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeQueue<ConsolidateData>.Concurrent SetQueue;
+            public NativeQueue<SetData>.Concurrent SetQueue;
             [ReadOnly] public ArchetypeChunkComponentType<Died> DiedType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -28,7 +28,7 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    SetQueue.Enqueue(new ConsolidateData
+                    SetQueue.Enqueue(new SetData
                     {
                         Entity = diedArray[entityIndex].This,
                         Destroy = new Destroy()
@@ -39,7 +39,7 @@ namespace Game.Systems
 
         private struct ApplyJob : IJob
         {
-            public NativeQueue<ConsolidateData> SetQueue;
+            public NativeQueue<SetData> SetQueue;
             public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
@@ -52,7 +52,7 @@ namespace Game.Systems
         }
 
         private ComponentGroup m_Group;
-        private NativeQueue<ConsolidateData> m_SetQueue;
+        private NativeQueue<SetData> m_SetQueue;
 
         protected override void OnCreateManager()
         {
@@ -63,7 +63,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
-            m_SetQueue = new NativeQueue<ConsolidateData>(Allocator.Persistent);
+            m_SetQueue = new NativeQueue<SetData>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

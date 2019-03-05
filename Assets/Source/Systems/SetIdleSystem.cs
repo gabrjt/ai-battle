@@ -9,6 +9,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetIdleSystem : JobComponentSystem, IDisposable
     {
         private struct SetData
@@ -38,7 +39,8 @@ namespace Game.Systems
                         Idle = new Idle
                         {
                             Duration = Random.NextFloat(2, 5),
-                            StartTime = Time
+                            StartTime = Time,
+                            Expired = false
                         }
                     });
                 }
