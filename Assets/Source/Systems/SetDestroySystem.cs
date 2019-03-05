@@ -13,7 +13,7 @@ namespace Game.Systems
         [BurstCompile]
         private struct ConsolidateJob : IJobChunk
         {
-            public NativeHashMap<Entity, Destroy>.Concurrent SetMap;
+            public NativeQueue<Entity>.Concurrent SetQueue;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public ArchetypeChunkComponentType<Died> DiedType;
 
@@ -25,34 +25,27 @@ namespace Game.Systems
                 {
                     var entity = diedArray[entityIndex].This;
 
-                    SetMap.TryAdd(entity, new Destroy());
+                    SetQueue.Enqueue(entity);
                 }
             }
         }
 
         private struct ApplyJob : IJob
         {
-            [ReadOnly] public NativeHashMap<Entity, Destroy> SetMap;
+            public NativeQueue<Entity> SetQueue;
             public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                var entityArray = SetMap.GetKeyArray(Allocator.Temp);
-
-                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+                while (SetQueue.TryDequeue(out var entity))
                 {
-                    var entity = entityArray[entityIndex];
-
-                    CommandBuffer.AddComponent(entity, SetMap[entity]);
+                    CommandBuffer.AddComponent(entity, new Destroy());
                 }
-
-                entityArray.Dispose();
             }
         }
 
         private ComponentGroup m_Group;
-        private EntityArchetype m_Archetype;
-        private NativeHashMap<Entity, Destroy> m_SetMap;
+        private NativeQueue<Entity> m_SetQueue;
 
         protected override void OnCreateManager()
         {
@@ -63,39 +56,29 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Destroyed>());
+            m_SetQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            Dispose();
-
-            m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
-
             var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
-                SetMap = m_SetMap.ToConcurrent(),
+                SetQueue = m_SetQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 DiedType = GetArchetypeChunkComponentType<Died>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
-                SetMap = m_SetMap,
+                SetQueue = m_SetQueue,
                 CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
-        }
-
-        protected override void OnStopRunning()
-        {
-            base.OnStopRunning();
-            Dispose();
         }
 
         protected override void OnDestroyManager()
@@ -106,9 +89,9 @@ namespace Game.Systems
 
         public void Dispose()
         {
-            if (m_SetMap.IsCreated)
+            if (m_SetQueue.IsCreated)
             {
-                m_SetMap.Dispose();
+                m_SetQueue.Dispose();
             }
         }
     }
