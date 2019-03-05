@@ -113,11 +113,11 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.Create<Target>() },
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadWrite<Target>() },
                 None = new[] { ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.Create<Target>(), ComponentType.ReadOnly<Dead>() }
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadWrite<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Killed>() }
@@ -130,7 +130,7 @@ namespace Game.Systems
 
             m_RemoveTargetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -146,10 +146,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 RemoveTargetMap = m_RemoveTargetMap,
-                CommandBuffer = removeBarrier.CreateCommandBuffer(),
+                CommandBuffer = removeSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

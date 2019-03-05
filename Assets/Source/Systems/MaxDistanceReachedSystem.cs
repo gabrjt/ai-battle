@@ -12,14 +12,14 @@ namespace Game.Systems
     public class MaxDistanceReachedSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
-        [RequireSubtractiveComponent(typeof(Destroy))]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Position, MaxSqrDistance>
+        [ExcludeComponent(typeof(Destroy))]
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Translation, MaxSqrDistance>
         {
             public NativeQueue<MaxDistanceReached>.Concurrent MaxDistanceReachedQueue;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Position position, [ReadOnly] ref MaxSqrDistance maxSqrDistance)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Translation translation, [ReadOnly] ref MaxSqrDistance maxSqrDistance)
             {
-                if (math.distancesq(position.Value, maxSqrDistance.Origin) < maxSqrDistance.Value) return;
+                if (math.distancesq(translation.Value, maxSqrDistance.Origin) < maxSqrDistance.Value) return;
 
                 MaxDistanceReachedQueue.Enqueue(new MaxDistanceReached
                 {
@@ -55,14 +55,14 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<MaxDistanceReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<MaxDistanceReached>());
 
             m_MaxDistanceReachedQueue = new NativeQueue<MaxDistanceReached>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -72,11 +72,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 MaxDistanceReachedQueue = m_MaxDistanceReachedQueue,
-                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

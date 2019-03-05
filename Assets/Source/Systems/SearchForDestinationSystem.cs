@@ -23,12 +23,12 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<DestinationFound>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestinationFound>());
         }
 
         protected override void OnUpdate()
         {
-            var commandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
+            var commandBuffer = World.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer();
 
             var terrain = Terrain.activeTerrain;
 

@@ -95,7 +95,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Died>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<Destroyed>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Destroyed>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -104,8 +104,8 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var destroySystem = World.GetExistingManager<DestroyCommandBufferSystem>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             var consolidateDeps = new ConsolidateJob
             {
@@ -117,20 +117,20 @@ namespace Game.Systems
             var applyDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = destroyBarrier.CreateCommandBuffer(),
+                CommandBuffer = destroySystem.CreateCommandBuffer(),
             }.Schedule(consolidateDeps);
 
             var destroyedDeps = new DispatchDestroyedJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(consolidateDeps);
 
             inputDeps = JobHandle.CombineDependencies(applyDeps, destroyedDeps);
 
-            destroyBarrier.AddJobHandleForProducer(inputDeps);
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            destroySystem.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -11,25 +11,25 @@ namespace Game.Systems
     public class UpdateTargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentDataWithEntity<Target, Position, AttackDistance, Destination>
+        private struct Job : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Destination>
         {
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             public void Execute(Entity entity, int index,
                 [ReadOnly] ref Target target,
-                [ReadOnly] ref Position position,
+                [ReadOnly] ref Translation translation,
                 [ReadOnly] ref AttackDistance attackDistance,
                 ref Destination destination)
             {
                 if (PositionFromEntity.Exists(target.Value))
                 {
                     var targetDestination = PositionFromEntity[target.Value].Value;
-                    var distance = math.distance(position.Value, targetDestination);
+                    var distance = math.distance(translation.Value, targetDestination);
 
                     if (distance < attackDistance.Min || distance > attackDistance.Max)
                     {
-                        var direction = math.normalizesafe(targetDestination - position.Value);
+                        var direction = math.normalizesafe(targetDestination - translation.Value);
                         destination.LastValue = destination.Value;
                         destination.Value = targetDestination - direction * attackDistance.Min;
                     }
@@ -41,7 +41,7 @@ namespace Game.Systems
         {
             return new Job
             {
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true)
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this, inputDeps);
         }
     }

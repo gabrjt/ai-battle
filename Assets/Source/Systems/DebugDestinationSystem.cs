@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [DisableAutoCreation]
+    //[DisableAutoCreation]
     public class DebugDestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -17,11 +17,11 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Destination>() },
+                All = new[] { ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<Destination>() },
                 None = new[] { ComponentType.ReadOnly<Target>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() },
+                All = new[] { ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() },
             });
         }
 
@@ -29,7 +29,7 @@ namespace Game.Systems
         {
             var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
             var targetType = GetArchetypeChunkComponentType<Target>();
-            var positionType = GetArchetypeChunkComponentType<Position>();
+            var positionType = GetArchetypeChunkComponentType<Translation>();
             var destinationType = GetArchetypeChunkComponentType<Destination>();
 
             for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)

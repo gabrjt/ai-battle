@@ -145,7 +145,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Target>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -161,11 +161,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                CommandBuffer = setSystem.CreateCommandBuffer(),
                 TargetFromEntity = GetComponentDataFromEntity<Target>()
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

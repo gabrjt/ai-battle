@@ -12,6 +12,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class SpawnAttackSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -28,7 +29,7 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<Target> TargetType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Position> PositionType;
+            public ArchetypeChunkComponentType<Translation> PositionType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Attack> AttackType;
@@ -43,7 +44,7 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<AttackSpeed> AttackSpeedType;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             public float Time;
 
@@ -67,21 +68,21 @@ namespace Game.Systems
 
                     if (!PositionFromEntity.Exists(target.Value)) continue;
 
-                    var position = positionArray[entityIndex].Value;
+                    var translation = positionArray[entityIndex].Value;
                     var targetPosition = PositionFromEntity[target.Value].Value;
                     var attackDistance = attackDistanceArray[entityIndex];
                     var attackSpeed = attackSpeedArray[entityIndex].Value;
 
-                    if (math.distance(position, targetPosition) > attackDistance.Max) continue;
+                    if (math.distance(translation, targetPosition) > attackDistance.Max) continue;
 
-                    var direction = math.normalizesafe(targetPosition - position);
+                    var direction = math.normalizesafe(targetPosition - translation);
 
-                    var origin = position + new float3(0, 0.35f, 0);
+                    var origin = translation + new float3(0, 0.35f, 0);
 
                     SpawnDataQueue.Enqueue(new SpawnData
                     {
                         Owner = entity,
-                        Position = new Position
+                        Translation = new Translation
                         {
                             Value = origin
                         },
@@ -92,7 +93,7 @@ namespace Game.Systems
                         },
                         MaxSqrDistance = new MaxSqrDistance
                         {
-                            Origin = position,
+                            Origin = translation,
                             Value = attackDistance.Max * attackDistance.Max
                         },
                         Speed = new Speed { Value = attackSpeed * 5 },
@@ -130,7 +131,7 @@ namespace Game.Systems
             public EntityCommandBuffer CommandBuffer;
 
             [ReadOnly]
-            public EntityCommandBuffer EventCommandBuffer;
+            public EntityCommandBuffer EventCommandBufferSystemSystem;
 
             public void Execute()
             {
@@ -141,8 +142,8 @@ namespace Game.Systems
                     CommandBuffer.AddComponent(entity, applyAttackingData.Attacking);
                     CommandBuffer.AddComponent(entity, applyAttackingData.Cooldown);
 
-                    var attacked = EventCommandBuffer.CreateEntity(AttackedArchetype);
-                    EventCommandBuffer.SetComponent(attacked, new Attacked { This = entity });
+                    var attacked = EventCommandBufferSystemSystem.CreateEntity(AttackedArchetype);
+                    EventCommandBufferSystemSystem.SetComponent(attacked, new Attacked { This = entity });
                 }
             }
         }
@@ -162,7 +163,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<AttackInstance> AttackInstanceFromEntity;
 
             [NativeDisableParallelForRestriction]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Rotation> RotationFromEntity;
@@ -193,7 +194,7 @@ namespace Game.Systems
                     Radius = 0.25f
                 };
 
-                PositionFromEntity[entity] = spawnData.Position;
+                PositionFromEntity[entity] = spawnData.Translation;
                 RotationFromEntity[entity] = spawnData.Rotation;
                 DirectionFromEntity[entity] = spawnData.Direction;
                 MaxSqrDistanceFromEntity[entity] = spawnData.MaxSqrDistance;
@@ -220,7 +221,7 @@ namespace Game.Systems
         {
             public Entity Owner;
 
-            public Position Position;
+            public Translation Translation;
 
             public Rotation Rotation;
 
@@ -256,7 +257,7 @@ namespace Game.Systems
                 All = new[]
                 {
                     ComponentType.ReadOnly<Target>(),
-                    ComponentType.ReadOnly<Position>(),
+                    ComponentType.ReadOnly<Translation>(),
                     ComponentType.ReadOnly<Attack>(),
                     ComponentType.ReadOnly<AttackDistance>(),
                     ComponentType.ReadOnly<AttackDuration>(),
@@ -266,21 +267,21 @@ namespace Game.Systems
             });
 
             m_Archetype = EntityManager.CreateArchetype(
-                ComponentType.Create<AttackInstance>(),
-                ComponentType.Create<Position>(),
-                ComponentType.Create<Rotation>(),
-                ComponentType.Create<Scale>(),
+                ComponentType.ReadWrite<AttackInstance>(),
+                ComponentType.ReadWrite<Translation>(),
+                ComponentType.ReadWrite<Rotation>(),
+                ComponentType.ReadWrite<Scale>(),
 #if DEBUG_ATTACK
-                ComponentType.Create<RenderMesh>(),
+                ComponentType.ReadWrite<RenderMesh>(),
 #endif
-                ComponentType.Create<Speed>(),
-                ComponentType.Create<Direction>(),
-                ComponentType.Create<Velocity>(),
-                ComponentType.Create<Damage>(),
-                ComponentType.Create<MaxSqrDistance>(),
-                ComponentType.Create<Prefab>());
+                ComponentType.ReadWrite<Speed>(),
+                ComponentType.ReadWrite<Direction>(),
+                ComponentType.ReadWrite<Velocity>(),
+                ComponentType.ReadWrite<Damage>(),
+                ComponentType.ReadWrite<MaxSqrDistance>(),
+                ComponentType.ReadWrite<Prefab>());
 
-            m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<Attacked>());
+            m_AttackedArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<Attacked>());
 
             m_Prefab = EntityManager.CreateEntity(m_Archetype);
 
@@ -290,7 +291,7 @@ namespace Game.Systems
             var material = sphere.GetComponent<MeshRenderer>().sharedMaterial;
 #endif
 
-            EntityManager.SetComponentData(m_Prefab, new Scale { Value = new float3(0.25f, 0.25f, 0.25f) });
+            EntityManager.SetComponentData(m_Prefab, new Scale { Value = 0.25f });
 
 #if DEBUG_ATTACK
             EntityManager.SetSharedComponentData(m_Prefab, new RenderMesh
@@ -306,7 +307,7 @@ namespace Game.Systems
             Object.Destroy(sphere);
 #endif
 
-            m_Random = new Random((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)Environment.TickCount);
 
             m_ApplyAttackingQueue = new NativeQueue<ApplyAttackingData>(Allocator.Persistent);
             m_SpawnDataQueue = new NativeQueue<SpawnData>(Allocator.Persistent);
@@ -314,8 +315,8 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -323,12 +324,12 @@ namespace Game.Systems
                 ApplyAttackingQueue = m_ApplyAttackingQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
-                PositionType = GetArchetypeChunkComponentType<Position>(true),
+                PositionType = GetArchetypeChunkComponentType<Translation>(true),
                 AttackType = GetArchetypeChunkComponentType<Attack>(true),
                 AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
                 AttackDurationType = GetArchetypeChunkComponentType<AttackDuration>(true),
                 AttackSpeedType = GetArchetypeChunkComponentType<AttackSpeed>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 Time = Time.time
             }.Schedule(m_Group, inputDeps);
 
@@ -336,8 +337,8 @@ namespace Game.Systems
             {
                 ApplyAttackingQueue = m_ApplyAttackingQueue,
                 AttackedArchetype = m_AttackedArchetype,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
-                EventCommandBuffer = eventBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer(),
+                EventCommandBufferSystemSystem = eventSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps.Complete();
@@ -358,7 +359,7 @@ namespace Game.Systems
                 EntityArray = entityArray,
                 SpawnDataArray = spawnDataArray,
                 AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
                 DirectionFromEntity = GetComponentDataFromEntity<Direction>(),
                 MaxSqrDistanceFromEntity = GetComponentDataFromEntity<MaxSqrDistance>(),
@@ -367,8 +368,8 @@ namespace Game.Systems
                 VelocityFromEntity = GetComponentDataFromEntity<Velocity>(),
             }.Schedule(entityArray.Length, 64, inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

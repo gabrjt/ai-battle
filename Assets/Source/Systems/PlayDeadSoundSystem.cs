@@ -107,10 +107,10 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<ViewReference>(), ComponentType.ReadOnly<Dead>() },
-                None = new[] { ComponentType.Create<Initialized>() }
+                None = new[] { ComponentType.ReadWrite<Initialized>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<Initialized>() },
+                All = new[] { ComponentType.ReadWrite<Initialized>() },
                 None = new[] { ComponentType.ReadOnly<ViewReference>(), ComponentType.ReadOnly<Dead>() },
             });
 
@@ -123,8 +123,8 @@ namespace Game.Systems
 
             m_AddInitializedEntityMap = new NativeHashMap<Entity, Initialized>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -139,13 +139,13 @@ namespace Game.Systems
             var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityMap = m_AddInitializedEntityMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             var removeInitializedDeps = new RemoveInitializedJob
             {
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = removeSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
@@ -166,8 +166,8 @@ namespace Game.Systems
 
             entityArray.Dispose();
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -31,7 +31,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Destination> DestinationFromEntity;
@@ -94,12 +94,12 @@ namespace Game.Systems
 
             private void Stop(Entity entity)
             {
-                var position = PositionFromEntity[entity].Value;
+                var translation = PositionFromEntity[entity].Value;
 
                 SetMap.TryAdd(entity, new Destination
                 {
-                    Value = position,
-                    LastValue = position
+                    Value = translation,
+                    LastValue = translation
                 });
             }
 
@@ -128,7 +128,7 @@ namespace Game.Systems
 
             public EntityCommandBuffer CommandBuffer;
 
-            public EntityCommandBuffer EventCommandBuffer;
+            public EntityCommandBuffer EventCommandBufferSystemSystem;
 
             [ReadOnly]
             public EntityArchetype Archetype;
@@ -150,8 +150,8 @@ namespace Game.Systems
 
                         if (destination.Equals(DestinationFromEntity[entity]))
                         {
-                            var destinationReached = EventCommandBuffer.CreateEntity(Archetype);
-                            EventCommandBuffer.SetComponent(destinationReached, new DestinationReached { This = entity });
+                            var destinationReached = EventCommandBufferSystemSystem.CreateEntity(Archetype);
+                            EventCommandBufferSystemSystem.SetComponent(destinationReached, new DestinationReached { This = entity });
                         }
                     }
                     else
@@ -176,15 +176,15 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Position>() },
-                None = new[] { ComponentType.Create<Destination>(), ComponentType.ReadOnly<Dead>() }
+                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Translation>() },
+                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<DestinationReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<DestinationReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -193,8 +193,8 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -204,21 +204,21 @@ namespace Game.Systems
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
-                EventCommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = setSystem.CreateCommandBuffer(),
+                EventCommandBufferSystemSystem = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype,
                 DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

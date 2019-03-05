@@ -28,7 +28,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Visible> VisibleFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -47,7 +47,7 @@ namespace Game.Systems
                     PlayAttackSoundQueue.Enqueue(new PlayAttackSoundData
                     {
                         Entity = view,
-                        Position = PositionFromEntity[view].Value
+                        Translation = PositionFromEntity[view].Value
                     });
                 }
             }
@@ -57,7 +57,7 @@ namespace Game.Systems
         {
             public Entity Entity;
 
-            public float3 Position;
+            public float3 Translation;
         }
 
         private ComponentGroup m_Group;
@@ -84,14 +84,14 @@ namespace Game.Systems
                 AttackedType = GetArchetypeChunkComponentType<Attacked>(true),
                 ViewReferenceFromEntity = GetComponentDataFromEntity<ViewReference>(true),
                 VisibleFromEntity = GetComponentDataFromEntity<Visible>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true)
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps.Complete();
 
             while (m_PlayAttackSoundQueue.TryDequeue(out var playAttackSoundData))
             {
-                EntityManager.GetComponentObject<Transform>(playAttackSoundData.Entity).GetComponentInChildren<PlayAttackSound>().PlayAtPoint(playAttackSoundData.Position);
+                EntityManager.GetComponentObject<Transform>(playAttackSoundData.Entity).GetComponentInChildren<PlayAttackSound>().PlayAtPoint(playAttackSoundData.Translation);
             }
 
             return inputDeps;

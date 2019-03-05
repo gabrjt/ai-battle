@@ -24,7 +24,7 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<ViewReference> ViewReferenceType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Position> PositionType;
+            public ArchetypeChunkComponentType<Translation> PositionType;
 
             [ReadOnly]
             public ArchetypeChunkComponentType<Target> TargetType;
@@ -36,7 +36,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Visible> VisibleFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [ReadOnly]
             public ComponentDataFromEntity<Owner> OwnerFromEntity;
@@ -51,13 +51,13 @@ namespace Game.Systems
                 for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var view = viewReferenceArray[entityIndex].Value;
-                    var position = positionArray[entityIndex].Value;
+                    var translation = positionArray[entityIndex].Value;
                     var target = targetArray[entityIndex].Value;
                     var maxAttackDistance = AttackDistanceArray[entityIndex].Max;
 
                     if (!VisibleFromEntity.Exists(view)) continue;
 
-                    if (math.distance(position, PositionFromEntity[target].Value) <= maxAttackDistance)
+                    if (math.distance(translation, PositionFromEntity[target].Value) <= maxAttackDistance)
                     {
                         PlayIdleAnimationQueue.Enqueue(view);
                     }
@@ -107,11 +107,11 @@ namespace Game.Systems
                 PlayIdleAnimationQueue = m_PlayIdleAnimationQueue.ToConcurrent(),
                 PlayChargingAnimationDataQueue = m_PlayChargingAnimationDataQueue.ToConcurrent(),
                 ViewReferenceType = GetArchetypeChunkComponentType<ViewReference>(true),
-                PositionType = GetArchetypeChunkComponentType<Position>(true),
+                PositionType = GetArchetypeChunkComponentType<Translation>(true),
                 TargetType = GetArchetypeChunkComponentType<Target>(true),
                 AttackDistanceType = GetArchetypeChunkComponentType<AttackDistance>(true),
                 VisibleFromEntity = GetComponentDataFromEntity<Visible>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(m_Group, inputDeps);
 

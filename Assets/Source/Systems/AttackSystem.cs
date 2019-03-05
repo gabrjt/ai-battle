@@ -52,7 +52,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -63,10 +63,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 EntityQueue = m_EntityQueue,
-                CommandBuffer = removeBarrier.CreateCommandBuffer(),
+                CommandBuffer = removeSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

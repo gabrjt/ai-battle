@@ -83,14 +83,14 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Event>(), ComponentType.ReadOnly<Damaged>() },
             });
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<Killed>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Killed>());
 
             m_KilledQueue = new NativeQueue<Killed>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -102,11 +102,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 KilledQueue = m_KilledQueue,
-                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

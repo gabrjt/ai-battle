@@ -11,8 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(SetCameraSingletonSystem))]
-    [UpdateAfter(typeof(SetCanvasSingletonSystem))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class SpawnHealthBarSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -31,7 +30,7 @@ namespace Game.Systems
             public ArchetypeChunkComponentType<Initialized> InitializedType;
 
             [ReadOnly]
-            public ArchetypeChunkComponentType<Position> PositionType;
+            public ArchetypeChunkComponentType<Translation> PositionType;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -51,7 +50,7 @@ namespace Game.Systems
                         SpawnDataQueue.Enqueue(new SpawnData
                         {
                             Owner = entity,
-                            Position = positionArray[entityIndex].Value
+                            Translation = positionArray[entityIndex].Value
                         });
                     }
                     else
@@ -116,7 +115,7 @@ namespace Game.Systems
         {
             public Entity Owner;
 
-            public float3 Position;
+            public float3 Translation;
         }
 
         private struct Initialized : ISystemStateComponentData { }
@@ -137,12 +136,12 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() },
-                None = new[] { ComponentType.Create<Initialized>(), ComponentType.ReadOnly<Dead>() }
+                All = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Translation>() },
+                None = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Position>() }
+                All = new[] { ComponentType.ReadWrite<Initialized>() },
+                None = new[] { ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<MaxHealth>(), ComponentType.ReadOnly<Translation>() }
             });
 
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("Health Bar"));
@@ -157,10 +156,10 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (!HasSingleton<CameraSingleton>() && !HasSingleton<CanvasSingleton>()) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
+            if (!HasSingleton<CameraSingleton>() || !EntityManager.Exists(GetSingleton<CameraSingleton>().Owner) || !HasSingleton<CanvasSingleton>() || !EntityManager.Exists(GetSingleton<CanvasSingleton>().Owner)) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -169,19 +168,19 @@ namespace Game.Systems
                 SpawnDataQueue = m_SpawnDataQueue.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
                 InitializedType = GetArchetypeChunkComponentType<Initialized>(),
-                PositionType = GetArchetypeChunkComponentType<Position>(true)
+                PositionType = GetArchetypeChunkComponentType<Translation>(true)
             }.Schedule(m_Group, inputDeps);
 
             var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             var removeInitializedDeps = new RemoveInitializedJob
             {
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = removeSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
@@ -195,7 +194,7 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
             var ownerArray = new NativeArray<Owner>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
-            var healthBarPool = World.GetExistingManager<DestroyBarrier>().m_HealthBarPool;
+            var healthBarPool = World.GetExistingManager<DestroySystem>().m_HealthBarPool;
 
             var entityIndex = 0;
             while (m_SpawnDataQueue.TryDequeue(out var spawnData))
@@ -218,7 +217,7 @@ namespace Game.Systems
                 healthBar.name = $"Health Bar {entity.Index}";
 
                 var transform = healthBar.GetComponent<RectTransform>();
-                transform.position = camera.WorldToScreenPoint(spawnData.Position + math.up());
+                transform.position = camera.WorldToScreenPoint(spawnData.Translation + math.up());
 
                 entityArray[entityIndex] = entity;
                 ownerArray[entityIndex] = new Owner { Value = spawnData.Owner };
@@ -232,8 +231,8 @@ namespace Game.Systems
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>()
             }.Schedule(entityArray.Length, 64, inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

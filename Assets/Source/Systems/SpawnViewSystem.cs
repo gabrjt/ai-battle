@@ -12,6 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class SpawnViewSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -97,7 +98,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Owner> OwnerFromEntity;
 
             [NativeDisableParallelForRestriction]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Rotation> RotationFromEntity;
@@ -111,7 +112,7 @@ namespace Game.Systems
                 var setData = SetDataArray[index];
 
                 OwnerFromEntity[entity] = setData.Owner;
-                PositionFromEntity[entity] = setData.Position;
+                PositionFromEntity[entity] = setData.Translation;
                 RotationFromEntity[entity] = setData.Rotation;
                 ViewFromEntity[entity] = setData.View;
             }
@@ -179,7 +180,7 @@ namespace Game.Systems
         {
             public Owner Owner;
 
-            public Position Position;
+            public Translation Translation;
 
             public Rotation Rotation;
 
@@ -208,13 +209,13 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Rotation>() },
+                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<Rotation>() },
                 Any = new[] { ComponentType.ReadOnly<Knight>(), ComponentType.ReadOnly<OrcWolfRider>(), ComponentType.ReadOnly<Skeleton>() },
-                None = new[] { ComponentType.Create<Initialized>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<Initialized>() },
-                None = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Rotation>() }
+                All = new[] { ComponentType.ReadWrite<Initialized>() },
+                None = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<Rotation>() }
             });
 
             Debug.Assert(m_KnightPrefab = Resources.Load<GameObject>("Knight"));
@@ -230,10 +231,10 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
+            if (!HasSingleton<CameraSingleton>() || !EntityManager.Exists(GetSingleton<CameraSingleton>().Owner)) return inputDeps; // TODO: remove this when RequireSingletonForUpdate is working.
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -250,13 +251,13 @@ namespace Game.Systems
             var addInitializedDeps = new AddInitializedJob
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             var removeInitializedDeps = new RemoveInitializedJob
             {
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = removeSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
@@ -266,10 +267,10 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(m_SpawnDataQueue.Count, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(m_SpawnDataQueue.Count, Allocator.TempJob);
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
-            var knightPool = destroyBarrier.m_KnightPool;
-            var orcWolfRiderPool = destroyBarrier.m_OrcWolfRiderPool;
-            var skeletonPool = destroyBarrier.m_SkeletonPool;
+            var destroySystem = World.GetExistingManager<DestroySystem>();
+            var knightPool = destroySystem.m_KnightPool;
+            var orcWolfRiderPool = destroySystem.m_OrcWolfRiderPool;
+            var skeletonPool = destroySystem.m_SkeletonPool;
 
             var entityIndex = 0;
 
@@ -277,7 +278,7 @@ namespace Game.Systems
             {
                 var owner = spawnData.Owner;
 
-                var position = EntityManager.GetComponentData<Position>(owner).Value;
+                var translation = EntityManager.GetComponentData<Translation>(owner).Value;
                 var rotation = EntityManager.GetComponentData<Rotation>(owner).Value;
 
                 GameObject view = null;
@@ -304,7 +305,7 @@ namespace Game.Systems
 
                 var entity = view.GetComponent<GameObjectEntity>().Entity;
 
-                view.transform.position = position;
+                view.transform.position = translation;
                 view.transform.rotation = rotation;
 
                 view.name = $"{spawnData.ViewType.ToString()} {entity.Index}";
@@ -314,7 +315,7 @@ namespace Game.Systems
                 var setData = new SetData
                 {
                     Owner = new Owner { Value = spawnData.Owner },
-                    Position = new Position { Value = position },
+                    Translation = new Translation { Value = translation },
                     Rotation = new Rotation { Value = rotation },
                     View = new View { Value = spawnData.ViewType }
                 };
@@ -327,7 +328,7 @@ namespace Game.Systems
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
                 ViewFromEntity = GetComponentDataFromEntity<View>()
             }.Schedule(entityArray.Length, 64, inputDeps);
@@ -336,11 +337,11 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                EntityCommandBuffer = setBarrier.CreateCommandBuffer()
+                EntityCommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

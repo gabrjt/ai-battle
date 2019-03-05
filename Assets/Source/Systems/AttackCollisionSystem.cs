@@ -26,7 +26,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<AttackInstance> AttackInstanceFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [ReadOnly]
             public ComponentDataFromEntity<Direction> DirectionFromEntity;
@@ -98,11 +98,11 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<AttackInstance>(), ComponentType.ReadOnly<Direction>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Speed>() }
+                All = new[] { ComponentType.ReadOnly<AttackInstance>(), ComponentType.ReadOnly<Direction>(), ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<Speed>() }
             });
 
-            m_DamagedArchetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<Damaged>());
-            m_CollidedArchetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<Collided>());
+            m_DamagedArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<Damaged>());
+            m_CollidedArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<Collided>());
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
             m_Layer = 1 << m_LayerMask;
@@ -124,7 +124,7 @@ namespace Game.Systems
                 SpherecastCommandDataArray = m_SpherecastCommandDataArray,
                 CommandArray = m_CommandArray,
                 AttackInstanceFromEntity = GetComponentDataFromEntity<AttackInstance>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 DirectionFromEntity = GetComponentDataFromEntity<Direction>(true),
                 SpeedFromEntity = GetComponentDataFromEntity<Speed>(true),
                 DeltaTime = Time.deltaTime,
@@ -133,7 +133,7 @@ namespace Game.Systems
 
             SpherecastCommand.ScheduleBatch(m_CommandArray, m_ResultArray, 1, inputDeps).Complete();
 
-            var eventCommandBuffer = World.GetExistingManager<EventBarrier>().CreateCommandBuffer();
+            var eventCommandBuffer = World.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer();
 
             for (int index = 0; index < m_ResultArray.Length; index++)
             {

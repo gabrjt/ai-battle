@@ -10,15 +10,15 @@ namespace Game.Systems
     public class SetViewToOwnerPositionSystem : JobComponentSystem
     {
         [BurstCompile]
-        [RequireComponentTag(typeof(Position), typeof(View), typeof(Visible))]
+        [RequireComponentTag(typeof(Translation), typeof(View), typeof(Visible))]
         private struct Job : IJobProcessComponentDataWithEntity<Owner, Offset>
         {
             [NativeDisableParallelForRestriction]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Owner owner, [ReadOnly] ref Offset offset)
             {
-                PositionFromEntity[entity] = new Position { Value = PositionFromEntity[owner.Value].Value + offset.Value };
+                PositionFromEntity[entity] = new Translation { Value = PositionFromEntity[owner.Value].Value + offset.Value };
             }
         }
 
@@ -26,7 +26,7 @@ namespace Game.Systems
         {
             return new Job
             {
-                PositionFromEntity = GetComponentDataFromEntity<Position>()
+                PositionFromEntity = GetComponentDataFromEntity<Translation>()
             }.Schedule(this, inputDeps);
         }
     }

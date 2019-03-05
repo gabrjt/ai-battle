@@ -9,15 +9,15 @@ namespace Game.Comparers
 {
     public class TargetBufferComparer : IComparer<TargetBuffer>
     {
-        public float3 Position;
+        public float3 Translation;
 
         [ReadOnly]
-        public ComponentDataFromEntity<Position> PositionFromEntity;
+        public ComponentDataFromEntity<Translation> PositionFromEntity;
 
         public int Compare(TargetBuffer lhs, TargetBuffer rhs)
         {
-            var lhsSqrDistance = math.distancesq(PositionFromEntity[lhs.Value].Value, Position);
-            var rhsSqrDistance = math.distancesq(PositionFromEntity[rhs.Value].Value, Position);
+            var lhsSqrDistance = math.distancesq(PositionFromEntity[lhs.Value].Value, Translation);
+            var rhsSqrDistance = math.distancesq(PositionFromEntity[rhs.Value].Value, Translation);
 
             return lhsSqrDistance.CompareTo(rhsSqrDistance);
         }

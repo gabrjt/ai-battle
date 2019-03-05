@@ -11,9 +11,8 @@ using UnityEngine.AI;
 
 namespace Game.Systems
 {
-    [AlwaysUpdateSystem]
-    [UpdateAfter(typeof(EventBarrier))]
-    public class DestroyBarrier : BarrierSystem
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    public class DestroySystem : ComponentSystem
     {
         [BurstCompile]
         private struct ConsolidateJob : IJobParallelFor
@@ -115,10 +114,13 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<View>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<HealthBar>() },
+                All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<HealthBar>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<View>() },
+                All = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>(), ComponentType.ReadOnly<View>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Components.Event>() }
             });
 
             m_PureEntityQueue = new NativeQueue<Entity>(Allocator.Persistent);
@@ -219,8 +221,6 @@ namespace Game.Systems
             {
                 Object.Destroy(m_HealthBarPool.Dequeue());
             }
-
-            base.OnUpdate();
         }
 
         private void ApplyToPool(GameObject gameObject)

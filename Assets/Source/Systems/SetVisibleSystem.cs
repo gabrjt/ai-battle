@@ -11,7 +11,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(SetCameraSingletonSystem))]
     public class SetVisibleSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -49,7 +48,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [ReadOnly]
             public ComponentDataFromEntity<Dead> DeadFromEntity;
@@ -162,10 +161,10 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<Owner>() },
                 Any = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<View>() },
-                None = new[] { ComponentType.Create<Visible>() }
+                None = new[] { ComponentType.ReadWrite<Visible>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<Owner>(), ComponentType.Create<Visible>() }
+                All = new[] { ComponentType.ReadOnly<MaxSqrDistanceFromCamera>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadWrite<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -173,10 +172,10 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (!HasSingleton<CameraSingleton>()) return inputDeps; // TODO: use RequireSingletonForUpdate.
+            if (!HasSingleton<CameraSingleton>() || !EntityManager.Exists(GetSingleton<CameraSingleton>().Owner)) return inputDeps; // TODO: use RequireSingletonForUpdate.
 
-            var setBarrier = World.Active.GetExistingManager<SetBarrier>();
-            var removeBarrier = World.Active.GetExistingManager<RemoveBarrier>();
+            var setSystem = World.Active.GetExistingManager<EndSimulationEntityCommandBufferSystem>();
+            var removeSystem = World.Active.GetExistingManager<EndSimulationEntityCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -191,7 +190,7 @@ namespace Game.Systems
                 ViewType = GetArchetypeChunkComponentType<View>(true),
                 HealthFromEntity = GetComponentDataFromEntity<Health>(true),
                 MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(true),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true)
             }.Schedule(m_Group, inputDeps);
@@ -199,19 +198,19 @@ namespace Game.Systems
             var addVisibleDeps = new AddVisibleJob
             {
                 AddQueue = m_AddQueue,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             var removeVisibleDeps = new RemoveVisibleJob
             {
                 RemoveQueue = m_RemoveQueue,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps = JobHandle.CombineDependencies(addVisibleDeps, removeVisibleDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

@@ -17,7 +17,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<FrameRate>(), ComponentType.Create<TextMeshProUGUI>() }
+                All = new[] { ComponentType.ReadOnly<FrameRate>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
             });
         }
 

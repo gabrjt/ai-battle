@@ -4,7 +4,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(SetBarrier))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class SetCameraSingletonSystem : ComponentSystem
     {
         private struct Initialized : ISystemStateComponentData { }

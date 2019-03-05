@@ -22,7 +22,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CharacterCount>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
+            if (!HasSingleton<CharacterCount>() || !EntityManager.Exists(GetSingleton<CharacterCount>().Owner)) return; // TODO: remove this when RequireSingletonForUpdate is working.
 
             var characterCount = GetSingleton<CharacterCount>();
 

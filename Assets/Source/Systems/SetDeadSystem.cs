@@ -129,7 +129,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Health>() },
-                None = new[] { ComponentType.Create<Dead>() }
+                None = new[] { ComponentType.ReadWrite<Dead>() }
             },
             new EntityArchetypeQuery
             {
@@ -150,7 +150,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var deadBarrier = World.GetExistingManager<DeadBarrier>();
+            var deadSystem = World.GetExistingManager<DeadCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -167,11 +167,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = deadBarrier.CreateCommandBuffer(),
+                CommandBuffer = deadSystem.CreateCommandBuffer(),
                 HealthFromEntity = GetComponentDataFromEntity<Health>()
             }.Schedule(inputDeps);
 
-            deadBarrier.AddJobHandleForProducer(inputDeps);
+            deadSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

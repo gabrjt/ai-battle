@@ -15,12 +15,12 @@ namespace Game.MonoBehaviours
         {
             m_EntityManager = World.Active.GetExistingManager<EntityManager>();
 
-            m_Archetype = m_EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<KillAllCharacters>());
+            m_Archetype = m_EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<KillAllCharacters>());
         }
 
         public void KillAllCharacters()
         {
-            World.Active.GetExistingManager<EventBarrier>().CreateCommandBuffer().CreateEntity(m_Archetype);
+            World.Active.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
         }
     }
 }

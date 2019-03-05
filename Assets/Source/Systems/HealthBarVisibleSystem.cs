@@ -100,10 +100,10 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadOnly<Visible>() },
-                None = new[] { ComponentType.Create<Initialized>() }
+                None = new[] { ComponentType.ReadWrite<Initialized>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<Initialized>() },
+                All = new[] { ComponentType.ReadWrite<Initialized>() },
                 None = new[] { ComponentType.ReadOnly<Visible>() }
             });
 
@@ -115,8 +115,8 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var setBarrier = World.GetExistingManager<SetBarrier>();
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -130,14 +130,14 @@ namespace Game.Systems
             {
                 AddInitializedEntityQueue = m_AddInitializedEntityQueue,
                 SetEnabledTrueEntityList = m_SetEnabledTrueEntityList,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             var removeInitializedDeps = new RemoveInitializedJob
             {
                 RemoveInitializedEntityQueue = m_RemoveInitializedEntityQueue,
                 SetEnabledFalseEntityList = m_SetEnabledFalseEntityList,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = removeSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             inputDeps = JobHandle.CombineDependencies(addInitializedDeps, removeInitializedDeps);
@@ -158,8 +158,8 @@ namespace Game.Systems
 
             m_SetEnabledFalseEntityList.Clear();
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

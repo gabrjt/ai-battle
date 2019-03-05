@@ -14,7 +14,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<NavMeshAgent>(), ComponentType.ReadOnly<Destination>() },
+                All = new[] { ComponentType.ReadWrite<NavMeshAgent>(), ComponentType.ReadOnly<Destination>() },
                 None = new[] { ComponentType.ReadOnly<Dead>() }
             });
         }
@@ -23,13 +23,11 @@ namespace Game.Systems
         {
             ForEach((NavMeshAgent navMeshAgent, ref Destination destination) =>
             {
-                if (!navMeshAgent.pathPending ||
+                if ((navMeshAgent.pathPending ||
                     navMeshAgent.pathStatus == NavMeshPathStatus.PathInvalid ||
-                    navMeshAgent.pathStatus == NavMeshPathStatus.PathPartial ||
-                    destination.IsDirty)
-                {
-                    navMeshAgent.SetDestination(destination.Value);
-                }
+                    navMeshAgent.pathStatus == NavMeshPathStatus.PathPartial) && !destination.IsDirty) return;
+
+                navMeshAgent.SetDestination(destination.Value);
             }, m_Group);
         }
     }

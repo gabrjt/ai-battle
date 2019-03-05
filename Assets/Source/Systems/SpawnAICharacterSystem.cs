@@ -14,8 +14,7 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
-    [UpdateAfter(typeof(SetCharacterCountInputFieldSingletonSystem))]
-    [UpdateAfter(typeof(DestroyBarrier))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class SpawnAICharacterSystem : ComponentSystem
     {
         [BurstCompile]
@@ -25,7 +24,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<HomePosition> HomePositionFromEntity;
 
             [NativeDisableParallelForRestriction]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [NativeDisableParallelForRestriction]
             public ComponentDataFromEntity<Rotation> RotationFromEntity;
@@ -60,7 +59,7 @@ namespace Game.Systems
                 var setData = SetDataArray[index];
 
                 HomePositionFromEntity[entity] = setData.HomePosition;
-                PositionFromEntity[entity] = setData.Position;
+                PositionFromEntity[entity] = setData.Translation;
                 RotationFromEntity[entity] = setData.Rotation;
                 MaxHealthFromEntity[entity] = setData.MaxHealth;
                 HealthFromEntity[entity] = setData.Health;
@@ -116,7 +115,7 @@ namespace Game.Systems
         {
             public HomePosition HomePosition;
 
-            public Position Position;
+            public Translation Translation;
 
             public Rotation Rotation;
 
@@ -137,13 +136,11 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
 
-        private EntityArchetype m_Archetype;
-
         private GameObject m_Prefab;
 
         private GameObject m_ViewPrefab;
 
-        internal int m_TotalCount = 50;
+        internal int m_TotalCount = 1   ;
 
         internal int m_LastTotalCount;
 
@@ -157,8 +154,6 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Character>() }
             });
-
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadOnly<Attach>());
 
             m_LastTotalCount = m_TotalCount;
 
@@ -181,7 +176,7 @@ namespace Game.Systems
 
             if (entityCount <= 0) return;
 
-            var characterPool = World.GetExistingManager<DestroyBarrier>().m_CharacterPool;
+            var characterPool = World.GetExistingManager<DestroySystem>().m_CharacterPool;
 
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
@@ -248,7 +243,7 @@ namespace Game.Systems
                 {
                     HomePosition = new HomePosition { Value = navMeshAgent.transform.position },
 
-                    Position = new Position { Value = navMeshAgent.transform.position },
+                    Translation = new Translation { Value = navMeshAgent.transform.position },
                     Rotation = new Rotation { Value = navMeshAgent.transform.rotation },
 
                     MaxHealth = new MaxHealth { Value = maxHealth },
@@ -266,7 +261,7 @@ namespace Game.Systems
                 setDataArray[entityIndex] = setData;
             }
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             var inputDeps = default(JobHandle);
 
@@ -275,7 +270,7 @@ namespace Game.Systems
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
                 HomePositionFromEntity = GetComponentDataFromEntity<HomePosition>(),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(),
                 RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
                 MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(),
                 HealthFromEntity = GetComponentDataFromEntity<Health>(),
@@ -289,7 +284,7 @@ namespace Game.Systems
             {
                 EntityArray = entityArray,
                 SetDataArray = setDataArray,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                CommandBuffer = setSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
             inputDeps.Complete();

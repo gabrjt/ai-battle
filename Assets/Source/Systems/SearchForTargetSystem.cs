@@ -10,19 +10,18 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(SetBarrier))]
     public partial class SearchForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
-        [RequireSubtractiveComponent(typeof(Dead))]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Position, Group>
+        [ExcludeComponent(typeof(Dead))]
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<SearchingForTarget, Translation, Group>
         {
             public NativeQueue<SearchForTargetData>.Concurrent DataQueue;
 
             [ReadOnly]
             public float Time;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref SearchingForTarget searchingForTarget, [ReadOnly] ref Position position, [ReadOnly] ref Group group)
+            public void Execute(Entity entity, int index, [ReadOnly] ref SearchingForTarget searchingForTarget, [ReadOnly] ref Translation translation, [ReadOnly] ref Group group)
             {
                 if (searchingForTarget.StartTime + searchingForTarget.Interval > Time) return;
 
@@ -30,7 +29,7 @@ namespace Game.Systems
                 {
                     Entity = entity,
                     SearchingForTarget = searchingForTarget,
-                    Position = position,
+                    Translation = translation,
                     Group = group
                 });
             }
@@ -42,7 +41,7 @@ namespace Game.Systems
 
             public SearchingForTarget SearchingForTarget;
 
-            public Position Position;
+            public Translation Translation;
 
             public Group Group;
         }
@@ -65,7 +64,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<TargetFound>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<TargetFound>());
 
             m_LayerMask = LayerMask.NameToLayer("Entity");
             m_Layer = 1 << m_LayerMask;
@@ -90,14 +89,14 @@ namespace Game.Systems
             while (m_DataQueue.TryDequeue(out var data))
             {
                 var entity = data.Entity;
-                var position = data.Position.Value;
+                var translation = data.Translation.Value;
                 var searchingForTarget = data.SearchingForTarget;
 
                 var targetBuffer = targetBufferFromEntity[entity];
 
                 if (targetBuffer.Length >= TargetBufferProxy.InternalBufferCapacity) continue;
 
-                var count = Physics.OverlapSphereNonAlloc(position, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
+                var count = Physics.OverlapSphereNonAlloc(translation, searchingForTarget.Radius, m_CachedColliderArray, m_Layer);
 
                 if (count > 0)
                 {
@@ -159,12 +158,12 @@ namespace Game.Systems
                 }
                 else
                 {
-                    var setBarrier = World.GetExistingManager<SetBarrier>();
+                    var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
                     searchingForTarget.StartTime = Time.time;
 
-                    setBarrier.CreateCommandBuffer().SetComponent(entity, searchingForTarget);
+                    setSystem.CreateCommandBuffer().SetComponent(entity, searchingForTarget);
 
-                    setBarrier.AddJobHandleForProducer(inputDeps);
+                    setSystem.AddJobHandleForProducer(inputDeps);
                 }
             }
 

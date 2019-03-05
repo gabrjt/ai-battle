@@ -12,14 +12,14 @@ namespace Game.Systems
     public class DestinationReachedSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
-        [RequireSubtractiveComponent(typeof(Target))]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Destination, Position>
+        [ExcludeComponent(typeof(Target))]
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Destination, Translation>
         {
             public NativeQueue<DestinationReached>.Concurrent DestinationReachedQueue;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Position position)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Translation translation)
             {
-                if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(position.Value.x, 0, position.Value.z)) > 0.01f) return;
+                if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(translation.Value.x, 0, translation.Value.z)) > 0.01f) return;
 
                 DestinationReachedQueue.Enqueue(new DestinationReached { This = entity });
             }
@@ -52,14 +52,14 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Event>(), ComponentType.Create<DestinationReached>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<DestinationReached>());
 
             m_DestinationReachedQueue = new NativeQueue<DestinationReached>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -69,11 +69,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 DestinationReachedQueue = m_DestinationReachedQueue,
-                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

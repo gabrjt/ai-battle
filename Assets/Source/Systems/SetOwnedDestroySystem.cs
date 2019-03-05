@@ -116,7 +116,7 @@ namespace Game.Systems
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Owner>() },
-                None = new[] { ComponentType.Create<Destroy>() }
+                None = new[] { ComponentType.ReadWrite<Destroy>() }
             });
 
             m_OwnedQueue = new NativeQueue<Entity>(Allocator.Persistent);
@@ -128,7 +128,7 @@ namespace Game.Systems
 
             m_OwnerMap = new NativeHashMap<Entity, Entity>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+            var destroySystem = World.GetExistingManager<DestroyCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -144,11 +144,11 @@ namespace Game.Systems
             {
                 OwnerMap = m_OwnerMap,
                 OwnedQueue = m_OwnedQueue,
-                CommandBuffer = destroyBarrier.CreateCommandBuffer(),
+                CommandBuffer = destroySystem.CreateCommandBuffer(),
                 OwnerFromEntity = GetComponentDataFromEntity<Owner>(true)
             }.Schedule(inputDeps);
 
-            destroyBarrier.AddJobHandleForProducer(inputDeps);
+            destroySystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

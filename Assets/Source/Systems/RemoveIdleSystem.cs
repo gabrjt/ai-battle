@@ -82,7 +82,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.Create<Idle>() },
+                All = new[] { ComponentType.ReadWrite<Idle>() },
                 Any = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
@@ -96,7 +96,7 @@ namespace Game.Systems
 
             m_RemoveMap = new NativeHashMap<Entity, Idle>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var removeBarrier = World.GetExistingManager<RemoveBarrier>();
+            var removeSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -109,10 +109,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 RemoveMap = m_RemoveMap,
-                CommandBuffer = removeBarrier.CreateCommandBuffer()
+                CommandBuffer = removeSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            removeBarrier.AddJobHandleForProducer(inputDeps);
+            removeSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

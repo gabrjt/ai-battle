@@ -108,7 +108,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 None = new[]
                 {
-                    ComponentType.Create<Idle>(),
+                    ComponentType.ReadWrite<Idle>(),
                     ComponentType.ReadOnly<SearchingForDestination>(),
                     ComponentType.ReadOnly<Destination>(),
                     ComponentType.ReadOnly<Target>(),
@@ -119,7 +119,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Components.Event>(), ComponentType.ReadOnly<DestinationReached>() }
             });
 
-            m_Random = new Random((uint)System.Environment.TickCount);
+            m_Random = new Random((uint)Environment.TickCount);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -128,7 +128,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Idle>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -144,10 +144,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer()
+                CommandBuffer = setSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

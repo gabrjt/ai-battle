@@ -11,14 +11,14 @@ namespace Game.Systems
     public class RotateTowardsTargetSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentData<Position, Target, Rotation>
+        private struct Job : IJobProcessComponentData<Translation, Target, Rotation>
         {
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
-            public void Execute([ReadOnly] ref Position position, [ReadOnly] ref Target target, ref Rotation rotation)
+            public void Execute([ReadOnly] ref Translation translation, [ReadOnly] ref Target target, ref Rotation rotation)
             {
-                rotation.Value = quaternion.LookRotation(PositionFromEntity[target.Value].Value - position.Value, math.up());
+                rotation.Value = quaternion.LookRotation(PositionFromEntity[target.Value].Value - translation.Value, math.up());
             }
         }
 
@@ -26,7 +26,7 @@ namespace Game.Systems
         {
             return new Job
             {
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true)
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this, inputDeps);
         }
     }

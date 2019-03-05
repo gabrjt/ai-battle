@@ -20,7 +20,7 @@ namespace Game.Systems
             public ComponentDataFromEntity<Dead> DeadFromEntity;
 
             [ReadOnly]
-            public ComponentDataFromEntity<Position> PositionFromEntity;
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
 
             [ReadOnly]
             public ComponentDataFromEntity<AttackDistance> AttackDistanceFromEntity;
@@ -35,7 +35,7 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-                    var position = PositionFromEntity[entity].Value;
+                    var translation = PositionFromEntity[entity].Value;
 
                     var targetBuffer = TargetBufferFromEntity[entity];
 
@@ -49,7 +49,7 @@ namespace Game.Systems
                         var target = targetBufferArray[targetBufferIndex].Value;
                         var targetPostion = PositionFromEntity[target].Value;
                         var attackDistance = AttackDistanceFromEntity[entity];
-                        if (DeadFromEntity.Exists(target) || math.distance(position, targetPostion) > attackDistance.Max * TargetBufferProxy.InternalBufferCapacity) continue;
+                        if (DeadFromEntity.Exists(target) || math.distance(translation, targetPostion) > attackDistance.Max * TargetBufferProxy.InternalBufferCapacity) continue;
 
                         threatTargetList.Add(target);
                     }
@@ -64,14 +64,14 @@ namespace Game.Systems
                         targetBufferSort[bufferIndex] = new SortData
                         {
                             Target = target,
-                            Position = targetPosition
+                            Translation = targetPosition
                         };
                     }
 
                     targetBuffer.Clear();
 
                     // TODO: Burst compliant sort algorithm
-                    var targetBufferRange = new NativeArray<TargetBuffer>(targetBufferSort.OrderBy((data) => math.distancesq(data.Position, position)).Select((data) => data.Target).ToArray(), Allocator.Temp);
+                    var targetBufferRange = new NativeArray<TargetBuffer>(targetBufferSort.OrderBy((data) => math.distancesq(data.Translation, translation)).Select((data) => data.Target).ToArray(), Allocator.Temp);
 
                     targetBuffer.AddRange(targetBufferRange);
 
@@ -84,7 +84,7 @@ namespace Game.Systems
         {
             public TargetBuffer Target;
 
-            public float3 Position;
+            public float3 Translation;
         }
 
         private ComponentGroup m_Group;
@@ -105,7 +105,7 @@ namespace Game.Systems
             return inputDeps = new ConsolidateJob
             {
                 EntityType = GetArchetypeChunkEntityType(),
-                PositionFromEntity = GetComponentDataFromEntity<Position>(true),
+                PositionFromEntity = GetComponentDataFromEntity<Translation>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 AttackDistanceFromEntity = GetComponentDataFromEntity<AttackDistance>(true),
                 TargetBufferFromEntity = GetBufferFromEntity<TargetBuffer>()

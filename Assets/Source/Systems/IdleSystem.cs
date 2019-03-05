@@ -53,14 +53,14 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.Create<Components.Event>(), ComponentType.Create<IdleTimeExpired>());
+            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<IdleTimeExpired>());
 
             m_IdleTimeExpiredQueue = new NativeQueue<IdleTimeExpired>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var eventBarrier = World.GetExistingManager<EventBarrier>();
+            var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -71,11 +71,11 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 IdleTimeExpiredQueue = m_IdleTimeExpiredQueue,
-                CommandBuffer = eventBarrier.CreateCommandBuffer(),
+                CommandBuffer = eventSystem.CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 
-            eventBarrier.AddJobHandleForProducer(inputDeps);
+            eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

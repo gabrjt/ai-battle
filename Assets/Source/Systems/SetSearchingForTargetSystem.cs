@@ -9,6 +9,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    /*
     // ONE DEPENDENCY TO RULE THEM ALL
     [UpdateBefore(typeof(SetDeadSystem))]
     [UpdateBefore(typeof(RemoveDestinationSystem))]
@@ -21,6 +22,7 @@ namespace Game.Systems
     [UpdateBefore(typeof(RemoveSearchingForDestinationSystem))]
     [UpdateBefore(typeof(RemoveIdleSystem))]
     [UpdateBefore(typeof(SetDestroySystem))]
+    */
     public class SetSearchingForTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
@@ -94,7 +96,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<TargetBuffer>() },
-                None = new[] { ComponentType.Create<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadWrite<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Random = new Random((uint)Environment.TickCount);
@@ -106,7 +108,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, SearchingForTarget>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setBarrier = World.GetExistingManager<SetBarrier>();
+            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -120,10 +122,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setBarrier.CreateCommandBuffer(),
+                CommandBuffer = setSystem.CreateCommandBuffer(),
             }.Schedule(inputDeps);
 
-            setBarrier.AddJobHandleForProducer(inputDeps);
+            setSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

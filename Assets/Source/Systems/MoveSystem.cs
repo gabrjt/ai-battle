@@ -11,13 +11,13 @@ namespace Game.Systems
     public class MoveSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentData<Velocity, Position>
+        private struct Job : IJobProcessComponentData<Velocity, Translation>
         {
             public float DeltaTime;
 
-            public void Execute([ReadOnly] ref Velocity velocity, ref Position position)
+            public void Execute([ReadOnly] ref Velocity velocity, ref Translation translation)
             {
-                position.Value += velocity.Value * DeltaTime;
+                translation.Value += velocity.Value * DeltaTime;
             }
         }
 

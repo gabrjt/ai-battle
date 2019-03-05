@@ -17,8 +17,8 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Transform>(),
-                    ComponentType.ReadOnly<Position>(),
-                    ComponentType.Create<Rotation>(),
+                    ComponentType.ReadOnly<Translation>(),
+                    ComponentType.ReadWrite<Rotation>(),
                     ComponentType.ReadOnly<RotationSpeed>(),
                     ComponentType.ReadOnly<Destination>()},
                 None = new[] { ComponentType.ReadOnly<Target>() }
@@ -27,7 +27,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            ForEach((ref Position position, ref Rotation rotation, ref RotationSpeed rotationSpeed, ref Destination destination) =>
+            ForEach((ref Translation translation, ref Rotation rotation, ref RotationSpeed rotationSpeed, ref Destination destination) =>
             {
             }, m_Group);
         }

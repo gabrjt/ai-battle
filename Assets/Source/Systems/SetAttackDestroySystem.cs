@@ -84,7 +84,7 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<Collided>(), ComponentType.ReadOnly<MaxDistanceReached>() },
-                None = new[] { ComponentType.Create<Destroy>() }
+                None = new[] { ComponentType.ReadWrite<Destroy>() }
             });
 
             m_SetQueue = new NativeQueue<Entity>(Allocator.Persistent);
@@ -96,7 +96,7 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destroy>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var destroyBarrier = World.GetExistingManager<DestroyBarrier>();
+            var destroySystem = World.GetExistingManager<DestroyCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
@@ -108,10 +108,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = destroyBarrier.CreateCommandBuffer()
+                CommandBuffer = destroySystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            destroyBarrier.AddJobHandleForProducer(inputDeps);
+            destroySystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

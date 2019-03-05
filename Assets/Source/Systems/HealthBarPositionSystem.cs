@@ -7,7 +7,7 @@ using UnityEngine.Experimental.PlayerLoop;
 
 namespace Game.Systems
 {
-    [UpdateAfter(typeof(PostLateUpdate))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class HealthBarPositionSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
@@ -20,7 +20,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.Create<RectTransform>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<Visible>() }
+                All = new[] { ComponentType.ReadOnly<HealthBar>(), ComponentType.ReadWrite<RectTransform>(), ComponentType.ReadOnly<Owner>(), ComponentType.ReadOnly<Visible>() }
             });
 
             RequireSingletonForUpdate<CameraSingleton>();
@@ -29,11 +29,11 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CameraSingleton>()) return; // TODO: remove this when RequireSingletonForUpdate is working.
+            if (!HasSingleton<CameraSingleton>() || !EntityManager.Exists(GetSingleton<CameraSingleton>().Owner)) return; // TODO: remove this when RequireSingletonForUpdate is working.
 
             m_Camera = EntityManager.GetComponentObject<Camera>(GetSingleton<CameraSingleton>().Owner);
 
-            var positionFromEntity = GetComponentDataFromEntity<Position>(true);
+            var positionFromEntity = GetComponentDataFromEntity<Translation>(true);
 
             ForEach((RectTransform rectTransform, ref Owner owner) =>
             {
