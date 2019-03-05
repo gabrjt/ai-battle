@@ -8,7 +8,7 @@ namespace Game.Systems
     [UpdateInGroup(typeof(DestroyEntityGroup))]
     public class DestroyEntitySystem : JobComponentSystem
     {
-        private struct DestroyJob : IJob
+        private struct Job : IJob
         {
             [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
             public EntityCommandBuffer CommandBuffer;
@@ -45,7 +45,7 @@ namespace Game.Systems
         {
             var destroyCommandBufferSystem = World.Active.GetExistingManager<DestroyCommandBufferSystem>();
 
-            inputDeps = new DestroyJob
+            inputDeps = new Job
             {
                 EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
                 CommandBuffer = destroyCommandBufferSystem.CreateCommandBuffer()
