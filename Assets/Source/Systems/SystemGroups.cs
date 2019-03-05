@@ -33,17 +33,17 @@ namespace Game.Systems
     [UpdateAfter(typeof(SetCommandBufferSystem))]
     public class RemoveCommandBufferSystem : EntityCommandBufferSystem { }
 
+    [UpdateInGroup(typeof(PlaybackGroup))]
+    [UpdateAfter(typeof(RemoveCommandBufferSystem))]
+    public class DestroyCommandBufferSystem : EntityCommandBufferSystem { }
+
     #endregion Playback
 
     #region Destroy
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(LogicGroup))]
-    public class DestroyGroup : ComponentSystemGroup { }
-
-    [UpdateInGroup(typeof(PlaybackGroup))]
-    [UpdateAfter(typeof(RemoveCommandBufferSystem))]
-    public class DestroyCommandBufferSystem : EntityCommandBufferSystem { }
+    public class DestroyEntityGroup : ComponentSystemGroup { }
 
     #endregion Destroy
 }

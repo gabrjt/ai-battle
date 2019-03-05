@@ -1,10 +1,10 @@
 ﻿using Game.Components;
-using Game.Systems;
 using TMPro;
 using Unity.Entities;
 
 namespace Game.Systems
 {
+    [DisableAutoCreation]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class PoolableObjectCountSystem : ComponentSystem
     {
@@ -22,13 +22,13 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var destroySystem = World.GetExistingManager<DestroySystem>();
-            var count = destroySystem.m_HealthBarPool.Count;
+            //var destroySystem = World.GetExistingManager<DestroyGameObjectSystem>();
+            //var count = destroyGameObjectSystem.m_HealthBarPool.Count;
 
             ForEach((TextMeshProUGUI poolableObjectCountText, ref PoolableObjectCount poolableObjectCount) =>
             {
-                poolableObjectCount.Value = count;
-                poolableObjectCountText.text = $"{count:#0} Poolable Objects";
+                //poolableObjectCount.Value = count;
+                //poolableObjectCountText.text = $"{count:#0} Poolable Objects";
             });
         }
     }

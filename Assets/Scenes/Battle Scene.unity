@@ -522,5 +522,15 @@ PrefabInstance:
       propertyPath: m_isInputParsingRequired
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3669998536448417794, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_text
+      value: 0 Poolable Objects
+      objectReference: {fileID: 0}
+    - target: {fileID: 3669998536448417794, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_textInfo.characterCount
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2d3291adca97a24193adc547d27ee44, type: 3}

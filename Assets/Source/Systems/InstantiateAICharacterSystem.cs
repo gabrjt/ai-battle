@@ -105,7 +105,7 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
         private GameObject m_Prefab;
         private GameObject m_ViewPrefab;
-        internal int m_TotalCount = 0xFF;
+        internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
         private Random m_Random;
         private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();

@@ -30,7 +30,7 @@ namespace Game.MonoBehaviours
             if (m_InstantiateAICharacterSystemEnabled)
             {
                 m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem.Enabled = false;
-                Invoke("EnableInstantiateAICharacterSystem", 5);
+                Invoke("EnableInstantiateAICharacterSystem", 1);
             }
 #endif
             World.Active.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
