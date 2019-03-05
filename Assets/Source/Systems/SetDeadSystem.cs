@@ -15,9 +15,11 @@ namespace Game.Systems
         private struct ConsolidateJob : IJobChunk
         {
             public NativeHashMap<Entity, Dead>.Concurrent SetMap;
+
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> EntityArray;
+
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public ArchetypeChunkComponentType<Health> HealthType;
             [ReadOnly] public ArchetypeChunkComponentType<KillAllCharacters> KillAllCharacterType;
@@ -34,8 +36,6 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = killedArray[entityIndex].Other;
-
-                        if (DeadFromEntity.Exists(entity)) continue;
 
                         SetMap.TryAdd(entity, new Dead
                         {
@@ -90,6 +90,7 @@ namespace Game.Systems
         }
 
         private ComponentGroup m_Group;
+        private ComponentGroup m_AliveCharacterGroup;
         private ComponentGroup m_CharacterGroup;
         private NativeHashMap<Entity, Dead> m_SetMap;
 
@@ -103,10 +104,15 @@ namespace Game.Systems
                 Any = new[] { ComponentType.ReadOnly<KillAllCharacters>(), ComponentType.ReadOnly<Killed>() }
             });
 
-            m_CharacterGroup = GetComponentGroup(new EntityArchetypeQuery
+            m_AliveCharacterGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 None = new[] { ComponentType.ReadWrite<Dead>() }
+            });
+
+            m_CharacterGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>() }
             });
         }
 
@@ -121,7 +127,7 @@ namespace Game.Systems
             {
                 SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                EntityArray = m_CharacterGroup.ToEntityArray(Allocator.TempJob),
+                EntityArray = m_AliveCharacterGroup.ToEntityArray(Allocator.TempJob),
                 HealthType = GetArchetypeChunkComponentType<Health>(true),
                 KillAllCharacterType = GetArchetypeChunkComponentType<KillAllCharacters>(true),
                 KilledType = GetArchetypeChunkComponentType<Killed>(true),
