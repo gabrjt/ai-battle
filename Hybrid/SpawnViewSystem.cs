@@ -12,6 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
+    [DisableAutoCreation]
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class SpawnViewSystem : JobComponentSystem, IDisposable
     {

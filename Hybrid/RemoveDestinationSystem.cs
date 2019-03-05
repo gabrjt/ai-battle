@@ -77,15 +77,17 @@ namespace Game.Systems
                             RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
                         }
                     }
-
-                    var deadEntityArray = chunk.GetNativeArray(EntityType);
-                    for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
+                    else
                     {
-                        var entity = deadEntityArray[entityIndex];
+                        var deadEntityArray = chunk.GetNativeArray(EntityType);
+                        for (int entityIndex = 0; entityIndex < deadEntityArray.Length; entityIndex++)
+                        {
+                            var entity = deadEntityArray[entityIndex];
 
-                        if (!DeadFromEntity.Exists(entity)) continue;
+                            if (!DeadFromEntity.Exists(entity)) continue;
 
-                        RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
+                            RemoveMap.TryAdd(entity, DestinationFromEntity[entity]);
+                        }
                     }
                 }
             }

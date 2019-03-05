@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class FrameRateSystem : ComponentSystem
     {
         private float m_FPS;
+
         private ComponentGroup m_Group;
 
         protected override void OnCreateManager()

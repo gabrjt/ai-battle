@@ -4,9 +4,11 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class CharacterCountSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
+        private ComponentGroup m_CharacterGroup;
 
         protected override void OnCreateManager()
         {
@@ -14,27 +16,24 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>() }
+                All = new[] { ComponentType.ReadWrite<CharacterCount>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
             });
 
-            RequireSingletonForUpdate<CharacterCount>();
+            m_CharacterGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Character>() }
+            });
         }
 
         protected override void OnUpdate()
         {
-            if (!HasSingleton<CharacterCount>() || !EntityManager.Exists(GetSingleton<CharacterCount>().Owner)) return; // TODO: remove this when RequireSingletonForUpdate is working.
+            var count = m_CharacterGroup.CalculateLength();
 
-            var characterCount = GetSingleton<CharacterCount>();
-
-            if (!EntityManager.HasComponent<TextMeshProUGUI>(characterCount.Owner)) return;
-
-            var count = m_Group.CalculateLength();
-
-            characterCount.Value = count;
-            SetSingleton(characterCount);
-
-            var characterCountText = EntityManager.GetComponentObject<TextMeshProUGUI>(characterCount.Owner);
-            characterCountText.text = $"{count:#0} Characters";
+            ForEach((TextMeshProUGUI characterCountText, ref CharacterCount characterCount) =>
+            {
+                characterCount.Value = count;
+                characterCountText.text = $"{count:#0} Characters";
+            }, m_Group);
         }
     }
 }

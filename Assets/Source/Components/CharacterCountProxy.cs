@@ -6,8 +6,6 @@ namespace Game.Components
     [Serializable]
     public struct CharacterCount : IComponentData
     {
-        public Entity Owner;
-
         public int Value;
     }
 

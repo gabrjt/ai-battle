@@ -1,4 +1,4 @@
-﻿using Game.Systems;
+﻿using Game.Systems.Pure;
 using TMPro;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -12,7 +12,7 @@ namespace Game.MonoBehaviours
         private TMP_InputField m_CharacterCountInputField;
 
         [SerializeField]
-        private int m_MaxTotalCount = 10000;
+        private int m_MaxTotalCount = 0xFFFF;
 
         public void Confirm()
         {

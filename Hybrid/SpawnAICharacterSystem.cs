@@ -7,12 +7,13 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.AI;
+using Object = UnityEngine.Object;
 using Random = Unity.Mathematics.Random;
 
-namespace Game.Systems.Pure
+namespace Game.Systems
 {
     [AlwaysUpdateSystem]
     [UpdateInGroup(typeof(InitializationSystemGroup))]
@@ -21,17 +22,38 @@ namespace Game.Systems.Pure
         [BurstCompile]
         private struct SetDataJob : IJobParallelFor
         {
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HomePosition> HomePositionFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Translation> PositionFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> RotationFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Health> HealthFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Attack> AttackFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackSpeed> AttackSpeedFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HealthRegeneration> HealthRegenerationFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDuration> AttackDurationFromEntity;
-            [ReadOnly] public NativeArray<Entity> EntityArray;
-            [ReadOnly] public NativeArray<SetData> SetDataArray;
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<HomePosition> HomePositionFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Translation> PositionFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Rotation> RotationFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Health> HealthFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<Attack> AttackFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<AttackSpeed> AttackSpeedFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<HealthRegeneration> HealthRegenerationFromEntity;
+
+            [NativeDisableParallelForRestriction]
+            public ComponentDataFromEntity<AttackDuration> AttackDurationFromEntity;
+
+            [ReadOnly]
+            public NativeArray<Entity> EntityArray;
+
+            [ReadOnly]
+            public NativeArray<SetData> SetDataArray;
 
             public void Execute(int index)
             {
@@ -55,10 +77,13 @@ namespace Game.Systems.Pure
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> EntityArray;
+
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<SetData> SetDataArray;
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
+
+            [ReadOnly]
+            public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
@@ -91,27 +116,44 @@ namespace Game.Systems.Pure
         private struct SetData
         {
             public HomePosition HomePosition;
+
             public Translation Translation;
+
             public Rotation Rotation;
+
             public MaxHealth MaxHealth;
+
             public Health Health;
+
             public Attack Attack;
+
             public AttackSpeed AttackSpeed;
+
             public HealthRegeneration HealthRegeneration;
+
             public ViewType ViewType;
+
             public AttackDuration AttackDuration;
         }
 
         private ComponentGroup m_Group;
+
         private ComponentGroup m_KnightGroup;
+
         private ComponentGroup m_OrcWolfRiderGroup;
+
         private ComponentGroup m_SkeletonGroup;
-        private EntityArchetype m_Archetype;
+
         private GameObject m_Prefab;
+
         private GameObject m_ViewPrefab;
-        internal int m_TotalCount = 0xFFF;
+
+        internal int m_TotalCount = 1;
+
         internal int m_LastTotalCount;
+
         private Random m_Random;
+
         private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
 
         protected override void OnCreateManager()
@@ -138,22 +180,10 @@ namespace Game.Systems.Pure
                 All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Skeleton>() }
             });
 
-            m_Archetype = EntityManager.CreateArchetype(
-
-                ComponentType.ReadWrite<Character>(),
-                ComponentType.ReadWrite<HomePosition>(),
-                ComponentType.ReadWrite<Translation>(),
-                ComponentType.ReadWrite<Rotation>(),
-                ComponentType.ReadWrite<MaxHealth>(),
-                ComponentType.ReadWrite<Health>(),
-                ComponentType.ReadWrite<Attack>(),
-                ComponentType.ReadWrite<AttackSpeed>(),
-                ComponentType.ReadWrite<AttackDuration>(),
-                ComponentType.ReadWrite<HealthRegeneration>()
-            );
-
             m_LastTotalCount = m_TotalCount;
+
             m_Random = new Random((uint)System.Environment.TickCount);
+
             Debug.Assert(m_Prefab = Resources.Load<GameObject>("AI Character"));
         }
 
@@ -161,6 +191,7 @@ namespace Game.Systems.Pure
         {
             var terrain = Terrain.activeTerrain;
             var count = m_Group.CalculateLength();
+
             SpawnAICharacters(terrain, count);
         }
 
@@ -170,14 +201,41 @@ namespace Game.Systems.Pure
 
             if (entityCount <= 0) return;
 
+            var characterPool = World.GetExistingManager<DestroySystem>().m_CharacterPool;
+
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
             var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
+
             var knightCount = m_KnightGroup.CalculateLength();
             var orcWolfRiderCount = m_OrcWolfRiderGroup.CalculateLength();
             var skeletonCount = m_SkeletonGroup.CalculateLength();
 
             for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
             {
+                GameObject gameObject = null;
+
+                if (characterPool.Count > 0)
+                {
+                    gameObject = characterPool.Dequeue();
+                }
+                else
+                {
+                    gameObject = Object.Instantiate(m_Prefab);
+                }
+
+                gameObject.SetActive(true);
+
+                gameObject.GetComponent<CapsuleCollider>().enabled = true;
+
+                var navMeshAgent = gameObject.GetComponent<NavMeshAgent>();
+                navMeshAgent.enabled = true;
+                navMeshAgent.Warp(terrain.GetRandomPosition());
+                navMeshAgent.transform.rotation = m_Random.NextQuaternionRotation();
+
+                var entity = gameObject.GetComponent<GameObjectEntity>().Entity;
+
+                navMeshAgent.name = $"Character AI {entity.Index}";
+
                 var sortArray = new CharacterCountSortData[]
                 {
                      new CharacterCountSortData
@@ -199,7 +257,6 @@ namespace Game.Systems.Pure
                 var viewType = sortArray[0].ViewType;
                 Array.Clear(sortArray, 0, sortArray.Length);
 
-                var homePosition = terrain.GetRandomPosition();
                 var maxHealth = 0;
                 var attack = 0;
                 var attackSpeed = 0f;
@@ -236,26 +293,32 @@ namespace Game.Systems.Pure
                         break;
                 }
 
+                entityArray[entityIndex] = entity;
+
                 var setData = new SetData
                 {
-                    HomePosition = new HomePosition { Value = homePosition },
-                    Translation = new Translation { Value = homePosition },
-                    Rotation = new Rotation { Value = quaternion.identity },
+                    HomePosition = new HomePosition { Value = navMeshAgent.transform.position },
+
+                    Translation = new Translation { Value = navMeshAgent.transform.position },
+                    Rotation = new Rotation { Value = navMeshAgent.transform.rotation },
+
                     MaxHealth = new MaxHealth { Value = maxHealth },
                     Health = new Health { Value = maxHealth },
+
                     Attack = new Attack { Value = attack },
                     AttackSpeed = new AttackSpeed { Value = attackSpeed },
                     AttackDuration = new AttackDuration { Value = attackDuration },
+
                     HealthRegeneration = new HealthRegeneration { Value = healthRegeneration },
+
                     ViewType = viewType
                 };
 
                 setDataArray[entityIndex] = setData;
             }
 
-            EntityManager.CreateEntity(m_Archetype, entityArray);
-
             var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+
             var inputDeps = default(JobHandle);
 
             inputDeps = new SetDataJob

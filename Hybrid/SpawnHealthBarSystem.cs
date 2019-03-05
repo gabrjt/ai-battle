@@ -11,6 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace Game.Systems
 {
+    [DisableAutoCreation]
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class SpawnHealthBarSystem : JobComponentSystem, IDisposable
     {

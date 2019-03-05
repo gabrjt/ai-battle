@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class IdleSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
