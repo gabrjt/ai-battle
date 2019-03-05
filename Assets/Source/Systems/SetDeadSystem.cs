@@ -27,17 +27,15 @@ namespace Game.Systems
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (chunk.Has(HealthType))
+                if (chunk.Has(KilledType))
                 {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-                    var healthArray = chunk.GetNativeArray(HealthType);
+                    var killedArray = chunk.GetNativeArray(KilledType);
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        var entity = entityArray[entityIndex];
-                        var health = healthArray[entityIndex];
+                        var entity = killedArray[entityIndex].Other;
 
-                        if (health.Value > 0) continue;
+                        if (DeadFromEntity.Exists(entity)) continue;
 
                         SetMap.TryAdd(entity, new Dead
                         {
@@ -52,24 +50,6 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
                     {
                         var entity = EntityArray[entityIndex];
-
-                        if (DeadFromEntity.Exists(entity)) continue;
-
-                        SetMap.TryAdd(entity, new Dead
-                        {
-                            Duration = 1,
-                            StartTime = Time,
-                            Expired = false
-                        });
-                    }
-                }
-                else if (chunk.Has(KilledType))
-                {
-                    var killedArray = chunk.GetNativeArray(KilledType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = killedArray[entityIndex].Other;
 
                         if (DeadFromEntity.Exists(entity)) continue;
 
@@ -119,11 +99,6 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Health>() },
-                None = new[] { ComponentType.ReadWrite<Dead>() }
-            },
-            new EntityArchetypeQuery
-            {
                 All = new[] { ComponentType.ReadOnly<Components.Event>() },
                 Any = new[] { ComponentType.ReadOnly<KillAllCharacters>(), ComponentType.ReadOnly<Killed>() }
             });
@@ -139,7 +114,7 @@ namespace Game.Systems
         {
             Dispose();
 
-            m_SetMap = new NativeHashMap<Entity, Dead>(m_Group.CalculateLength(), Allocator.TempJob);
+            m_SetMap = new NativeHashMap<Entity, Dead>(m_CharacterGroup.CalculateLength(), Allocator.TempJob);
             var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
