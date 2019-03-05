@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(DestroyGroup))]
     public class DestroySystem : JobComponentSystem
     {
         [BurstCompile]

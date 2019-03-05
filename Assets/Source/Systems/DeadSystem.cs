@@ -12,6 +12,7 @@ namespace Game.Systems
     public class DeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
+        [ExcludeComponent(typeof(Destroy))]
         private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Dead>
         {
             public NativeQueue<Died>.Concurrent DiedQueue;

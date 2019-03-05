@@ -18,4 +18,7 @@ namespace Game.Systems
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public class LogicGroup : ComponentSystemGroup { }
+
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public class DestroyGroup : ComponentSystemGroup { }
 }

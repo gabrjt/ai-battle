@@ -15,11 +15,9 @@ namespace Game.Systems
         private struct ConsolidateJob : IJobChunk
         {
             public NativeHashMap<Entity, Dead>.Concurrent SetMap;
-
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> EntityArray;
-
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public ArchetypeChunkComponentType<Health> HealthType;
             [ReadOnly] public ArchetypeChunkComponentType<KillAllCharacters> KillAllCharacterType;
