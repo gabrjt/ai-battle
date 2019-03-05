@@ -113,7 +113,6 @@ namespace Game.Systems
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
-
             Dispose();
         }
 

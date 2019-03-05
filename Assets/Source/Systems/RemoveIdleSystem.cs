@@ -26,7 +26,7 @@ namespace Game.Systems
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        RemoveMap.TryAdd(entityArray[entityIndex], new Idle());
+                        RemoveMap.TryAdd(entityArray[entityIndex], default);
                     }
                 }
                 else if (chunk.Has(IdleTimeExpiredType))
@@ -35,7 +35,7 @@ namespace Game.Systems
 
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        RemoveMap.TryAdd(idleTimeExpiredArray[entityIndex].This, new Idle());
+                        RemoveMap.TryAdd(idleTimeExpiredArray[entityIndex].This, default);
                     }
                 }
             }
@@ -107,7 +107,6 @@ namespace Game.Systems
         protected override void OnDestroyManager()
         {
             base.OnDestroyManager();
-
             Dispose();
         }
 

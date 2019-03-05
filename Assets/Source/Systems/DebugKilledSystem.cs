@@ -8,6 +8,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    [DisableAutoCreation]
     [UpdateInGroup(typeof(LogicGroup))]
     public class DebugKilledSystem : JobComponentSystem, IDisposable
     {

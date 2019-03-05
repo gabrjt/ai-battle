@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [DisableAutoCreation]
+    //[DisableAutoCreation]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class DebugCharacterTranslationSystem : JobComponentSystem, IDisposable
     {
@@ -90,17 +90,17 @@ namespace Game.Systems
 
             while (m_KnightQueue.TryDequeue(out var translation))
             {
-                Debug.DrawRay(translation.Value, math.up(), Color.gray);
+                Debug.DrawRay(translation.Value, math.up(), Color.blue);
             }
 
             while (m_OrcWolfRiderQueue.TryDequeue(out var translation))
             {
-                Debug.DrawRay(translation.Value, math.up(), Color.green);
+                Debug.DrawRay(translation.Value, math.up(), Color.magenta);
             }
 
             while (m_SkeletonQueue.TryDequeue(out var translation))
             {
-                Debug.DrawRay(translation.Value, math.up(), Color.white);
+                Debug.DrawRay(translation.Value, math.up(), Color.black);
             }
 
             return inputDeps;

@@ -15,6 +15,9 @@ namespace Game.Systems
         {
             public NativeQueue<Entity>.Concurrent SetQueue;
             [ReadOnly] public ArchetypeChunkComponentType<IdleTimeExpired> IdleTimeExpiredType;
+            [ReadOnly] public ComponentDataFromEntity<SearchingForDestination> SearchingForDestinationFromEntity;
+            [ReadOnly] public ComponentDataFromEntity<Destination> DestinationFromEntity;
+            [ReadOnly] public ComponentDataFromEntity<Target> TargetFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -63,7 +66,10 @@ namespace Game.Systems
             inputDeps = new ConsolidateJob
             {
                 SetQueue = m_SetQueue.ToConcurrent(),
-                IdleTimeExpiredType = GetArchetypeChunkComponentType<IdleTimeExpired>(true)
+                IdleTimeExpiredType = GetArchetypeChunkComponentType<IdleTimeExpired>(true),
+                SearchingForDestinationFromEntity = GetComponentDataFromEntity<SearchingForDestination>(true),
+                DestinationFromEntity = GetComponentDataFromEntity<Destination>(true),
+                TargetFromEntity = GetComponentDataFromEntity<Target>(true)
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

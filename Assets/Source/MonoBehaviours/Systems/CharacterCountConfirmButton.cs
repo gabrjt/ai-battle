@@ -21,6 +21,8 @@ namespace Game.MonoBehaviours
 
         public void Confirm()
         {
+            if (World.Active == null) return;
+
             var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
 
             if (instantiateAICharacterSystem == null) return;
