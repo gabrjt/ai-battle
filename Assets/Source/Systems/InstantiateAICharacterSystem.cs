@@ -108,7 +108,7 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
         private GameObject m_Prefab;
         private GameObject m_ViewPrefab;
-        internal int m_TotalCount = 0xFFF;
+        internal int m_TotalCount = 1;
         internal int m_LastTotalCount;
         private Random m_Random;
         private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
@@ -217,7 +217,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 3);
                         healthRegeneration = m_Random.NextFloat(2, 4);
                         attackDuration = 1;
-                        walkSpeed = m_Random.NextFloat(1, 2);
+                        walkSpeed = m_Random.NextFloat(0.25f, 0.75f);
                         ++knightCount;
                         break;
 
@@ -227,7 +227,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 2);
                         healthRegeneration = m_Random.NextFloat(4, 6);
                         attackDuration = 1.333f;
-                        walkSpeed = m_Random.NextFloat(2, 3);
+                        walkSpeed = m_Random.NextFloat(0.5f, 1);
                         ++orcWolfRiderCount;
                         break;
 
@@ -237,7 +237,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 4);
                         healthRegeneration = m_Random.NextFloat(0.5f);
                         attackDuration = 2f;
-                        walkSpeed = m_Random.NextFloat(0.5f, 1);
+                        walkSpeed = m_Random.NextFloat(0.1f, 0.5f);
                         if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
                         break;
                 }

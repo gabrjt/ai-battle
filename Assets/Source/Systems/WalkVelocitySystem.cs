@@ -14,7 +14,7 @@ namespace Game.Systems
         {
             public void Execute([ReadOnly] ref WalkSpeed walkSpeed, [ReadOnly] ref MovementDirection movementDirection, ref Velocity velocity)
             {
-                velocity.Value += walkSpeed.Value * movementDirection.Value;
+                velocity.Value = walkSpeed.Value * movementDirection.Value;
             }
         }
 

@@ -68,13 +68,22 @@ namespace Game.Systems
                         var destinationFound = destinationFoundArray[entityIndex];
                         var entity = destinationFound.This;
 
-                        if (DestinationFromEntity.Exists(entity)) continue;
-
-                        SetMap.TryAdd(entity, new Destination
+                        if (DestinationFromEntity.Exists(entity))
                         {
-                            Value = destinationFound.Value,
-                            LastValue = destinationFound.Value
-                        });
+                            DestinationFromEntity[entity] = new Destination
+                            {
+                                Value = destinationFound.Value,
+                                LastValue = destinationFound.Value
+                            };
+                        }
+                        else
+                        {
+                            SetMap.TryAdd(entity, new Destination
+                            {
+                                Value = destinationFound.Value,
+                                LastValue = destinationFound.Value
+                            });
+                        }
                     }
                 }
             }
