@@ -7,9 +7,10 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Game.Systems.Pure
+namespace Game.Systems
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(DestroyGroup))]
+    [UpdateBefore(typeof(DestroyCommandBufferSystem))]
     public class DestroySystem : JobComponentSystem
     {
         [BurstCompile]

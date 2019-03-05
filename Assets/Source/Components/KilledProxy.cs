@@ -5,7 +5,6 @@ namespace Game.Components
     public struct Killed : IComponentData
     {
         public Entity This;
-
         public Entity Other;
     }
 

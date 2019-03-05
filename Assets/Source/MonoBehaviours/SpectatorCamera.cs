@@ -16,7 +16,7 @@ using Random = Unity.Mathematics.Random;
 public class SpectatorCamera : MonoBehaviour
 {
     [SerializeField]
-    private Camera m_Camera;
+    private UnityEngine.Camera m_Camera;
 
     private LayerMask m_LayerMask;
 

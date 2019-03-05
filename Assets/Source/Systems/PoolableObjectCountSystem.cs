@@ -1,5 +1,5 @@
 ﻿using Game.Components;
-using Game.Systems.Pure;
+using Game.Systems;
 using TMPro;
 using Unity.Entities;
 

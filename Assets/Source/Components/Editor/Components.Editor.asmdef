@@ -1,0 +1,15 @@
+{
+    "name": "Components.Editor",
+    "references": [
+        "GUID:70b19af2986048c4888743dd4886b5d1"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
