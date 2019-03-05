@@ -30,6 +30,7 @@ namespace Game.Systems
             public HealthRegeneration HealthRegeneration;
             public ViewType ViewType;
             public AttackDuration AttackDuration;
+            public WalkSpeed WalkSpeed;
         }
 
         [BurstCompile]
@@ -44,6 +45,7 @@ namespace Game.Systems
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackSpeed> AttackSpeedFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HealthRegeneration> HealthRegenerationFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDuration> AttackDurationFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<WalkSpeed> WalkSpeedFromEntity;
             [ReadOnly] public NativeArray<Entity> EntityArray;
             [ReadOnly] public NativeArray<SetData> SetDataArray;
 
@@ -61,6 +63,7 @@ namespace Game.Systems
                 AttackSpeedFromEntity[entity] = setData.AttackSpeed;
                 HealthRegenerationFromEntity[entity] = setData.HealthRegeneration;
                 AttackDurationFromEntity[entity] = setData.AttackDuration;
+                WalkSpeedFromEntity[entity] = setData.WalkSpeed;
             }
         }
 
@@ -145,7 +148,10 @@ namespace Game.Systems
                 ComponentType.ReadWrite<Attack>(),
                 ComponentType.ReadWrite<AttackSpeed>(),
                 ComponentType.ReadWrite<AttackDuration>(),
-                ComponentType.ReadWrite<HealthRegeneration>()
+                ComponentType.ReadWrite<HealthRegeneration>(),
+                ComponentType.ReadWrite<WalkSpeed>(),
+                ComponentType.ReadWrite<MovementDirection>(),
+                ComponentType.ReadWrite<Velocity>()
             );
 
             m_LastTotalCount = m_TotalCount;
@@ -157,10 +163,10 @@ namespace Game.Systems
         {
             var terrain = Terrain.activeTerrain;
             var count = m_Group.CalculateLength();
-            SpawnAICharacters(terrain, count);
+            InstantiateAICharacters(terrain, count);
         }
 
-        private void SpawnAICharacters(Terrain terrain, int count)
+        private void InstantiateAICharacters(Terrain terrain, int count)
         {
             var entityCount = m_TotalCount - count;
 
@@ -201,6 +207,7 @@ namespace Game.Systems
                 var attackSpeed = 0f;
                 var healthRegeneration = 0f;
                 var attackDuration = 0f;
+                var walkSpeed = 0f;
 
                 switch (viewType)
                 {
@@ -210,6 +217,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 3);
                         healthRegeneration = m_Random.NextFloat(2, 4);
                         attackDuration = 1;
+                        walkSpeed = m_Random.NextFloat(1, 2);
                         ++knightCount;
                         break;
 
@@ -219,6 +227,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 2);
                         healthRegeneration = m_Random.NextFloat(4, 6);
                         attackDuration = 1.333f;
+                        walkSpeed = m_Random.NextFloat(2, 3);
                         ++orcWolfRiderCount;
                         break;
 
@@ -228,6 +237,7 @@ namespace Game.Systems
                         attackSpeed = m_Random.NextFloat(1, 4);
                         healthRegeneration = m_Random.NextFloat(0.5f);
                         attackDuration = 2f;
+                        walkSpeed = m_Random.NextFloat(0.5f, 1);
                         if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
                         break;
                 }
@@ -243,6 +253,7 @@ namespace Game.Systems
                     AttackSpeed = new AttackSpeed { Value = attackSpeed },
                     AttackDuration = new AttackDuration { Value = attackDuration },
                     HealthRegeneration = new HealthRegeneration { Value = healthRegeneration },
+                    WalkSpeed = new WalkSpeed { Value = walkSpeed },
                     ViewType = viewType
                 };
 
@@ -266,7 +277,8 @@ namespace Game.Systems
                 AttackFromEntity = GetComponentDataFromEntity<Attack>(),
                 AttackSpeedFromEntity = GetComponentDataFromEntity<AttackSpeed>(),
                 HealthRegenerationFromEntity = GetComponentDataFromEntity<HealthRegeneration>(),
-                AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>()
+                AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>(),
+                WalkSpeedFromEntity = GetComponentDataFromEntity<WalkSpeed>()
             }.Schedule(setDataArray.Length, 64, inputDeps);
 
             inputDeps = new AddGroupJob
