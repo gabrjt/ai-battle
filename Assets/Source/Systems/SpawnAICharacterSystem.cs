@@ -52,12 +52,8 @@ namespace Game.Systems
 
         private struct AddGroupJob : IJob
         {
-            [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<Entity> EntityArray;
-            [ReadOnly]
-            [DeallocateOnJobCompletion]
-            public NativeArray<SetData> SetDataArray;
+            [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
+            [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<SetData> SetDataArray;
             [ReadOnly] public EntityCommandBuffer CommandBuffer;
 
             public void Execute()

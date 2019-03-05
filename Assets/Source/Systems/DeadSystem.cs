@@ -43,7 +43,6 @@ namespace Game.Systems
         }
 
         private EntityArchetype m_Archetype;
-
         private NativeQueue<Died> m_DiedQueue;
 
         protected override void OnCreateManager()
