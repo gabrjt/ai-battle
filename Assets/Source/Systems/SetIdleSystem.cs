@@ -57,6 +57,8 @@ namespace Game.Systems
                 while (SetQueue.TryDequeue(out var data))
                 {
                     CommandBuffer.AddComponent(data.Entity, data.Idle);
+                    CommandBuffer.SetComponent(data.Entity, new Velocity());
+                    CommandBuffer.SetComponent(data.Entity, new MovementDirection());
                 }
             }
         }
