@@ -4,6 +4,30 @@ using Unity.Mathematics;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
+    public class DestroyEventSystem : ComponentSystem
+    {
+        private ComponentGroup m_Group;
+
+        protected override void OnCreateManager()
+        {
+            base.OnCreateManager();
+
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Event>() }
+            });
+        }
+
+        protected override void OnUpdate()
+        {
+            ForEach((Entity entity) =>
+            {
+                PostUpdateCommands.DestroyEntity(entity);
+            }, m_Group);
+        }
+    }
+
     [UpdateInGroup(typeof(EntityLifecycleGroup))]
     public class DestroyEntitySystem : ComponentSystem
     {
@@ -16,17 +40,13 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Destroy>() }
-            },
-             new EntityArchetypeQuery
-             {
-                 All = new[] { ComponentType.ReadOnly<Event>() }
-             });
+            });
         }
 
         protected override void OnUpdate()
         {
             var groupLength = m_Group.CalculateLength();
-            var totalCount = (int)(groupLength * 0.25f);
+            var totalCount = 1024;
             var maxDestroyCount = math.select(totalCount, groupLength, groupLength > totalCount);
 
             ForEach((Entity entity) =>
