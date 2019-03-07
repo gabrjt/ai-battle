@@ -3,8 +3,8 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(EntityLifecycleGroup))]
-    public class DestroyEntitySystem : ComponentSystem
+    [UpdateInGroup(typeof(LateSimulationSystemGroup))]
+    public class DestroyEventSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
 
@@ -14,7 +14,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Destroy>() }
+                All = new[] { ComponentType.ReadOnly<Event>() }
             });
         }
 
