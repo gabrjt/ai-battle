@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 4189501869004178294}
   - component: {fileID: 8233123168730423747}
   - component: {fileID: 3623083349114224081}
-  - component: {fileID: 5928438160465727914}
+  - component: {fileID: 8369038771535014227}
   m_Layer: 5
-  m_Name: Kill All Characters Button
+  m_Name: Destroy All Characters Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -57,7 +57,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 1749484644018415690}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: -765806418, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
@@ -87,7 +86,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 1749484644018415690}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 1392445389, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
@@ -122,8 +120,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 5928438160465727914}
-        m_MethodName: KillAllCharacters
+      - m_Target: {fileID: 8369038771535014227}
+        m_MethodName: DestroyAllCharacters
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -135,7 +133,7 @@ MonoBehaviour:
         m_CallState: 2
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
---- !u!114 &5928438160465727914
+--- !u!114 &8369038771535014227
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,8 +142,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1749484644018415690}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 90cab715ea517e440b0ccb39365fae33, type: 3}
+  m_Script: {fileID: 11500000, guid: 8083a5c8708d734409482be0eb58e174, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &5700802847435015867
@@ -202,7 +199,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 5700802847435015867}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
