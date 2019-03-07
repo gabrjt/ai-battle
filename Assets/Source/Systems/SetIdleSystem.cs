@@ -30,7 +30,7 @@ namespace Game.Systems
                     {
                         Duration = Random.NextFloat(1, 5),
                         StartTime = Time,
-                        Expired = false
+                        IdleTimeExpiredDispatched = false
                     });
                 }
             }

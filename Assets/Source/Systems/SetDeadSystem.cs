@@ -57,7 +57,7 @@ namespace Game.Systems
                 {
                     Duration = 1,
                     StartTime = Time,
-                    Expired = false
+                    DiedDispatched = false
                 });
 
                 HealthFromEntity[entity] = new Health { Value = 0 };

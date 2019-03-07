@@ -9,17 +9,17 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    public class DestinationReachedSystem : JobComponentSystem, IDisposable
+    public class ReachedDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
         [ExcludeComponent(typeof(Target))]
-        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Destination, Translation>
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Destination, Translation, Velocity>
         {
             public NativeQueue<DestinationReached>.Concurrent DestinationReachedQueue;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Translation translation)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Destination destination, [ReadOnly] ref Translation translation, [ReadOnly] ref Velocity velocity)
             {
-                if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(translation.Value.x, 0, translation.Value.z)) > 0.01f) return;
+                if (math.distance(new float3(destination.Value.x, 0, destination.Value.z), new float3(translation.Value.x, 0, translation.Value.z)) > math.lengthsq(velocity.Value) * 0.01f) return;
 
                 DestinationReachedQueue.Enqueue(new DestinationReached { This = entity });
             }

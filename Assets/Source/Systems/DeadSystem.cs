@@ -19,9 +19,9 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Dead dead)
             {
-                if (dead.Expired || dead.StartTime + dead.Duration > Time) return;
+                if (dead.DiedDispatched || dead.StartTime + dead.Duration > Time) return;
 
-                dead.Expired = true;
+                dead.DiedDispatched = true;
                 DiedQueue.Enqueue(new Died { This = entity });
             }
         }

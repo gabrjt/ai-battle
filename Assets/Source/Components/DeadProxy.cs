@@ -8,7 +8,7 @@ namespace Game.Components
     {
         public float Duration;
         public float StartTime;
-        public @bool Expired;
+        public @bool DiedDispatched;
     }
 
     public class DeadProxy : ComponentDataProxy<Dead> { }
