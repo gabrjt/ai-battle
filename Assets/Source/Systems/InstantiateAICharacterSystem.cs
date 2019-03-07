@@ -3,7 +3,6 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
 namespace Game.Systems
 {
@@ -15,6 +14,7 @@ namespace Game.Systems
         private ComponentGroup m_Group;
         private EntityArchetype m_Archetype;
         private EntityArchetype m_DestroyAllCharactersArchetype;
+        private const int m_MaxDestroyCount = 1024;
         internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
 
@@ -41,23 +41,11 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var terrain = Terrain.activeTerrain;
             var count = m_Group.CalculateLength();
             var entityCount = m_TotalCount - count;
 
             DestroyExceedingCharacters(count, entityCount);
             InstantiateCharacters(entityCount);
-        }
-
-        private void InstantiateCharacters(int entityCount)
-        {
-            if (entityCount <= 0) return;
-
-            var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
-
-            EntityManager.CreateEntity(m_Archetype, entityArray);
-
-            entityArray.Dispose();
         }
 
         private void DestroyExceedingCharacters(int count, int entityCount)
@@ -72,14 +60,26 @@ namespace Game.Systems
             {
                 entityCount = math.abs(entityCount);
                 var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
+                var maxDestroyCount = math.select(entityCount, m_MaxDestroyCount, entityCount > m_MaxDestroyCount);
 
-                for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
+                for (var entityIndex = 0; entityIndex < maxDestroyCount; entityIndex++)
                 {
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
                 }
 
                 entityArray.Dispose();
             }
+        }
+
+        private void InstantiateCharacters(int entityCount)
+        {
+            if (entityCount <= 0) return;
+
+            var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
+
+            EntityManager.CreateEntity(m_Archetype, entityArray);
+
+            entityArray.Dispose();
         }
     }
 }
