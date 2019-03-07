@@ -22,7 +22,7 @@ namespace Game.Systems
             m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Dying>() }
             });
 
             m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery

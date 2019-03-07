@@ -60,7 +60,7 @@ public class SpectatorCamera : MonoBehaviour
         var targetFound = false;
 
         var entities = m_EntityManager.GetAllEntities();
-        var targets = entities.Where(entity => m_EntityManager.HasComponent<Character>(entity) && !m_EntityManager.HasComponent<Dead>(entity) && m_EntityManager.HasComponent<Transform>(entity)).ToArray();
+        var targets = entities.Where(entity => m_EntityManager.HasComponent<Character>(entity) && !m_EntityManager.HasComponent<Dying>(entity) && m_EntityManager.HasComponent<Transform>(entity)).ToArray();
 
         if (targets.Length > 0)
         {
