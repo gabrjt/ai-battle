@@ -29,6 +29,7 @@ namespace Game.Systems
             public AttackSpeed AttackSpeed;
             public HealthRegeneration HealthRegeneration;
             public ViewType ViewType;
+            public AttackDistance AttackDistance;
             public AttackDuration AttackDuration;
             public WalkSpeed WalkSpeed;
         }
@@ -44,6 +45,7 @@ namespace Game.Systems
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Attack> AttackFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackSpeed> AttackSpeedFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HealthRegeneration> HealthRegenerationFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDistance> AttackDistanceFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDuration> AttackDurationFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<WalkSpeed> WalkSpeedFromEntity;
             [ReadOnly] public NativeArray<Entity> EntityArray;
@@ -62,6 +64,7 @@ namespace Game.Systems
                 AttackFromEntity[entity] = setData.Attack;
                 AttackSpeedFromEntity[entity] = setData.AttackSpeed;
                 HealthRegenerationFromEntity[entity] = setData.HealthRegeneration;
+                AttackDistanceFromEntity[entity] = setData.AttackDistance;
                 AttackDurationFromEntity[entity] = setData.AttackDuration;
                 WalkSpeedFromEntity[entity] = setData.WalkSpeed;
             }
@@ -121,7 +124,7 @@ namespace Game.Systems
         private ComponentGroup m_OrcWolfRiderGroup;
         private ComponentGroup m_SkeletonGroup;
         private EntityArchetype m_Archetype;
-        internal int m_TotalCount = 0xFFF;
+        internal int m_TotalCount = 2;
         internal int m_LastTotalCount;
         private Random m_Random;
         private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
@@ -161,6 +164,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<Health>(),
                 ComponentType.ReadWrite<Attack>(),
                 ComponentType.ReadWrite<AttackSpeed>(),
+                ComponentType.ReadWrite<AttackDistance>(),
                 ComponentType.ReadWrite<AttackDuration>(),
                 ComponentType.ReadWrite<HealthRegeneration>(),
                 ComponentType.ReadWrite<WalkSpeed>()
@@ -281,6 +285,7 @@ namespace Game.Systems
                         Health = new Health { Value = maxHealth },
                         Attack = new Attack { Value = attack },
                         AttackSpeed = new AttackSpeed { Value = attackSpeed },
+                        AttackDistance = new AttackDistance { Min = 1.2f, Max = 1.5f },
                         AttackDuration = new AttackDuration { Value = attackDuration },
                         HealthRegeneration = new HealthRegeneration { Value = healthRegeneration },
                         WalkSpeed = new WalkSpeed { Value = walkSpeed },
@@ -306,6 +311,7 @@ namespace Game.Systems
                     AttackFromEntity = GetComponentDataFromEntity<Attack>(),
                     AttackSpeedFromEntity = GetComponentDataFromEntity<AttackSpeed>(),
                     HealthRegenerationFromEntity = GetComponentDataFromEntity<HealthRegeneration>(),
+                    AttackDistanceFromEntity = GetComponentDataFromEntity<AttackDistance>(),
                     AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>(),
                     WalkSpeedFromEntity = GetComponentDataFromEntity<WalkSpeed>()
                 }.Schedule(setDataArray.Length, 64, inputDeps);

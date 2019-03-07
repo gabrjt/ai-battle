@@ -28,9 +28,7 @@ namespace Game.Systems
                 {
                     CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new SearchingForTarget
                     {
-                        Radius = Random.NextInt(5, 11),
-                        Interval = 1,
-                        StartTime = Time
+                        SqrRadius = Random.NextInt(25, 225)
                     });
                 }
             }
@@ -46,7 +44,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadWrite<SearchingForTarget>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Random = new Random((uint)Environment.TickCount);

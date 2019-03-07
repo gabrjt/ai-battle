@@ -6,11 +6,7 @@ namespace Game.Components
     [Serializable]
     public struct SearchingForTarget : IComponentData
     {
-        public float Interval;
-
-        public float StartTime;
-
-        public float Radius;
+        public float SqrRadius;
     }
 
     public class SearchingForTargetProxy : ComponentDataProxy<SearchingForTarget> { }
