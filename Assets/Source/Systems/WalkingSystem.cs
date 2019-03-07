@@ -47,8 +47,9 @@ namespace Game.Systems
                 {
                     for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                     {
-                        CommandBuffer.RemoveComponent<Initialized>(m_ThreadIndex, entityArray[entityIndex]);
-                        CommandBuffer.RemoveComponent<Walking>(m_ThreadIndex, entityArray[entityIndex]);
+                        var entity = entityArray[entityIndex];
+                        CommandBuffer.RemoveComponent<Initialized>(m_ThreadIndex, entity);
+                        CommandBuffer.RemoveComponent<Walking>(m_ThreadIndex, entity);
                     }
                 }
             }
@@ -65,8 +66,8 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>(), ComponentType.ReadOnly<Target>() }
             }, new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>() },
-                None = new[] { ComponentType.ReadOnly<Destination>() }
+                All = new[] { ComponentType.ReadWrite<Initialized>() },
+                None = new[] { ComponentType.ReadOnly<Walking>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>(), ComponentType.ReadOnly<Target>() }
