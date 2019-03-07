@@ -15,7 +15,8 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
-    [UpdateInGroup(typeof(InstantiateGroup))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateBefore(typeof(BeginInitializationEntityCommandBufferSystem))]
     public class InstantiateAICharacterSystem : JobComponentSystem
     {
         private struct SetData
@@ -190,16 +191,16 @@ namespace Game.Systems
             if (entityCount <= 0)
             {
                 entityCount = count - m_TotalCount;
-                var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
+                var commandBufferSystem = World.GetExistingManager<BeginInitializationEntityCommandBufferSystem>();
 
                 inputDeps = new KillExceedingCharactersJob
                 {
                     EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
-                    CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
+                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
                     Count = entityCount
                 }.Schedule();
 
-                setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
+                commandBufferSystem.AddJobHandleForProducer(inputDeps);
             }
             else
             {
@@ -300,7 +301,7 @@ namespace Game.Systems
 
                 EntityManager.CreateEntity(m_Archetype, entityArray);
 
-                var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
+                var commandBufferSystem = World.GetExistingManager<BeginInitializationEntityCommandBufferSystem>();
 
                 inputDeps = new SetDataJob
                 {
@@ -323,10 +324,10 @@ namespace Game.Systems
                 {
                     EntityArray = entityArray,
                     SetDataArray = setDataArray,
-                    CommandBuffer = setCommandBufferSystem.CreateCommandBuffer(),
+                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
                 }.Schedule(inputDeps);
 
-                setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
+                commandBufferSystem.AddJobHandleForProducer(inputDeps);
             }
         }
     }

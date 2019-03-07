@@ -1,22 +1,21 @@
 ﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Transforms;
 
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(LogicGroup))]
-    public class SetDestinationSystem : JobComponentSystem
+    public class RemoveSearchingForDestinationSystem : JobComponentSystem
     {
         private struct Job : IJobChunk
         {
             [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
             [ReadOnly] public ArchetypeChunkComponentType<DestinationFound> DestinationFoundType;
-            [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
-            [NativeSetThreadIndex] private readonly int m_ThreadIndex;
+            [NativeSetThreadIndex] public readonly int m_ThreadIndex;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -24,14 +23,7 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    var destinationFound = destinationFoundArray[entityIndex];
-                    var entity = destinationFound.This;
-
-                    CommandBuffer.AddComponent(m_ThreadIndex, entity, new Destination
-                    {
-                        Value = destinationFound.Value,
-                        LastValue = destinationFound.Value
-                    });
+                    CommandBuffer.RemoveComponent<SearchingForDestination>(m_ThreadIndex, destinationFoundArray[entityIndex].This);
                 }
             }
         }
@@ -51,17 +43,16 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var removeCommandBufferSystem = World.GetExistingManager<RemoveCommandBufferSystem>();
 
             inputDeps = new Job
             {
-                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+                CommandBuffer = removeCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true),
-                TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
+                DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true)
             }.Schedule(m_Group, inputDeps);
 
-            setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
+            removeCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
         }

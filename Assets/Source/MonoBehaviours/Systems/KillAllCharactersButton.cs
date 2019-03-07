@@ -27,7 +27,7 @@ namespace Game.MonoBehaviours
                 m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem.Enabled = false;
                 Invoke("EnableInstantiateAICharacterSystem", 5);
             }
-            World.Active.GetExistingManager<EventCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
+            World.Active.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_Archetype);
         }
 
         private void EnableInstantiateAICharacterSystem()

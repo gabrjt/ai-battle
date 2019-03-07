@@ -1,43 +1,41 @@
 ﻿using Game.Components;
-using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
-using Random = Unity.Mathematics.Random;
+using Unity.Transforms;
 
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(LogicGroup))]
-    public class SetIdleSystem : JobComponentSystem
+    public class SetDestinationSystem : JobComponentSystem
     {
         private struct Job : IJobChunk
         {
             [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
-            [ReadOnly] public Random Random;
-            [ReadOnly] public float Time;
+            [ReadOnly] public ArchetypeChunkComponentType<DestinationFound> DestinationFoundType;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                var entityArray = chunk.GetNativeArray(EntityType);
+                var destinationFoundArray = chunk.GetNativeArray(DestinationFoundType);
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new Idle
+                    var destinationFound = destinationFoundArray[entityIndex];
+                    var entity = destinationFound.This;
+
+                    CommandBuffer.AddComponent(m_ThreadIndex, entity, new Destination
                     {
-                        Duration = Random.NextFloat(1, 5),
-                        StartTime = Time,
-                        IdleTimeExpiredDispatched = false
+                        Value = destinationFound.Value,
+                        LastValue = destinationFound.Value
                     });
                 }
             }
         }
 
         private ComponentGroup m_Group;
-        private Random m_Random;
 
         protected override void OnCreateManager()
         {
@@ -45,18 +43,9 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[]
-                {
-                    ComponentType.ReadWrite<Idle>(),
-                    ComponentType.ReadOnly<SearchingForDestination>(),
-                    ComponentType.ReadOnly<Destination>(),
-                    ComponentType.ReadOnly<Target>(),
-                    ComponentType.ReadOnly<Dead>()
-                }
+                All = new[] { ComponentType.ReadOnly<Event>() },
+                Any = new[] { ComponentType.ReadOnly<DestinationFound>() }
             });
-
-            m_Random = new Random((uint)Environment.TickCount);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -67,8 +56,7 @@ namespace Game.Systems
             {
                 CommandBuffer = setCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                Random = m_Random,
-                Time = Time.time
+                DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true)
             }.Schedule(m_Group, inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);

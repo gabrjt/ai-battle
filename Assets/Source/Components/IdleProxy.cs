@@ -8,7 +8,6 @@ namespace Game.Components
     {
         public float Duration;
         public float StartTime;
-        public @bool IdleTimeExpiredDispatched;
     }
 
     public class IdleProxy : ComponentDataProxy<Idle> { }

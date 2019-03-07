@@ -19,9 +19,8 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Idle idle)
             {
-                if (idle.IdleTimeExpiredDispatched || idle.StartTime + idle.Duration > Time) return;
+                if (idle.StartTime + idle.Duration > Time) return;
 
-                idle.IdleTimeExpiredDispatched = true;
                 IdleTimeExpiredQueue.Enqueue(new IdleTimeExpired { This = entity });
             }
         }
