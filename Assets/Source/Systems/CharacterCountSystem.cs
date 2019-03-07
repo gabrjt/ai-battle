@@ -24,7 +24,7 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Character>() }
             });
 
-            RequireForUpdate(m_Group);
+            RequireSingletonForUpdate<CharacterCount>();
         }
 
         protected override void OnUpdate()

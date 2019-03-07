@@ -1,135 +1,22 @@
-﻿using Game.Comparers;
-using Game.Components;
-using Game.Enums;
-using Game.Extensions;
-using System;
-using Unity.Burst;
+﻿using Game.Components;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
     [UpdateInGroup(typeof(EntityLifecycleGroup))]
     [UpdateAfter(typeof(DestroyEntitySystem))]
-    public class InstantiateAICharacterSystem : JobComponentSystem
+    public class InstantiateAICharacterSystem : ComponentSystem
     {
-        private struct SetData
-        {
-            public HomePosition HomePosition;
-            public Translation Translation;
-            public Rotation Rotation;
-            public MaxHealth MaxHealth;
-            public Health Health;
-            public Attack Attack;
-            public AttackSpeed AttackSpeed;
-            public HealthRegeneration HealthRegeneration;
-            public ViewType ViewType;
-            public AttackDistance AttackDistance;
-            public AttackDuration AttackDuration;
-            public WalkSpeed WalkSpeed;
-        }
-
-        [BurstCompile]
-        private struct SetDataJob : IJobParallelFor
-        {
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HomePosition> HomePositionFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Translation> PositionFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Rotation> RotationFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<MaxHealth> MaxHealthFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Health> HealthFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Attack> AttackFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackSpeed> AttackSpeedFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<HealthRegeneration> HealthRegenerationFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDistance> AttackDistanceFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<AttackDuration> AttackDurationFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<WalkSpeed> WalkSpeedFromEntity;
-            [ReadOnly] public NativeArray<Entity> EntityArray;
-            [ReadOnly] public NativeArray<SetData> SetDataArray;
-
-            public void Execute(int index)
-            {
-                var entity = EntityArray[index];
-                var setData = SetDataArray[index];
-
-                HomePositionFromEntity[entity] = setData.HomePosition;
-                PositionFromEntity[entity] = setData.Translation;
-                RotationFromEntity[entity] = setData.Rotation;
-                MaxHealthFromEntity[entity] = setData.MaxHealth;
-                HealthFromEntity[entity] = setData.Health;
-                AttackFromEntity[entity] = setData.Attack;
-                AttackSpeedFromEntity[entity] = setData.AttackSpeed;
-                HealthRegenerationFromEntity[entity] = setData.HealthRegeneration;
-                AttackDistanceFromEntity[entity] = setData.AttackDistance;
-                AttackDurationFromEntity[entity] = setData.AttackDuration;
-                WalkSpeedFromEntity[entity] = setData.WalkSpeed;
-            }
-        }
-
-        private struct AddGroupJob : IJob
-        {
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
-            [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<SetData> SetDataArray;
-
-            public void Execute()
-            {
-                for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
-                {
-                    var entity = EntityArray[entityIndex];
-                    var viewType = SetDataArray[entityIndex].ViewType;
-
-                    switch (viewType)
-                    {
-                        case ViewType.Knight:
-                            CommandBuffer.AddComponent(entity, new Knight());
-                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
-                            break;
-
-                        case ViewType.OrcWolfRider:
-                            CommandBuffer.AddComponent(entity, new OrcWolfRider());
-                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
-                            break;
-
-                        case ViewType.Skeleton:
-                            CommandBuffer.AddComponent(entity, new Skeleton());
-                            CommandBuffer.AddComponent(entity, new Group { Value = (int)viewType });
-                            break;
-                    }
-                }
-            }
-        }
-
-        private struct DestroyExceedingCharactersJob : IJob
-        {
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
-            [ReadOnly] public int Count;
-
-            public void Execute()
-            {
-                for (var entityIndex = 0; entityIndex < Count; entityIndex++)
-                {
-                    CommandBuffer.AddComponent(EntityArray[entityIndex], new Destroy());
-                }
-            }
-        }
-
         private ComponentGroup m_Group;
-        private ComponentGroup m_KnightGroup;
-        private ComponentGroup m_OrcWolfRiderGroup;
-        private ComponentGroup m_SkeletonGroup;
         private EntityArchetype m_Archetype;
         private EntityArchetype m_DestroyAllCharactersArchetype;
         internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
-        private Random m_Random;
-        private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
 
         protected override void OnCreateManager()
         {
@@ -141,205 +28,57 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadOnly<Destroy>() }
             });
 
-            m_KnightGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Knight>() }
-            });
-
-            m_OrcWolfRiderGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<OrcWolfRider>() }
-            });
-
-            m_SkeletonGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Skeleton>() }
-            });
-
             m_Archetype = EntityManager.CreateArchetype(
-
                 ComponentType.ReadWrite<Character>(),
-                ComponentType.ReadWrite<HomePosition>(),
                 ComponentType.ReadWrite<Translation>(),
-                ComponentType.ReadWrite<Rotation>(),
-                ComponentType.ReadWrite<MaxHealth>(),
-                ComponentType.ReadWrite<Health>(),
-                ComponentType.ReadWrite<Attack>(),
-                ComponentType.ReadWrite<AttackSpeed>(),
-                ComponentType.ReadWrite<AttackDistance>(),
-                ComponentType.ReadWrite<AttackDuration>(),
-                ComponentType.ReadWrite<HealthRegeneration>(),
-                ComponentType.ReadWrite<WalkSpeed>()
+                ComponentType.ReadWrite<Rotation>()
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
 
             m_LastTotalCount = m_TotalCount;
-            m_Random = new Random((uint)Environment.TickCount);
         }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        protected override void OnUpdate()
         {
             var terrain = Terrain.activeTerrain;
             var count = m_Group.CalculateLength();
-            InstantiateAICharacters(terrain, count, ref inputDeps);
-
-            return inputDeps;
-        }
-
-        private void InstantiateAICharacters(Terrain terrain, int count, ref JobHandle inputDeps)
-        {
             var entityCount = m_TotalCount - count;
 
-            if (entityCount <= 0)
+            DestroyExceedingCharacters(count, entityCount);
+            InstantiateCharacters(entityCount);
+        }
+
+        private void InstantiateCharacters(int entityCount)
+        {
+            if (entityCount <= 0) return;
+
+            var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
+
+            EntityManager.CreateEntity(m_Archetype, entityArray);
+
+            entityArray.Dispose();
+        }
+
+        private void DestroyExceedingCharacters(int count, int entityCount)
+        {
+            if (entityCount > 0) return;
+
+            if (m_TotalCount == 0 && count > 0)
             {
-                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-                var commandBuffer = commandBufferSystem.CreateCommandBuffer();
-                
-                if (m_TotalCount == 0 && count > 0)
-                {
-                    commandBuffer.CreateEntity(m_DestroyAllCharactersArchetype);
-                }
-                else if (entityCount < 0)
-                {
-                    entityCount = math.abs(entityCount);
-
-                    inputDeps = new DestroyExceedingCharactersJob
-                    {
-                        CommandBuffer = commandBuffer,
-                        EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
-                        Count = entityCount
-                    }.Schedule(inputDeps);
-
-                    commandBufferSystem.AddJobHandleForProducer(inputDeps);
-                }
+                World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_DestroyAllCharactersArchetype);
             }
-            else
+            else if (entityCount < 0)
             {
-                var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
-                var setDataArray = new NativeArray<SetData>(entityCount, Allocator.TempJob);
-                var knightCount = m_KnightGroup.CalculateLength();
-                var orcWolfRiderCount = m_OrcWolfRiderGroup.CalculateLength();
-                var skeletonCount = m_SkeletonGroup.CalculateLength();
+                entityCount = math.abs(entityCount);
+                var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
 
                 for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
                 {
-                    var sortArray = new CharacterCountSortData[]
-                    {
-                     new CharacterCountSortData
-                     {
-                         ViewType = ViewType.Knight,
-                         Count = knightCount
-                     }, new CharacterCountSortData
-                     {
-                         ViewType = ViewType.OrcWolfRider,
-                         Count = orcWolfRiderCount
-                     }, new CharacterCountSortData
-                     {
-                         ViewType = ViewType.Skeleton,
-                         Count = skeletonCount
-                     }
-                    };
-
-                    Array.Sort(sortArray, 0, sortArray.Length, m_CharacterCountComparer);
-                    var viewType = sortArray[0].ViewType;
-                    Array.Clear(sortArray, 0, sortArray.Length);
-
-                    var homePosition = terrain.GetRandomPosition();
-                    var maxHealth = 0;
-                    var attack = 0;
-                    var attackSpeed = 0f;
-                    var healthRegeneration = 0f;
-                    var attackDuration = 0f;
-                    var walkSpeed = 0f;
-
-                    switch (viewType)
-                    {
-                        case ViewType.Knight:
-                            maxHealth = m_Random.NextInt(300, 751);
-                            attack = m_Random.NextInt(25, 31);
-                            attackSpeed = m_Random.NextFloat(1, 3);
-                            healthRegeneration = m_Random.NextFloat(2, 4);
-                            attackDuration = 1;
-                            //walkSpeed = m_Random.NextFloat(0.25f, 0.75f);
-                            //walkSpeed = m_Random.NextFloat(1, 2);
-                            walkSpeed = 1;
-                            ++knightCount;
-                            break;
-
-                        case ViewType.OrcWolfRider:
-                            maxHealth = m_Random.NextInt(400, 1001);
-                            attack = m_Random.NextInt(30, 51);
-                            attackSpeed = m_Random.NextFloat(1, 2);
-                            healthRegeneration = m_Random.NextFloat(4, 6);
-                            attackDuration = 1.333f;
-                            //walkSpeed = m_Random.NextFloat(0.5f, 1);
-                            //walkSpeed = m_Random.NextFloat(1, 3);
-                            walkSpeed = 1;
-                            ++orcWolfRiderCount;
-                            break;
-
-                        case ViewType.Skeleton:
-                            maxHealth = m_Random.NextInt(150, 251);
-                            attack = m_Random.NextInt(40, 71);
-                            attackSpeed = m_Random.NextFloat(1, 4);
-                            healthRegeneration = m_Random.NextFloat(0.5f);
-                            attackDuration = 2f;
-                            //walkSpeed = m_Random.NextFloat(0.1f, 0.5f);
-                            //walkSpeed = m_Random.NextFloat(1, 1.5f);
-                            walkSpeed = 1;
-                            if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
-                            break;
-                    }
-
-                    var setData = new SetData
-                    {
-                        HomePosition = new HomePosition { Value = homePosition },
-                        Translation = new Translation { Value = homePosition },
-                        Rotation = new Rotation { Value = quaternion.identity },
-                        MaxHealth = new MaxHealth { Value = maxHealth },
-                        Health = new Health { Value = maxHealth },
-                        Attack = new Attack { Value = attack },
-                        AttackSpeed = new AttackSpeed { Value = attackSpeed },
-                        AttackDistance = new AttackDistance { Min = 2, Max = 3 },
-                        AttackDuration = new AttackDuration { Value = attackDuration },
-                        HealthRegeneration = new HealthRegeneration { Value = healthRegeneration },
-                        WalkSpeed = new WalkSpeed { Value = walkSpeed },
-                        ViewType = viewType
-                    };
-
-                    setDataArray[entityIndex] = setData;
+                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
                 }
 
-                EntityManager.CreateEntity(m_Archetype, entityArray);
-
-                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-
-                inputDeps = new SetDataJob
-                {
-                    EntityArray = entityArray,
-                    SetDataArray = setDataArray,
-                    HomePositionFromEntity = GetComponentDataFromEntity<HomePosition>(),
-                    PositionFromEntity = GetComponentDataFromEntity<Translation>(),
-                    RotationFromEntity = GetComponentDataFromEntity<Rotation>(),
-                    MaxHealthFromEntity = GetComponentDataFromEntity<MaxHealth>(),
-                    HealthFromEntity = GetComponentDataFromEntity<Health>(),
-                    AttackFromEntity = GetComponentDataFromEntity<Attack>(),
-                    AttackSpeedFromEntity = GetComponentDataFromEntity<AttackSpeed>(),
-                    HealthRegenerationFromEntity = GetComponentDataFromEntity<HealthRegeneration>(),
-                    AttackDistanceFromEntity = GetComponentDataFromEntity<AttackDistance>(),
-                    AttackDurationFromEntity = GetComponentDataFromEntity<AttackDuration>(),
-                    WalkSpeedFromEntity = GetComponentDataFromEntity<WalkSpeed>()
-                }.Schedule(setDataArray.Length, 64, inputDeps);
-
-                inputDeps = new AddGroupJob
-                {
-                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
-                    EntityArray = entityArray,
-                    SetDataArray = setDataArray,
-                }.Schedule(inputDeps);
-
-                commandBufferSystem.AddJobHandleForProducer(inputDeps);
+                entityArray.Dispose();
             }
         }
     }

@@ -18,6 +18,8 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadWrite<PoolableObjectCount>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
             });
+
+            RequireSingletonForUpdate<PoolableObjectCount>();
         }
 
         protected override void OnUpdate()

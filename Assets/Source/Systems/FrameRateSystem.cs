@@ -19,6 +19,8 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<FrameRate>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
             });
+
+            RequireSingletonForUpdate<FrameRate>();
         }
 
         protected override void OnUpdate()
