@@ -15,6 +15,8 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
+    [UpdateInGroup(typeof(EntityLifecycleGroup))]
+    [UpdateAfter(typeof(DestroyEntitySystem))]
     public class InstantiateAICharacterSystem : JobComponentSystem
     {
         private struct SetData
@@ -103,7 +105,7 @@ namespace Game.Systems
             }
         }
 
-        private struct KillExceedingCharactersJob : IJob
+        private struct DestroyExceedingCharactersJob : IJob
         {
             [ReadOnly] public EntityCommandBuffer CommandBuffer;
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
@@ -113,7 +115,7 @@ namespace Game.Systems
             {
                 for (var entityIndex = 0; entityIndex < Count; entityIndex++)
                 {
-                    CommandBuffer.AddComponent(EntityArray[entityIndex], new Dead());
+                    CommandBuffer.AddComponent(EntityArray[entityIndex], new Destroy());
                 }
             }
         }
@@ -135,7 +137,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadOnly<Destroy>() }
             });
 
             m_KnightGroup = GetComponentGroup(new EntityArchetypeQuery
@@ -191,7 +193,7 @@ namespace Game.Systems
                 entityCount = count - m_TotalCount;
                 var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-                inputDeps = new KillExceedingCharactersJob
+                inputDeps = new DestroyExceedingCharactersJob
                 {
                     CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
                     EntityArray = m_Group.ToEntityArray(Allocator.TempJob),

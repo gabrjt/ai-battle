@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Game.MonoBehaviours
 {
-    public class KillAllCharactersButton : MonoBehaviour
+    public class DestroyAllCharactersButton : MonoBehaviour
     {
         private EntityManager m_EntityManager;
         private EntityArchetype m_Archetype;
@@ -15,12 +15,12 @@ namespace Game.MonoBehaviours
         private void Start()
         {
             m_EntityManager = World.Active.GetExistingManager<EntityManager>();
-            m_Archetype = m_EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<KillAllCharacters>());
+            m_Archetype = m_EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
             m_InstantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
             m_InstantiateAICharacterSystemEnabled = m_InstantiateAICharacterSystem != null ? m_InstantiateAICharacterSystem.Enabled : false;
         }
 
-        public void KillAllCharacters()
+        public void DestroyAllCharacters()
         {
             if (m_InstantiateAICharacterSystemEnabled)
             {
