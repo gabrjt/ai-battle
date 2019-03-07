@@ -9,21 +9,6 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    /*
-    // ONE DEPENDENCY TO RULE THEM ALL
-    [UpdateBefore(typeof(SetDeadSystem))]
-    [UpdateBefore(typeof(RemoveDestinationSystem))]
-    [UpdateBefore(typeof(SetOwnedDestroySystem))]
-    [UpdateBefore(typeof(RemoveTargetSystem))]
-    [UpdateBefore(typeof(SetDestinationSystem))]
-    [UpdateBefore(typeof(RemoveSearchingForTargetSystem))]
-    [UpdateBefore(typeof(SetAttackDestroySystem))]
-    [UpdateBefore(typeof(SetIdleSystem))]
-    [UpdateBefore(typeof(RemoveSearchingForDestinationSystem))]
-    [UpdateBefore(typeof(RemoveIdleSystem))]
-    [UpdateBefore(typeof(SetDestroySystem))]
-    */
-
     [UpdateInGroup(typeof(LogicGroup))]
     public class SetSearchingForTargetSystem : JobComponentSystem
     {

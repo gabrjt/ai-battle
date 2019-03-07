@@ -23,6 +23,8 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadOnly<Character>() }
             });
+
+            RequireForUpdate(m_Group);
         }
 
         protected override void OnUpdate()

@@ -36,14 +36,14 @@ namespace Game.Systems
             }
         }
 
-        private ComponentGroup m_IdleGroup;
+        private ComponentGroup m_Group;
         private Random m_Random;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_IdleGroup = GetComponentGroup(new EntityArchetypeQuery
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 None = new[]
@@ -69,7 +69,7 @@ namespace Game.Systems
                 EntityType = GetArchetypeChunkEntityType(),
                 Random = m_Random,
                 Time = Time.time
-            }.Schedule(m_IdleGroup, inputDeps);
+            }.Schedule(m_Group, inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
