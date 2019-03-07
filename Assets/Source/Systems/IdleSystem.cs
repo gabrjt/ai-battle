@@ -1,83 +1,41 @@
 ﻿using Game.Components;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 
-public class IdleSystem : ComponentSystem
+namespace Game.Systems
 {
-    private struct AddIdleJob : IJobChunk
+    [UpdateInGroup(typeof(GameLogicGroup))]
+    public class IdleSystem : ComponentSystem
     {
-        [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
-        [ReadOnly] public ArchetypeChunkEntityType EntityType;
-        [ReadOnly] public ArchetypeChunkComponentType<Character> CharacterType;
-        [NativeSetThreadIndex] private readonly int m_ThreadIndex;
+        private ComponentGroup m_ProcessGroup;
+        private ComponentGroup m_AddGroup;
+        private ComponentGroup m_RemoveGroup;
 
-        public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
+        protected override void OnCreateManager()
         {
-            var entityArray = chunk.GetNativeArray(EntityType);
-            if (chunk.Has(CharacterType))
+            base.OnCreateManager();
+
+            m_ProcessGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
-                {
-                    CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new Idle());
-                }
-            }
-        }
-    }
+                All = new[] { ComponentType.ReadWrite<Idle>() }
+            });
 
-    private struct RemoveIdleJob : IJobChunk
-    {
-        [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
-        [ReadOnly] public ArchetypeChunkEntityType EntityType;
-        [ReadOnly] public ArchetypeChunkComponentType<Destination> DestinationType;
-        [ReadOnly] public ArchetypeChunkComponentType<Target> TargetType;
-        [NativeSetThreadIndex] private readonly int m_ThreadIndex;
-
-        public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-        {
-            var entityArray = chunk.GetNativeArray(EntityType);
-            if (chunk.Has(DestinationType) || chunk.Has(TargetType))
+            m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
-                {
-                    CommandBuffer.RemoveComponent<Idle>(m_ThreadIndex, entityArray[entityIndex]);
-                }
-            }
+                All = new[] { ComponentType.ReadOnly<Character>() },
+                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Dead>() }
+            });
+
+            m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadWrite<Idle>() },
+                Any = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
+            });
         }
-    }
 
-    private ComponentGroup m_ProcessGroup;
-    private ComponentGroup m_AddGroup;
-    private ComponentGroup m_RemoveGroup;
-
-    protected override void OnCreateManager()
-    {
-        base.OnCreateManager();
-
-        m_ProcessGroup = GetComponentGroup(new EntityArchetypeQuery
+        protected override void OnUpdate()
         {
-            // Processar Idle
-            All = new[] { ComponentType.ReadWrite<Idle>() }
-        });
-
-        m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
-        {
-            // Adicionar Idle
-            All = new[] { ComponentType.ReadOnly<Character>() },
-            None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Dead>() }
-        });
-
-        m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
-        {
-            // Remover Idle
-            All = new[] { ComponentType.ReadWrite<Idle>() },
-            Any = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
-        });
-    }
-
-    protected override void OnUpdate()
-    {
-        EntityManager.AddComponent(m_AddGroup, typeof(Idle));
-        EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<Idle>());
+            EntityManager.AddComponent(m_AddGroup, ComponentType.ReadWrite<Idle>());
+            EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<Idle>());
+        }
     }
 }

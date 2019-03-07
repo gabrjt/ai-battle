@@ -125,7 +125,8 @@ namespace Game.Systems
         private ComponentGroup m_OrcWolfRiderGroup;
         private ComponentGroup m_SkeletonGroup;
         private EntityArchetype m_Archetype;
-        internal int m_TotalCount = 2;
+        private EntityArchetype m_DestroyAllCharactersArchetype;
+        internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
         private Random m_Random;
         private readonly CharacterCountComparer m_CharacterCountComparer = new CharacterCountComparer();
@@ -171,6 +172,8 @@ namespace Game.Systems
                 ComponentType.ReadWrite<WalkSpeed>()
             );
 
+            m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
+
             m_LastTotalCount = m_TotalCount;
             m_Random = new Random((uint)Environment.TickCount);
         }
@@ -190,17 +193,26 @@ namespace Game.Systems
 
             if (entityCount <= 0)
             {
-                entityCount = count - m_TotalCount;
                 var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-
-                inputDeps = new DestroyExceedingCharactersJob
+                var commandBuffer = commandBufferSystem.CreateCommandBuffer();
+                
+                if (m_TotalCount == 0 && count > 0)
                 {
-                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
-                    EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
-                    Count = entityCount
-                }.Schedule(inputDeps);
+                    commandBuffer.CreateEntity(m_DestroyAllCharactersArchetype);
+                }
+                else if (entityCount < 0)
+                {
+                    entityCount = math.abs(entityCount);
 
-                commandBufferSystem.AddJobHandleForProducer(inputDeps);
+                    inputDeps = new DestroyExceedingCharactersJob
+                    {
+                        CommandBuffer = commandBuffer,
+                        EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
+                        Count = entityCount
+                    }.Schedule(inputDeps);
+
+                    commandBufferSystem.AddJobHandleForProducer(inputDeps);
+                }
             }
             else
             {

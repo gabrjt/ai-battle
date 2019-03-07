@@ -3,6 +3,7 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(GameLogicGroup))]
     public class DestroyAllCharactersSystem : ComponentSystem
     {
         private ComponentGroup m_CharacterGroup;
@@ -22,7 +23,7 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            EntityManager.AddComponent(m_CharacterGroup, typeof(Destroy));
+            EntityManager.AddComponent(m_CharacterGroup, ComponentType.ReadWrite<Destroy>());
         }
     }
 }
