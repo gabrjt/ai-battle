@@ -16,7 +16,6 @@ namespace Game.Systems
         {
             public NativeHashMap<Entity, Destination>.Concurrent SetMap;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
-            [ReadOnly] public ArchetypeChunkComponentType<Target> TargetType;
             [ReadOnly] public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
             [ReadOnly] public ArchetypeChunkComponentType<DestinationFound> DestinationFoundType;
             [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
@@ -25,21 +24,6 @@ namespace Game.Systems
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
-                if (chunk.Has(TargetType))
-                {
-                    var entityArray = chunk.GetNativeArray(EntityType);
-                    var targetArray = chunk.GetNativeArray(TargetType);
-
-                    for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                    {
-                        var entity = entityArray[entityIndex];
-                        var target = targetArray[entityIndex].Value;
-
-                        if (DeadFromEntity.Exists(target)) continue;
-
-                        SetTargetDestination(entity, target);
-                    }
-                }
                 if (chunk.Has(TargetFoundType))
                 {
                     var targetFoundArray = chunk.GetNativeArray(TargetFoundType);
@@ -53,7 +37,7 @@ namespace Game.Systems
                         {
                             Stop(entity);
                         }
-                        else
+                        else if (!DestinationFromEntity.Exists(entity))
                         {
                             SetTargetDestination(entity, targetFound.Other);
                         }
@@ -103,24 +87,11 @@ namespace Game.Systems
             {
                 var targetTranslation = TranslationFromEntity[target].Value;
 
-                if (DestinationFromEntity.Exists(entity))
+                SetMap.TryAdd(entity, new Destination
                 {
-                    var lastDestination = DestinationFromEntity[entity].Value;
-
-                    DestinationFromEntity[entity] = new Destination
-                    {
-                        Value = TranslationFromEntity[target].Value,
-                        LastValue = lastDestination
-                    };
-                }
-                else
-                {
-                    SetMap.TryAdd(entity, new Destination
-                    {
-                        Value = targetTranslation,
-                        LastValue = targetTranslation
-                    });
-                }
+                    Value = targetTranslation,
+                    LastValue = targetTranslation
+                });
             }
         }
 
@@ -128,7 +99,6 @@ namespace Game.Systems
         {
             [ReadOnly] public NativeHashMap<Entity, Destination> SetMap;
             public EntityCommandBuffer CommandBuffer;
-            [ReadOnly] public EntityArchetype Archetype;
 
             public void Execute()
             {
@@ -148,7 +118,6 @@ namespace Game.Systems
 
         private ComponentGroup m_Group;
         private NativeHashMap<Entity, Destination> m_SetMap;
-        private EntityArchetype m_Archetype;
 
         protected override void OnCreateManager()
         {
@@ -156,15 +125,9 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Translation>() },
-                None = new[] { ComponentType.ReadOnly<Dead>() }
-            }, new EntityArchetypeQuery
-            {
                 All = new[] { ComponentType.ReadOnly<Event>() },
                 Any = new[] { ComponentType.ReadOnly<DestinationFound>(), ComponentType.ReadOnly<TargetFound>() }
             });
-
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<DestinationReached>());
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -173,14 +136,13 @@ namespace Game.Systems
 
             m_SetMap = new NativeHashMap<Entity, Destination>(m_Group.CalculateLength(), Allocator.TempJob);
 
-            var setSystem = World.GetExistingManager<SetCommandBufferSystem>();
+            var setCommandBufferSystem = World.GetExistingManager<SetCommandBufferSystem>();
             var eventSystem = World.GetExistingManager<EventCommandBufferSystem>();
 
             inputDeps = new ConsolidateJob
             {
                 SetMap = m_SetMap.ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                TargetType = GetArchetypeChunkComponentType<Target>(true),
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DestinationFoundType = GetArchetypeChunkComponentType<DestinationFound>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
@@ -191,11 +153,10 @@ namespace Game.Systems
             inputDeps = new ApplyJob
             {
                 SetMap = m_SetMap,
-                CommandBuffer = setSystem.CreateCommandBuffer(),
-                Archetype = m_Archetype,
+                CommandBuffer = setCommandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            setSystem.AddJobHandleForProducer(inputDeps);
+            setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
             eventSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;

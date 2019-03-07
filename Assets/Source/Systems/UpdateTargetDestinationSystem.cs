@@ -12,7 +12,7 @@ namespace Game.Systems
     public class UpdateTargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Velocity, Destination>
+        private struct Job : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Destination, Velocity>
         {
             [ReadOnly]
             public ComponentDataFromEntity<Translation> TranslationFromEntity;
@@ -21,8 +21,8 @@ namespace Game.Systems
                 [ReadOnly] ref Target target,
                 [ReadOnly] ref Translation translation,
                 [ReadOnly] ref AttackDistance attackDistance,
-                [ReadOnly] ref Velocity velocity,
-                ref Destination destination)
+                ref Destination destination,
+                ref Velocity velocity)
             {
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
                 var distance = math.distance(translation.Value, targetTranslation);
@@ -31,7 +31,11 @@ namespace Game.Systems
                 {
                     var direction = math.normalizesafe(targetTranslation - translation.Value);
                     destination.LastValue = destination.Value;
-                    destination.Value = targetTranslation - direction * attackDistance.Min;
+                    destination.Value = targetTranslation - direction * attackDistance.Min * math.length(velocity.Value);
+                }
+                else
+                {
+                    velocity.Value = float3.zero;
                 }
             }
         }
