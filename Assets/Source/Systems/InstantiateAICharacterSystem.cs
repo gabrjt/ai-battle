@@ -15,8 +15,6 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [AlwaysUpdateSystem]
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
-    [UpdateBefore(typeof(BeginInitializationEntityCommandBufferSystem))]
     public class InstantiateAICharacterSystem : JobComponentSystem
     {
         private struct SetData
@@ -73,16 +71,16 @@ namespace Game.Systems
 
         private struct AddGroupJob : IJob
         {
+            [ReadOnly] public EntityCommandBuffer CommandBuffer;
             [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
             [ReadOnly] [DeallocateOnJobCompletion] public NativeArray<SetData> SetDataArray;
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                for (var index = 0; index < EntityArray.Length; index++)
+                for (var entityIndex = 0; entityIndex < EntityArray.Length; entityIndex++)
                 {
-                    var entity = EntityArray[index];
-                    var viewType = SetDataArray[index].ViewType;
+                    var entity = EntityArray[entityIndex];
+                    var viewType = SetDataArray[entityIndex].ViewType;
 
                     switch (viewType)
                     {
@@ -107,8 +105,8 @@ namespace Game.Systems
 
         private struct KillExceedingCharactersJob : IJob
         {
+            [ReadOnly] public EntityCommandBuffer CommandBuffer;
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
-            public EntityCommandBuffer CommandBuffer;
             [ReadOnly] public int Count;
 
             public void Execute()
@@ -191,14 +189,14 @@ namespace Game.Systems
             if (entityCount <= 0)
             {
                 entityCount = count - m_TotalCount;
-                var commandBufferSystem = World.GetExistingManager<BeginInitializationEntityCommandBufferSystem>();
+                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
                 inputDeps = new KillExceedingCharactersJob
                 {
-                    EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
                     CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
+                    EntityArray = m_Group.ToEntityArray(Allocator.TempJob),
                     Count = entityCount
-                }.Schedule();
+                }.Schedule(inputDeps);
 
                 commandBufferSystem.AddJobHandleForProducer(inputDeps);
             }
@@ -301,7 +299,7 @@ namespace Game.Systems
 
                 EntityManager.CreateEntity(m_Archetype, entityArray);
 
-                var commandBufferSystem = World.GetExistingManager<BeginInitializationEntityCommandBufferSystem>();
+                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
                 inputDeps = new SetDataJob
                 {
@@ -322,9 +320,9 @@ namespace Game.Systems
 
                 inputDeps = new AddGroupJob
                 {
+                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
                     EntityArray = entityArray,
                     SetDataArray = setDataArray,
-                    CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
                 }.Schedule(inputDeps);
 
                 commandBufferSystem.AddJobHandleForProducer(inputDeps);
