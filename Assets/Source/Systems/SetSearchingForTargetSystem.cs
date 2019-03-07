@@ -24,7 +24,7 @@ namespace Game.Systems
     [UpdateBefore(typeof(SetDestroySystem))]
     */
 
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetSearchingForTargetSystem : JobComponentSystem
     {
         private struct Job : IJobChunk

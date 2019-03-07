@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetDeadSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

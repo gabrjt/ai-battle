@@ -9,7 +9,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetIdleSystem : JobComponentSystem
     {
         private struct Job : IJobChunk

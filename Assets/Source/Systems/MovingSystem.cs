@@ -5,7 +5,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class MovingSystem : JobComponentSystem
     {
         private struct Initialized : ISystemStateComponentData { }

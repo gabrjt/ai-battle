@@ -7,7 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class RemoveDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

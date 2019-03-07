@@ -6,7 +6,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(FixedSimulationLogic))]
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetDestroySystem : JobComponentSystem
     {
         private struct Job : IJobChunk

@@ -9,6 +9,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class ReachedDestinationSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]
