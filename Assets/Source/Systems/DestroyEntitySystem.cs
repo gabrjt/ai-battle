@@ -1,7 +1,5 @@
 ﻿using Game.Components;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace Game.Systems
@@ -9,16 +7,6 @@ namespace Game.Systems
     [UpdateInGroup(typeof(EntityLifecycleGroup))]
     public class DestroyEntitySystem : ComponentSystem
     {
-        private struct Job : IJob
-        {
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
-
-            public void Execute()
-            {
-            }
-        }
-
         private ComponentGroup m_Group;
 
         protected override void OnCreateManager()
