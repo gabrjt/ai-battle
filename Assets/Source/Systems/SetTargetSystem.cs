@@ -18,8 +18,7 @@ namespace Game.Systems
             [ReadOnly] public ArchetypeChunkComponentType<TargetFound> TargetFoundType;
             [ReadOnly] public ArchetypeChunkComponentType<Damaged> DamagedType;
             [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
-            [ReadOnly] public ComponentDataFromEntity<Target> TargetFromEntity;
-            [ReadOnly] public BufferFromEntity<TargetBuffer> TargetBufferFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
             {
@@ -35,7 +34,7 @@ namespace Game.Systems
 
                         if (DeadFromEntity.Exists(target) || (TargetFromEntity.Exists(entity) && target == TargetFromEntity[entity].Value)) continue;
 
-                        SetMap.TryAdd(entity, new Target { Value = target });
+                        SetTarget(entity, target);
                     }
                 }
                 else if (chunk.Has(DamagedType))
@@ -52,8 +51,20 @@ namespace Game.Systems
 
                         if (DeadFromEntity.Exists(newTarget) || hasCurrentTarget && !DeadFromEntity.Exists(currentTarget)) continue;
 
-                        SetMap.TryAdd(damagedEntity, new Target { Value = newTarget });
+                        SetTarget(damagedEntity, newTarget);
                     }
+                }
+            }
+
+            private void SetTarget(Entity entity, Entity target)
+            {
+                if (TargetFromEntity.Exists(entity))
+                {
+                    TargetFromEntity[entity] = new Target { Value = target };
+                }
+                else
+                {
+                    SetMap.TryAdd(entity, new Target { Value = target });
                 }
             }
         }
@@ -71,15 +82,7 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
                 {
                     var entity = entityArray[entityIndex];
-
-                    if (TargetFromEntity.Exists(entity))
-                    {
-                        CommandBuffer.SetComponent(entity, SetMap[entity]);
-                    }
-                    else
-                    {
-                        CommandBuffer.AddComponent(entity, SetMap[entity]);
-                    }
+                    CommandBuffer.AddComponent(entity, SetMap[entity]);
                 }
 
                 entityArray.Dispose();
@@ -115,8 +118,7 @@ namespace Game.Systems
                 TargetFoundType = GetArchetypeChunkComponentType<TargetFound>(true),
                 DamagedType = GetArchetypeChunkComponentType<Damaged>(true),
                 DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
-                TargetFromEntity = GetComponentDataFromEntity<Target>(true),
-                TargetBufferFromEntity = GetBufferFromEntity<TargetBuffer>(true),
+                TargetFromEntity = GetComponentDataFromEntity<Target>()
             }.Schedule(m_Group, inputDeps);
 
             inputDeps = new ApplyJob

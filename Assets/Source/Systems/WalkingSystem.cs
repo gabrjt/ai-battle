@@ -68,10 +68,7 @@ namespace Game.Systems
             {
                 All = new[] { ComponentType.ReadWrite<Initialized>() },
                 None = new[] { ComponentType.ReadOnly<Walking>() }
-            }/*, new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>(), ComponentType.ReadOnly<Target>() }
-            }*/);
+            });
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)

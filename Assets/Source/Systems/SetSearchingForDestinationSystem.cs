@@ -21,7 +21,6 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    UnityEngine.Debug.Assert(idleTimeExpiredArray[entityIndex].This != default);
                     CommandBuffer.AddComponent(m_ThreadIndex, idleTimeExpiredArray[entityIndex].This, new SearchingForDestination());
                 }
             }

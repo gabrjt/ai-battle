@@ -28,7 +28,7 @@ namespace Game.Systems
                 {
                     CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new SearchingForTarget
                     {
-                        SqrRadius = Random.NextInt(5*5, 15*15)
+                        SqrRadius = Random.NextInt(5 * 5, 15 * 15)
                     });
                 }
             }

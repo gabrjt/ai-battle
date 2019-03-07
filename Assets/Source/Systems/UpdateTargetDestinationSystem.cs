@@ -8,6 +8,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    // TODO: in target range component
     [UpdateInGroup(typeof(LogicGroup))]
     public class UpdateTargetDestinationSystem : JobComponentSystem
     {
