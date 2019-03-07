@@ -249,7 +249,8 @@ namespace Game.Systems
                             healthRegeneration = m_Random.NextFloat(2, 4);
                             attackDuration = 1;
                             //walkSpeed = m_Random.NextFloat(0.25f, 0.75f);
-                            walkSpeed = m_Random.NextFloat(1, 2);
+                            //walkSpeed = m_Random.NextFloat(1, 2);
+                            walkSpeed = 1;
                             ++knightCount;
                             break;
 
@@ -260,7 +261,8 @@ namespace Game.Systems
                             healthRegeneration = m_Random.NextFloat(4, 6);
                             attackDuration = 1.333f;
                             //walkSpeed = m_Random.NextFloat(0.5f, 1);
-                            walkSpeed = m_Random.NextFloat(1, 3);
+                            //walkSpeed = m_Random.NextFloat(1, 3);
+                            walkSpeed = 1;
                             ++orcWolfRiderCount;
                             break;
 
@@ -271,7 +273,8 @@ namespace Game.Systems
                             healthRegeneration = m_Random.NextFloat(0.5f);
                             attackDuration = 2f;
                             //walkSpeed = m_Random.NextFloat(0.1f, 0.5f);
-                            walkSpeed = m_Random.NextFloat(1, 1.5f);
+                            //walkSpeed = m_Random.NextFloat(1, 1.5f);
+                            walkSpeed = 1;
                             if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
                             break;
                     }
@@ -285,7 +288,7 @@ namespace Game.Systems
                         Health = new Health { Value = maxHealth },
                         Attack = new Attack { Value = attack },
                         AttackSpeed = new AttackSpeed { Value = attackSpeed },
-                        AttackDistance = new AttackDistance { Min = 1.2f, Max = 1.5f },
+                        AttackDistance = new AttackDistance { Min = 2, Max = 3 },
                         AttackDuration = new AttackDuration { Value = attackDuration },
                         HealthRegeneration = new HealthRegeneration { Value = healthRegeneration },
                         WalkSpeed = new WalkSpeed { Value = walkSpeed },

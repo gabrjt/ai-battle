@@ -33,11 +33,11 @@ namespace Game.Systems
                     for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
                         var entity = entityArray[entityIndex];
-                        var target = targetArray[entityIndex];
+                        var target = targetArray[entityIndex].Value;
 
-                        if (DeadFromEntity.Exists(target.Value)) continue;
+                        if (DeadFromEntity.Exists(target)) continue;
 
-                        SetTargetDestination(entity, target.Value);
+                        SetTargetDestination(entity, target);
                     }
                 }
                 if (chunk.Has(TargetFoundType))
@@ -157,7 +157,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Translation>() },
-                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadOnly<Dead>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Event>() },

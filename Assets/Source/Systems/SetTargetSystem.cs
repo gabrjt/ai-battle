@@ -7,6 +7,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class SetTargetSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

@@ -8,10 +8,11 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
+    [UpdateInGroup(typeof(LogicGroup))]
     public class UpdateTargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Destination>
+        private struct Job : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Velocity, Destination>
         {
             [ReadOnly]
             public ComponentDataFromEntity<Translation> TranslationFromEntity;
@@ -20,6 +21,7 @@ namespace Game.Systems
                 [ReadOnly] ref Target target,
                 [ReadOnly] ref Translation translation,
                 [ReadOnly] ref AttackDistance attackDistance,
+                [ReadOnly] ref Velocity velocity,
                 ref Destination destination)
             {
                 var targetTranslation = TranslationFromEntity[target.Value].Value;

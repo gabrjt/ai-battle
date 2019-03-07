@@ -63,15 +63,15 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Destination>() },
-                None = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>(), ComponentType.ReadOnly<Target>() }
+                None = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>() }
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadWrite<Initialized>() },
                 None = new[] { ComponentType.ReadOnly<Walking>() }
-            }, new EntityArchetypeQuery
+            }/*, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadWrite<Initialized>(), ComponentType.ReadWrite<Walking>(), ComponentType.ReadOnly<Target>() }
-            });
+            }*/);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
