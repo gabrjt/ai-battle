@@ -6,7 +6,7 @@ using Unity.Jobs;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(LogicGroup))]
+    [UpdateInGroup(typeof(FixedSimulationLogic))]
     public class WalkVelocitySystem : JobComponentSystem
     {
         [BurstCompile]

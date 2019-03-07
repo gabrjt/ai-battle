@@ -9,7 +9,7 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Systems
 {
     [DisableAutoCreation]
-    [UpdateInGroup(typeof(LogicGroup))]
+    [UpdateInGroup(typeof(FixedSimulationLogic))]
     public class DebugKilledSystem : JobComponentSystem, IDisposable
     {
         [BurstCompile]

@@ -8,7 +8,7 @@ using Unity.Transforms;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(LogicGroup))]
+    [UpdateInGroup(typeof(FixedSimulationLogic))]
     public class MovementDirectionSystem : JobComponentSystem
     {
         [BurstCompile]

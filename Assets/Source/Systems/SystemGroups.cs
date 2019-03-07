@@ -12,14 +12,14 @@ namespace Game.Systems
     #region Logic
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public class LogicGroup : ComponentSystemGroup { }
+    public class FixedSimulationLogic : ComponentSystemGroup { }
 
     #endregion Logic
 
     #region Playback
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(LogicGroup))]
+    [UpdateAfter(typeof(FixedSimulationLogic))]
     public class PlaybackGroup : ComponentSystemGroup { }
 
     [UpdateInGroup(typeof(PlaybackGroup))]
@@ -42,7 +42,7 @@ namespace Game.Systems
     #region Destroy
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateBefore(typeof(LogicGroup))]
+    [UpdateBefore(typeof(FixedSimulationLogic))]
     public class DestroyEntityGroup : ComponentSystemGroup { }
 
     #endregion Destroy

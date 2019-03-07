@@ -163,9 +163,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<AttackSpeed>(),
                 ComponentType.ReadWrite<AttackDuration>(),
                 ComponentType.ReadWrite<HealthRegeneration>(),
-                ComponentType.ReadWrite<WalkSpeed>(),
-                ComponentType.ReadWrite<MovementDirection>(),
-                ComponentType.ReadWrite<Velocity>()
+                ComponentType.ReadWrite<WalkSpeed>()
             );
 
             m_LastTotalCount = m_TotalCount;
@@ -246,7 +244,8 @@ namespace Game.Systems
                             attackSpeed = m_Random.NextFloat(1, 3);
                             healthRegeneration = m_Random.NextFloat(2, 4);
                             attackDuration = 1;
-                            walkSpeed = m_Random.NextFloat(0.25f, 0.75f);
+                            //walkSpeed = m_Random.NextFloat(0.25f, 0.75f);
+                            walkSpeed = m_Random.NextFloat(1, 2);
                             ++knightCount;
                             break;
 
@@ -256,7 +255,8 @@ namespace Game.Systems
                             attackSpeed = m_Random.NextFloat(1, 2);
                             healthRegeneration = m_Random.NextFloat(4, 6);
                             attackDuration = 1.333f;
-                            walkSpeed = m_Random.NextFloat(0.5f, 1);
+                            //walkSpeed = m_Random.NextFloat(0.5f, 1);
+                            walkSpeed = m_Random.NextFloat(1, 3);
                             ++orcWolfRiderCount;
                             break;
 
@@ -266,7 +266,8 @@ namespace Game.Systems
                             attackSpeed = m_Random.NextFloat(1, 4);
                             healthRegeneration = m_Random.NextFloat(0.5f);
                             attackDuration = 2f;
-                            walkSpeed = m_Random.NextFloat(0.1f, 0.5f);
+                            //walkSpeed = m_Random.NextFloat(0.1f, 0.5f);
+                            walkSpeed = m_Random.NextFloat(1, 1.5f);
                             if (m_Random.NextFloat(1) >= 0.9f) ++skeletonCount;
                             break;
                     }

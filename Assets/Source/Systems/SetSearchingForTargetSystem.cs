@@ -9,15 +9,30 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
+    /*
+    // ONE DEPENDENCY TO RULE THEM ALL
+    [UpdateBefore(typeof(SetDeadSystem))]
+    [UpdateBefore(typeof(RemoveDestinationSystem))]
+    [UpdateBefore(typeof(SetOwnedDestroySystem))]
+    [UpdateBefore(typeof(RemoveTargetSystem))]
+    [UpdateBefore(typeof(SetDestinationSystem))]
+    [UpdateBefore(typeof(RemoveSearchingForTargetSystem))]
+    [UpdateBefore(typeof(SetAttackDestroySystem))]
+    [UpdateBefore(typeof(SetIdleSystem))]
+    [UpdateBefore(typeof(RemoveSearchingForDestinationSystem))]
+    [UpdateBefore(typeof(RemoveIdleSystem))]
+    [UpdateBefore(typeof(SetDestroySystem))]
+    */
+
     [UpdateInGroup(typeof(FixedSimulationLogic))]
-    public class SetIdleSystem : JobComponentSystem
+    public class SetSearchingForTargetSystem : JobComponentSystem
     {
         private struct Job : IJobChunk
         {
             [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
             [ReadOnly] public ArchetypeChunkEntityType EntityType;
-            [ReadOnly] public Random Random;
             [ReadOnly] public float Time;
+            [ReadOnly] public Random Random;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
             public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
@@ -26,34 +41,27 @@ namespace Game.Systems
 
                 for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                 {
-                    CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new Idle
+                    CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new SearchingForTarget
                     {
-                        Duration = Random.NextFloat(1, 5),
-                        StartTime = Time,
-                        Expired = false
+                        Radius = Random.NextInt(5, 11),
+                        Interval = 1,
+                        StartTime = Time
                     });
                 }
             }
         }
 
-        private ComponentGroup m_IdleGroup;
+        private ComponentGroup m_Group;
         private Random m_Random;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_IdleGroup = GetComponentGroup(new EntityArchetypeQuery
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[]
-                {
-                    ComponentType.ReadWrite<Idle>(),
-                    ComponentType.ReadOnly<SearchingForDestination>(),
-                    ComponentType.ReadOnly<Destination>(),
-                    ComponentType.ReadOnly<Target>(),
-                    ComponentType.ReadOnly<Dead>()
-                }
+                None = new[] { ComponentType.ReadWrite<SearchingForTarget>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_Random = new Random((uint)Environment.TickCount);
@@ -67,9 +75,9 @@ namespace Game.Systems
             {
                 CommandBuffer = setCommandBufferSystem.CreateCommandBuffer().ToConcurrent(),
                 EntityType = GetArchetypeChunkEntityType(),
-                Random = m_Random,
-                Time = Time.time
-            }.Schedule(m_IdleGroup, inputDeps);
+                Time = Time.time,
+                Random = m_Random
+            }.Schedule(m_Group, inputDeps);
 
             setCommandBufferSystem.AddJobHandleForProducer(inputDeps);
 
