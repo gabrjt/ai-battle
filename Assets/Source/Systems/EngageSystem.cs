@@ -31,7 +31,7 @@ namespace Game.Systems
 
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
-        //[ExcludeComponent(typeof(Target))]
+        [ExcludeComponent(typeof(Target))]
         private struct EngageJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
@@ -98,22 +98,13 @@ namespace Game.Systems
                     var target = TargetArray[index];
                     var targetDestination = TranslationFromEntity[target].Value;
 
-                    if (TargetFromEntity.Exists(entity))
+                    if (TargetFromEntity.Exists(entity) && TargetFromEntity[entity].Value != target)
                     {
                         TargetFromEntity[entity] = new Target { Value = target };
                     }
                     else
                     {
                         CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target { Value = target });
-                    }
-
-                    if (DestinationFromEntity.Exists(entity))
-                    {
-                        DestinationFromEntity[entity] = new Destination { Value = targetDestination };
-                    }
-                    else
-                    {
-                        CommandBuffer.AddComponent(m_ThreadIndex, entity, new Destination { Value = targetDestination });
                     }
                 }
             }
