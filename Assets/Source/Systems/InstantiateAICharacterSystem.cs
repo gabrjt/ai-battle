@@ -1,8 +1,13 @@
 ﻿using Game.Components;
+using Game.Enums;
+using Game.Extensions;
+using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
@@ -15,6 +20,7 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
         private EntityArchetype m_DestroyAllCharactersArchetype;
         private const int m_MaxDestroyCount = 1024;
+        private Random m_Random;
         internal int m_TotalCount = 0xFFF;
         internal int m_LastTotalCount;
 
@@ -35,7 +41,7 @@ namespace Game.Systems
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
-
+            m_Random = new Random(0xABCDEF);
             m_LastTotalCount = m_TotalCount;
         }
 
@@ -78,6 +84,31 @@ namespace Game.Systems
             var entityArray = new NativeArray<Entity>(entityCount, Allocator.TempJob);
 
             EntityManager.CreateEntity(m_Archetype, entityArray);
+
+            var terrain = Terrain.activeTerrain;
+
+            for (var entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
+            {
+                var type = (ViewType)m_Random.NextInt(Enum.GetValues(typeof(ViewType)).Length);
+                var entity = entityArray[entityIndex];
+
+                PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
+
+                switch (type)
+                {
+                    case ViewType.Knight:
+                        PostUpdateCommands.AddComponent(entity, new Knight());
+                        break;
+
+                    case ViewType.OrcWolfRider:
+                        PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                        break;
+
+                    case ViewType.Skeleton:
+                        PostUpdateCommands.AddComponent(entity, new Skeleton());
+                        break;
+                }
+            }
 
             entityArray.Dispose();
         }
