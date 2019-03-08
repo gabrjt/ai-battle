@@ -96,7 +96,7 @@ namespace Game.Systems
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
                 PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = m_Random.NextFloat(1, 3) });
-                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = m_Random.NextFloat(25, 225) });
+                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = m_Random.NextFloat(25, 100) });
                 PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
 
                 switch (type)

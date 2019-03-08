@@ -31,7 +31,6 @@ namespace Game.Systems
 
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
-        [ExcludeComponent(typeof(Target))]
         private struct EngageJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
@@ -87,7 +86,6 @@ namespace Game.Systems
             [DeallocateOnJobCompletion] public NativeArray<@bool> EngagedArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
-            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Destination> DestinationFromEntity;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
             public void Execute(int index)
@@ -194,7 +192,6 @@ namespace Game.Systems
                 EngagedArray = engagedArray,
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                 TargetFromEntity = GetComponentDataFromEntity<Target>(),
-                DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(count, 64, inputDeps);
 
             commandBufferSystem.AddJobHandleForProducer(inputDeps);
