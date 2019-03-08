@@ -9,6 +9,7 @@ using Unity.Transforms;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
+    [UpdateAfter(typeof(EngageSystem))]
     public class DisengageSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -21,9 +22,9 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
-                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value &&
-                    !DestroyFromEntity.Exists(target.Value) &&
-                    !DyingFromEntity.Exists(target.Value)) return;
+                if (!DestroyFromEntity.Exists(target.Value) &&
+                    !DyingFromEntity.Exists(target.Value) &&
+                    math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
 
                 DisengageQueue.Enqueue(entity);
             }

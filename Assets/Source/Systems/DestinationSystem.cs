@@ -9,6 +9,7 @@ namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
     [UpdateAfter(typeof(IdleSystem))]    
+    [UpdateAfter(typeof(DisengageSystem))]
     public class DestinationSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

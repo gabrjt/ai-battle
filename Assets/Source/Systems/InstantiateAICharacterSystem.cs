@@ -40,7 +40,9 @@ namespace Game.Systems
                 ComponentType.ReadWrite<Rotation>(),
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
-                ComponentType.ReadWrite<AttackDistance>()
+                ComponentType.ReadWrite<AttackDistance>(),
+                ComponentType.ReadWrite<Health>(),
+                ComponentType.ReadWrite<MaxHealth>()
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
@@ -69,8 +71,9 @@ namespace Game.Systems
             {
                 entityCount = math.abs(entityCount);
                 var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
+                var maxDestroyCount = math.select(entityCount, m_MaxDestroyCount, entityCount > m_MaxDestroyCount);
 
-                for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
+                for (var entityIndex = 0; entityIndex < maxDestroyCount; entityIndex++)
                 {
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
                 }
@@ -93,11 +96,14 @@ namespace Game.Systems
             {
                 var type = (ViewType)m_Random.NextInt(Enum.GetValues(typeof(ViewType)).Length);
                 var entity = entityArray[entityIndex];
+                var maxHealth = m_Random.NextInt(100, 200);
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
                 PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = m_Random.NextFloat(1, 3) });
                 PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = m_Random.NextFloat(25, 100) });
                 PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
+                PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });
+                PostUpdateCommands.SetComponent(entity, new Health { Value = maxHealth });
 
                 switch (type)
                 {
