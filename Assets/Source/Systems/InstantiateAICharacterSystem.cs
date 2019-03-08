@@ -69,9 +69,8 @@ namespace Game.Systems
             {
                 entityCount = math.abs(entityCount);
                 var entityArray = m_Group.ToEntityArray(Allocator.TempJob);
-                var maxDestroyCount = math.select(entityCount, m_MaxDestroyCount, entityCount > m_MaxDestroyCount);
 
-                for (var entityIndex = 0; entityIndex < maxDestroyCount; entityIndex++)
+                for (var entityIndex = 0; entityIndex < entityCount; entityIndex++)
                 {
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
                 }

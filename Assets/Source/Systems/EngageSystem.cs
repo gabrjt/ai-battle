@@ -98,7 +98,7 @@ namespace Game.Systems
                     var target = TargetArray[index];
                     var targetDestination = TranslationFromEntity[target].Value;
 
-                    if (TargetFromEntity.Exists(entity) && TargetFromEntity[entity].Value != target)
+                    if (TargetFromEntity.Exists(entity))
                     {
                         TargetFromEntity[entity] = new Target { Value = target };
                     }

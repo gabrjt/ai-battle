@@ -14,29 +14,29 @@ namespace Game.Systems
         [BurstCompile]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, EngageSqrRadius>
         {
-            public NativeQueue<Entity>.Concurrent RemoveTargetQueue;
+            public NativeQueue<Entity>.Concurrent DisengageQueue;
             [ReadOnly] public ComponentDataFromEntity<Dying> DyingFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Destroy> DestroyFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
-                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value ||
-                    DyingFromEntity.Exists(target.Value) ||
-                    DestroyFromEntity.Exists(target.Value)) return;
+                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value &&
+                    !DestroyFromEntity.Exists(target.Value) &&
+                    !DyingFromEntity.Exists(target.Value)) return;
 
-                RemoveTargetQueue.Enqueue(entity);
+                DisengageQueue.Enqueue(entity);
             }
         }
 
         private struct DisengageJob : IJob
         {
-            public NativeQueue<Entity> RemoveTargetQueue;
+            public NativeQueue<Entity> DisengageQueue;
             public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                while (RemoveTargetQueue.TryDequeue(out var entity))
+                while (DisengageQueue.TryDequeue(out var entity))
                 {
                     CommandBuffer.RemoveComponent<Target>(entity);
                     CommandBuffer.RemoveComponent<Destination>(entity);
@@ -59,7 +59,7 @@ namespace Game.Systems
 
             inputDeps = new ProcessJob
             {
-                RemoveTargetQueue = m_DisengageQueue.ToConcurrent(),
+                DisengageQueue = m_DisengageQueue.ToConcurrent(),
                 DyingFromEntity = GetComponentDataFromEntity<Dying>(true),
                 DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
@@ -67,7 +67,7 @@ namespace Game.Systems
 
             inputDeps = new DisengageJob
             {
-                RemoveTargetQueue = m_DisengageQueue,
+                DisengageQueue = m_DisengageQueue,
                 CommandBuffer = commandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
