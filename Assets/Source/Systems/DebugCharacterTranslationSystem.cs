@@ -1,9 +1,6 @@
 ﻿using Game.Components;
-using System;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
@@ -12,51 +9,9 @@ namespace Game.Systems
 {
     //[DisableAutoCreation]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public class DebugCharacterTranslationSystem : JobComponentSystem, IDisposable
+    public class DebugCharacterTranslationSystem : ComponentSystem
     {
-        [BurstCompile]
-        private struct ConsolidateJob : IJobChunk
-        {
-            public NativeQueue<Translation>.Concurrent KnightQueue;
-            public NativeQueue<Translation>.Concurrent OrcWolfRiderQueue;
-            public NativeQueue<Translation>.Concurrent SkeletonQueue;
-            [ReadOnly] public ArchetypeChunkComponentType<Translation> TranslationType;
-            [ReadOnly] public ArchetypeChunkComponentType<Knight> KnightType;
-            [ReadOnly] public ArchetypeChunkComponentType<OrcWolfRider> OrcWolfRiderType;
-            [ReadOnly] public ArchetypeChunkComponentType<Skeleton> SkeletonType;
-
-            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-            {
-                var translationArray = chunk.GetNativeArray(TranslationType);
-
-                if (chunk.Has(KnightType))
-                {
-                    for (var entityIndex = 0; entityIndex < translationArray.Length; entityIndex++)
-                    {
-                        KnightQueue.Enqueue(translationArray[entityIndex]);
-                    }
-                }
-                else if (chunk.Has(OrcWolfRiderType))
-                {
-                    for (var entityIndex = 0; entityIndex < translationArray.Length; entityIndex++)
-                    {
-                        OrcWolfRiderQueue.Enqueue(translationArray[entityIndex]);
-                    }
-                }
-                else
-                {
-                    for (var entityIndex = 0; entityIndex < translationArray.Length; entityIndex++)
-                    {
-                        SkeletonQueue.Enqueue(translationArray[entityIndex]);
-                    }
-                }
-            }
-        }
-
         private ComponentGroup m_Group;
-        private NativeQueue<Translation> m_KnightQueue;
-        private NativeQueue<Translation> m_OrcWolfRiderQueue;
-        private NativeQueue<Translation> m_SkeletonQueue;
 
         protected override void OnCreateManager()
         {
@@ -67,67 +22,41 @@ namespace Game.Systems
                 All = new[] { ComponentType.ReadOnly<Character>() },
                 Any = new[] { ComponentType.ReadOnly<Knight>(), ComponentType.ReadOnly<OrcWolfRider>(), ComponentType.ReadOnly<Skeleton>() }
             });
-
-            m_KnightQueue = new NativeQueue<Translation>(Allocator.Persistent);
-            m_OrcWolfRiderQueue = new NativeQueue<Translation>(Allocator.Persistent);
-            m_SkeletonQueue = new NativeQueue<Translation>(Allocator.Persistent);
         }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        protected override void OnUpdate()
         {
-            inputDeps = new ConsolidateJob
-            {
-                KnightQueue = m_KnightQueue.ToConcurrent(),
-                OrcWolfRiderQueue = m_OrcWolfRiderQueue.ToConcurrent(),
-                SkeletonQueue = m_SkeletonQueue.ToConcurrent(),
-                TranslationType = GetArchetypeChunkComponentType<Translation>(true),
-                KnightType = GetArchetypeChunkComponentType<Knight>(true),
-                OrcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true),
-                SkeletonType = GetArchetypeChunkComponentType<Skeleton>(true)
-            }.Schedule(m_Group, inputDeps);
+            var chunkArray = m_Group.CreateArchetypeChunkArray(Allocator.TempJob);
+            var translationType = GetArchetypeChunkComponentType<Translation>(true);
+            var knightType = GetArchetypeChunkComponentType<Knight>(true);
+            var orcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true);
+            var skeletonType = GetArchetypeChunkComponentType<Skeleton>(true);
 
-            inputDeps.Complete();
-
-            while (m_KnightQueue.TryDequeue(out var translation))
+            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
             {
-                Debug.DrawRay(translation.Value, math.up(), Color.blue);
+                var chunk = chunkArray[chunkIndex];
+                var translationArray = chunk.GetNativeArray(translationType);
+
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                {
+                    var translation = translationArray[entityIndex];
+
+                    if (chunk.Has(knightType))
+                    {
+                        Debug.DrawRay(translation.Value, math.up(), Color.blue);
+                    }
+                    else if (chunk.Has(orcWolfRiderType))
+                    {
+                        Debug.DrawRay(translation.Value, math.up(), Color.magenta);
+                    }
+                    else if (chunk.Has(skeletonType))
+                    {
+                        Debug.DrawRay(translation.Value, math.up(), Color.black);
+                    }
+                }
             }
 
-            while (m_OrcWolfRiderQueue.TryDequeue(out var translation))
-            {
-                Debug.DrawRay(translation.Value, math.up(), Color.magenta);
-            }
-
-            while (m_SkeletonQueue.TryDequeue(out var translation))
-            {
-                Debug.DrawRay(translation.Value, math.up(), Color.black);
-            }
-
-            return inputDeps;
-        }
-
-        protected override void OnDestroyManager()
-        {
-            base.OnDestroyManager();
-            Dispose();
-        }
-
-        public void Dispose()
-        {
-            if (m_KnightQueue.IsCreated)
-            {
-                m_KnightQueue.Dispose();
-            }
-
-            if (m_OrcWolfRiderQueue.IsCreated)
-            {
-                m_OrcWolfRiderQueue.Dispose();
-            }
-
-            if (m_SkeletonQueue.IsCreated)
-            {
-                m_SkeletonQueue.Dispose();
-            }
+            chunkArray.Dispose();
         }
     }
 }

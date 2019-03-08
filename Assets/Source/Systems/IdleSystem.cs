@@ -1,15 +1,15 @@
 ﻿using Game.Components;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    public class IdleSystem : JobComponentSystem
+    public class IdleSystem : ComponentSystem
     {
         [BurstCompile]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Idle>
@@ -27,30 +27,11 @@ namespace Game.Systems
             }
         }
 
-        private struct AddJob : IJobChunk
-        {
-            [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
-            [ReadOnly] public ArchetypeChunkEntityType EntityType;
-            [NativeSetThreadIndex] private readonly int m_ThreadIndex;
-
-            public void Execute(ArchetypeChunk chunk, int chunkIndex, int firstEntityIndex)
-            {
-                var entityArray = chunk.GetNativeArray(EntityType);
-
-                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                {
-                    CommandBuffer.AddComponent(m_ThreadIndex, entityArray[entityIndex], new Idle
-                    {
-                        Duration = 1
-                    });
-                }
-            }
-        }
-
         private ComponentGroup m_AddGroup;
         private ComponentGroup m_ProcessGroup;
         private ComponentGroup m_RemoveGroup;
         private NativeQueue<Entity> m_ProcessedQueue;
+        private Random m_Random;
 
         protected override void OnCreateManager()
         {
@@ -59,7 +40,7 @@ namespace Game.Systems
             m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Dying>() }
+                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dying>() }
             });
 
             m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
@@ -69,71 +50,64 @@ namespace Game.Systems
             });
 
             m_ProcessedQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_Random = new Random(0xABCDEF);
         }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        protected override void OnUpdate()
         {
-            var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-
-            inputDeps = Process(inputDeps);
-
+            Add();
+            Process();
             Remove();
-
-            inputDeps = Add(inputDeps, commandBufferSystem);
-
-            commandBufferSystem.AddJobHandleForProducer(inputDeps);
-
-            return inputDeps;
         }
 
-        private JobHandle Process(JobHandle inputDeps)
+        private void Add()
         {
-            inputDeps = new ProcessJob
+            var chunkArray = m_AddGroup.CreateArchetypeChunkArray(Allocator.TempJob);
+            var entityType = GetArchetypeChunkEntityType();
+
+            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            {
+                var chunk = chunkArray[chunkIndex];
+                var entityArray = chunk.GetNativeArray(entityType);
+
+                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
+                {
+                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Idle
+                    {
+                        Duration = m_Random.NextFloat(1, 5)
+                    });
+                }
+            }
+
+            chunkArray.Dispose();
+        }
+
+        private void Process()
+        {
+            new ProcessJob
             {
                 ProcessedQueue = m_ProcessedQueue.ToConcurrent(),
                 DeltaTime = Time.deltaTime
-            }.Schedule(this, inputDeps);
-
-            inputDeps.Complete();
-            return inputDeps;
+            }.Schedule(this).Complete();
         }
 
         private void Remove()
         {
-            var removeGroupCount = m_RemoveGroup.CalculateLength();
-            var removeList = new NativeList<Entity>(removeGroupCount, Allocator.Temp);
+            var removeCount = m_RemoveGroup.CalculateLength();
+            var removeGroupArray = m_RemoveGroup.ToEntityArray(Allocator.TempJob);
+            var removeArray = new NativeArray<Entity>(removeCount + m_ProcessedQueue.Count, Allocator.Temp);
 
-            if (removeGroupCount > 0)
+            NativeArray<Entity>.Copy(removeGroupArray, removeArray, removeCount);
+
+            while (m_ProcessedQueue.TryDequeue(out var entity))
             {
-                var removeGroupArray = m_RemoveGroup.ToEntityArray(Allocator.TempJob);
-                NativeArray<Entity>.Copy(removeGroupArray, removeList, removeGroupCount);
-                removeGroupArray.Dispose();
+                removeArray[removeCount++] = entity;
             }
 
-            if (m_ProcessedQueue.Count > 0)
-            {
-                while (m_ProcessedQueue.TryDequeue(out var entity))
-                {
-                    removeList.Add(entity);
-                }
-            }
+            EntityManager.RemoveComponent(removeArray, ComponentType.ReadWrite<Idle>());
 
-            if (removeList.Length > 0)
-            {
-                EntityManager.RemoveComponent(removeList, ComponentType.ReadWrite<Idle>());
-            }
-
-            removeList.Dispose();
-        }
-
-        private JobHandle Add(JobHandle inputDeps, BeginSimulationEntityCommandBufferSystem commandBufferSystem)
-        {
-            inputDeps = new AddJob
-            {
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-                EntityType = GetArchetypeChunkEntityType()
-            }.Schedule(m_AddGroup, inputDeps);
-            return inputDeps;
+            removeArray.Dispose();
+            removeGroupArray.Dispose();
         }
 
         protected override void OnDestroyManager()
