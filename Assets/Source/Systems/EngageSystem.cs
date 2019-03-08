@@ -93,11 +93,11 @@ namespace Game.Systems
                 if (EngagedArray[index])
                 {
                     var entity = EntityArray[index];
-                    var targetEntity = TargetEntityArray[index];
+                    var target = TargetEntityArray[index];
 
                     CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target
                     {
-                        Value = targetEntity
+                        Value = target
                     });
                 }
             }
