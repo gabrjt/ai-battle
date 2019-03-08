@@ -31,7 +31,7 @@ namespace Game.Systems
 
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
-        [ExcludeComponent(typeof(Target))]
+        //[ExcludeComponent(typeof(Target))]
         private struct EngageJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
@@ -79,13 +79,15 @@ namespace Game.Systems
             }
         }
 
-        private struct AddTargetJob : IJobParallelFor
+        private struct ApplyJob : IJobParallelFor
         {
             [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
             [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
-            [DeallocateOnJobCompletion] public NativeArray<Entity> TargetEntityArray;
+            [DeallocateOnJobCompletion] public NativeArray<Entity> TargetArray;
             [DeallocateOnJobCompletion] public NativeArray<@bool> EngagedArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Destination> DestinationFromEntity;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
             public void Execute(int index)
@@ -93,12 +95,26 @@ namespace Game.Systems
                 if (EngagedArray[index])
                 {
                     var entity = EntityArray[index];
-                    var target = TargetEntityArray[index];
+                    var target = TargetArray[index];
+                    var targetDestination = TranslationFromEntity[target].Value;
 
-                    CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target
+                    if (TargetFromEntity.Exists(entity))
                     {
-                        Value = target
-                    });
+                        TargetFromEntity[entity] = new Target { Value = target };
+                    }
+                    else
+                    {
+                        CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target { Value = target });
+                    }
+
+                    if (DestinationFromEntity.Exists(entity))
+                    {
+                        DestinationFromEntity[entity] = new Destination { Value = targetDestination };
+                    }
+                    else
+                    {
+                        CommandBuffer.AddComponent(m_ThreadIndex, entity, new Destination { Value = targetDestination });
+                    }
                 }
             }
         }
@@ -117,7 +133,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new ComponentType[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<EngageSqrRadius>() },
-                None = new ComponentType[] { ComponentType.ReadWrite<Target>(), ComponentType.ReadOnly<Dying>() }
+                None = new ComponentType[] { ComponentType.ReadOnly<Dying>() }
             });
 
             m_TargetGroup = GetComponentGroup(new EntityArchetypeQuery
@@ -127,21 +143,6 @@ namespace Game.Systems
             });
 
             RequireForUpdate(m_Group);
-        }
-
-        protected override void OnDestroyManager()
-        {
-            base.OnDestroyManager();
-
-            if (m_NodeMap.IsCreated)
-            {
-                m_NodeMap.Dispose();
-            }
-
-            if (m_TranslationMap.IsCreated)
-            {
-                m_TranslationMap.Dispose();
-            }
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -179,33 +180,50 @@ namespace Game.Systems
 
             inputDeps = new MakeNodesJob
             {
-                NodeSize = NodeSize,
                 NodeMap = m_NodeMap.ToConcurrent(),
-                TranslationMap = m_TranslationMap.ToConcurrent()
+                TranslationMap = m_TranslationMap.ToConcurrent(),
+                NodeSize = NodeSize
             }.Schedule(this, inputDeps);
 
             inputDeps = new EngageJob
             {
-                NodeSize = NodeSize,
                 NodeMap = m_NodeMap,
                 TranslationMap = m_TranslationMap,
                 EntityArray = entityArray,
                 TargetArray = targetEntityArray,
-                EngagedArray = engagedArray
+                EngagedArray = engagedArray,
+                NodeSize = NodeSize
             }.Schedule(this, inputDeps);
 
-            inputDeps = new AddTargetJob
+            inputDeps = new ApplyJob
             {
+                CommandBuffer = commandBuffer.ToConcurrent(),
                 EntityArray = entityArray,
-                TargetEntityArray = targetEntityArray,
+                TargetArray = targetEntityArray,
                 EngagedArray = engagedArray,
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
-                CommandBuffer = commandBuffer.ToConcurrent()
+                TargetFromEntity = GetComponentDataFromEntity<Target>(),
+                DestinationFromEntity = GetComponentDataFromEntity<Destination>()
             }.Schedule(count, 64, inputDeps);
 
             commandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
+        }
+
+        protected override void OnDestroyManager()
+        {
+            base.OnDestroyManager();
+
+            if (m_NodeMap.IsCreated)
+            {
+                m_NodeMap.Dispose();
+            }
+
+            if (m_TranslationMap.IsCreated)
+            {
+                m_TranslationMap.Dispose();
+            }
         }
     }
 }

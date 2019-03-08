@@ -20,8 +20,6 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref AttackDistance attackDistance, ref Velocity velocity, ref Destination destination)
             {
-                if (!TranslationFromEntity.Exists(target.Value)) return; // TODO: disengage system
-
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
                 var distance = math.distance(translation.Value, targetTranslation);
 
