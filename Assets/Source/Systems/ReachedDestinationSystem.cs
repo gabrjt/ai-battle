@@ -14,6 +14,7 @@ namespace Game.Systems
     public class ReachedDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
+        [ExcludeComponent(typeof(Target))]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Translation, Destination>
         {
             public NativeQueue<Entity>.Concurrent ProcessedQueue;
