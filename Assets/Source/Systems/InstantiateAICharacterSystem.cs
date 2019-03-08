@@ -37,7 +37,8 @@ namespace Game.Systems
             m_Archetype = EntityManager.CreateArchetype(
                 ComponentType.ReadWrite<Character>(),
                 ComponentType.ReadWrite<Translation>(),
-                ComponentType.ReadWrite<Rotation>()
+                ComponentType.ReadWrite<Rotation>(),
+                ComponentType.ReadWrite<MovementSpeed>()
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
@@ -93,6 +94,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
+                PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = m_Random.NextFloat(1, 3) });
 
                 switch (type)
                 {
