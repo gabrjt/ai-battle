@@ -38,7 +38,8 @@ namespace Game.Systems
                 ComponentType.ReadWrite<Character>(),
                 ComponentType.ReadWrite<Translation>(),
                 ComponentType.ReadWrite<Rotation>(),
-                ComponentType.ReadWrite<MovementSpeed>()
+                ComponentType.ReadWrite<MovementSpeed>(),
+                ComponentType.ReadWrite<EngageSqrRadius>()
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
@@ -95,6 +96,7 @@ namespace Game.Systems
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
                 PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = m_Random.NextFloat(1, 3) });
+                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = m_Random.NextFloat(25, 225) });
 
                 switch (type)
                 {

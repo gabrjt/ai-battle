@@ -19,7 +19,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dying>() }
+                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Idle>(), ComponentType.ReadOnly<Dying>() }
             });
         }
 
