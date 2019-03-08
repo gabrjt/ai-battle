@@ -21,7 +21,9 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
-                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value || DyingFromEntity.Exists(target.Value) || DestroyFromEntity.Exists(target.Value)) return;
+                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value ||
+                    DyingFromEntity.Exists(target.Value) ||
+                    DestroyFromEntity.Exists(target.Value)) return;
 
                 RemoveTargetQueue.Enqueue(entity);
             }
