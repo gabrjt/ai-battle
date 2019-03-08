@@ -41,6 +41,9 @@ namespace Game.Systems
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
                 ComponentType.ReadWrite<AttackDistance>(),
+                ComponentType.ReadWrite<AttackDuration>(),
+                ComponentType.ReadWrite<AttackDamage>(),
+                ComponentType.ReadWrite<AttackSpeed>(),
                 ComponentType.ReadWrite<Health>(),
                 ComponentType.ReadWrite<MaxHealth>()
             );
@@ -96,29 +99,56 @@ namespace Game.Systems
             {
                 var type = (ViewType)m_Random.NextInt(Enum.GetValues(typeof(ViewType)).Length);
                 var entity = entityArray[entityIndex];
-                var maxHealth = m_Random.NextInt(100, 200);
+                var movementSpeed = 0f;
+                var engageSqrRadius = 0f;
+                var attackDuration = 0f;
+                var attackDamage = 0;
+                var attackSpeed = 0f;
+                var maxHealth = 0;
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
-                PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = m_Random.NextFloat(1, 3) });
-                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = m_Random.NextFloat(400, 2500) });
-                PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
-                PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });
-                PostUpdateCommands.SetComponent(entity, new Health { Value = maxHealth });
 
                 switch (type)
                 {
                     case ViewType.Knight:
                         PostUpdateCommands.AddComponent(entity, new Knight());
+                        movementSpeed = m_Random.NextFloat(1, 3);
+                        engageSqrRadius = m_Random.NextFloat(400, 2500);
+                        attackDuration = 1;
+                        attackDamage = m_Random.NextInt(10, 30);
+                        attackSpeed = m_Random.NextFloat(1, 3);
+                        maxHealth = m_Random.NextInt(100, 200);
                         break;
 
                     case ViewType.OrcWolfRider:
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                        movementSpeed = m_Random.NextFloat(1, 3);
+                        engageSqrRadius = m_Random.NextFloat(400, 2500);
+                        attackDuration = 1.333f;
+                        attackDamage = m_Random.NextInt(10, 30);
+                        attackSpeed = m_Random.NextFloat(1, 3);
+                        maxHealth = m_Random.NextInt(100, 200);
                         break;
 
                     case ViewType.Skeleton:
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
+                        movementSpeed = m_Random.NextFloat(1, 3);
+                        engageSqrRadius = m_Random.NextFloat(400, 2500);
+                        attackDuration = 2;
+                        attackDamage = m_Random.NextInt(10, 30);
+                        attackSpeed = m_Random.NextFloat(1, 3);
+                        maxHealth = m_Random.NextInt(100, 200);
                         break;
                 }
+
+                PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = movementSpeed });
+                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = engageSqrRadius });
+                PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
+                PostUpdateCommands.SetComponent(entity, new AttackDuration { Value = attackDuration });
+                PostUpdateCommands.SetComponent(entity, new AttackDamage { Value = attackDamage });
+                PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = attackSpeed });
+                PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });
+                PostUpdateCommands.SetComponent(entity, new Health { Value = maxHealth });
             }
 
             entityArray.Dispose();
