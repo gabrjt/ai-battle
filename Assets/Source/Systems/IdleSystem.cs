@@ -112,7 +112,6 @@ namespace Game.Systems
 
             if (m_ProcessedQueue.Count > 0)
             {
-                removeList.Capacity += m_ProcessedQueue.Count - 1;
                 while (m_ProcessedQueue.TryDequeue(out var entity))
                 {
                     removeList.Add(entity);
