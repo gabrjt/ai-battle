@@ -6,6 +6,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 
 namespace Game.Systems
 {
@@ -51,15 +52,15 @@ namespace Game.Systems
 
                 EntityArray[index] = entity;
 
-                for (var x = node.x - nodeRadius; x < maxNodeX; x++)
+                for (var x = node.x - nodeRadius; x <= maxNodeX; x++)
                 {
-                    for (var y = node.y - nodeRadius; y < maxNodeY; y++)
+                    for (var y = node.y - nodeRadius; y <= maxNodeY; y++)
                     {
                         if (NodeMap.TryGetFirstValue(new int2(x, y), out var targetEntity, out var iterator))
                         {
                             do
                             {
-                                if (TranslationMap.TryGetValue(targetEntity, out var targetTranslation) && targetEntity != entity)
+                                if (targetEntity != entity && TranslationMap.TryGetValue(targetEntity, out var targetTranslation))
                                 {
                                     var sqrDistance = math.lengthsq(targetTranslation - translation.Value);
 
@@ -81,9 +82,9 @@ namespace Game.Systems
         private struct ApplyJob : IJobParallelFor
         {
             [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
-            [DeallocateOnJobCompletion] public NativeArray<Entity> EntityArray;
-            [DeallocateOnJobCompletion] public NativeArray<Entity> TargetArray;
-            [DeallocateOnJobCompletion] public NativeArray<@bool> EngagedArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> TargetArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<@bool> EngagedArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
@@ -136,6 +137,8 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            if (Time.frameCount % 60 > 0) return inputDeps;
+
             var targetCount = m_TargetGroup.CalculateLength();
 
             if (m_Capacity < targetCount)

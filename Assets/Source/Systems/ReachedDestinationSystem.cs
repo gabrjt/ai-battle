@@ -5,12 +5,11 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    [UpdateBefore(typeof(IdleSystem))]
+    [UpdateAfter(typeof(DisengageSystem))]
     public class ReachedDestinationSystem : JobComponentSystem
     {
         [BurstCompile]

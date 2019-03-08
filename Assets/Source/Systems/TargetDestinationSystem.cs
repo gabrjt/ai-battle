@@ -14,7 +14,6 @@ namespace Game.Systems
     public class TargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        [ExcludeComponent(typeof(Destroy))]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Velocity, Destination>
         {
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;

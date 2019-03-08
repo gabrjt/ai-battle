@@ -9,7 +9,7 @@ using Unity.Transforms;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    [UpdateAfter(typeof(EngageSystem))]
+    [UpdateAfter(typeof(DestinationSystem))]
     public class DisengageSystem : JobComponentSystem
     {
         [BurstCompile]
@@ -30,21 +30,6 @@ namespace Game.Systems
             }
         }
 
-        private struct DisengageJob : IJob
-        {
-            public NativeQueue<Entity> DisengageQueue;
-            public EntityCommandBuffer CommandBuffer;
-
-            public void Execute()
-            {
-                while (DisengageQueue.TryDequeue(out var entity))
-                {
-                    CommandBuffer.RemoveComponent<Target>(entity);
-                    CommandBuffer.RemoveComponent<Destination>(entity);
-                }
-            }
-        }
-
         private NativeQueue<Entity> m_DisengageQueue;
 
         protected override void OnCreateManager()
@@ -56,8 +41,6 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-
             inputDeps = new ProcessJob
             {
                 DisengageQueue = m_DisengageQueue.ToConcurrent(),
@@ -66,13 +49,13 @@ namespace Game.Systems
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this, inputDeps);
 
-            inputDeps = new DisengageJob
-            {
-                DisengageQueue = m_DisengageQueue,
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer()
-            }.Schedule(inputDeps);
+            inputDeps.Complete();
 
-            commandBufferSystem.AddJobHandleForProducer(inputDeps);
+            while (m_DisengageQueue.TryDequeue(out var entity))
+            {
+                EntityManager.RemoveComponent<Target>(entity);
+                EntityManager.RemoveComponent<Destination>(entity);
+            }
 
             return inputDeps;
         }

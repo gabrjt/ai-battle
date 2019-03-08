@@ -95,7 +95,7 @@ namespace Game.Systems
         {
             var removeCount = m_RemoveGroup.CalculateLength();
             var removeGroupArray = m_RemoveGroup.ToEntityArray(Allocator.TempJob);
-            var removeArray = new NativeArray<Entity>(removeCount + m_ProcessedQueue.Count, Allocator.Temp);
+            var removeArray = new NativeArray<Entity>(removeCount + m_ProcessedQueue.Count, Allocator.TempJob);
 
             NativeArray<Entity>.Copy(removeGroupArray, removeArray, removeCount);
 
