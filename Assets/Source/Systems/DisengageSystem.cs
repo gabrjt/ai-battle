@@ -9,21 +9,17 @@ using Unity.Transforms;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    public class DisengageSystem : JobComponentSystem
+    public class DisengageSystem : ComponentSystem
     {
         [BurstCompile]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, EngageSqrRadius>
         {
             public NativeQueue<Entity>.Concurrent RemoveQueue;
-            [ReadOnly] public ComponentDataFromEntity<Dying> DyingFromEntity;
-            [ReadOnly] public ComponentDataFromEntity<Destroy> DestroyFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
-                if (!DestroyFromEntity.Exists(target.Value) &&
-                    !DyingFromEntity.Exists(target.Value) &&
-                    math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
+                if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
 
                 RemoveQueue.Enqueue(entity);
             }
@@ -44,26 +40,36 @@ namespace Game.Systems
             }
         }
 
+        private ComponentGroup m_Group;
         private NativeQueue<Entity> m_RemoveQueue;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
+            m_Group = Entities.WithAll<Target>().ToComponentGroup();
+
             m_RemoveQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
-        protected override JobHandle OnUpdate(JobHandle inputDeps)
+        protected override void OnUpdate()
         {
+            Entities.With(m_Group).ForEach((Entity entity, ref Target target) =>
+            {
+                if (EntityManager.Exists(target.Value)) return;
+
+                PostUpdateCommands.RemoveComponent<Target>(entity);
+            });
+
+            PostUpdateCommands.Playback(EntityManager);
+
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-            inputDeps = new ProcessJob
+            var inputDeps = new ProcessJob
             {
                 RemoveQueue = m_RemoveQueue.ToConcurrent(),
-                DyingFromEntity = GetComponentDataFromEntity<Dying>(true),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
-            }.Schedule(this, inputDeps);
+            }.Schedule(this);
 
             inputDeps = new RemoveTargetJob
             {
@@ -71,7 +77,7 @@ namespace Game.Systems
                 CommandBuffer = commandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
-            return inputDeps;
+            inputDeps.Complete();
         }
 
         protected override void OnDestroyManager()
