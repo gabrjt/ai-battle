@@ -1,6 +1,7 @@
 ﻿using Game.Components;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -9,134 +10,80 @@ using Unity.Transforms;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    [UpdateAfter(typeof(ProcessMotionSystem))]
-    [UpdateBefore(typeof(MoveSystem))]
     public class TargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Velocity, Destination>
+        [ExcludeComponent(typeof(Destination), typeof(Dying))]
+        private struct ConsolidateTargetDestinationJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance>
         {
-            public NativeQueue<Entity>.Concurrent AddTargetInRangeQueue;
-            public NativeQueue<Entity>.Concurrent RemoveTargetInRangeQueue;
+            [NativeDisableParallelForRestriction] public NativeArray<Entity> EntityArray;
+            [NativeDisableParallelForRestriction] public NativeArray<Destination> DestinationArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
-            [ReadOnly] public ComponentDataFromEntity<TargetInRange> TargetInRangeFromEntity;
 
             public void Execute(Entity entity, int index,
-                [ReadOnly] ref Target target,
-                [ReadOnly] ref Translation translation,
-                [ReadOnly] ref AttackDistance attackDistance,
-                ref Velocity velocity,
-                ref Destination destination)
+               [ReadOnly] ref Target target,
+               [ReadOnly] ref Translation translation,
+               [ReadOnly] ref AttackDistance attackDistance)
             {
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
                 var distance = math.distance(translation.Value, targetTranslation);
+                var direction = math.normalizesafe(targetTranslation - translation.Value);
 
-                if (distance < attackDistance.Min || distance > attackDistance.Max)
-                {
-                    var direction = math.normalizesafe(targetTranslation - translation.Value);
-                    destination.Value = targetTranslation - direction * attackDistance.Min;
-
-                    if (TargetInRangeFromEntity.Exists(entity))
-                    {
-                        RemoveTargetInRangeQueue.Enqueue(entity);
-                    }
-                }
-                else
-                {
-                    destination.Value = translation.Value;
-                    velocity.Value = float3.zero;
-
-                    if (!TargetInRangeFromEntity.Exists(entity))
-                    {
-                        AddTargetInRangeQueue.Enqueue(entity);
-                    }
-                }
+                EntityArray[index] = entity;
+                DestinationArray[index] = new Destination { Value = targetTranslation - direction * attackDistance.Min };
             }
         }
 
-        private struct AddTargetInRangeJob : IJob
+        private struct AddTargetDestinationJob : IJobParallelFor
         {
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            public NativeQueue<Entity> AddTargetInRangeQueue;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Destination> DestinationArray;
+            [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
+            [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
-            public void Execute()
+            public void Execute(int index)
             {
-                while (AddTargetInRangeQueue.TryDequeue(out var entity))
-                {
-                    CommandBuffer.AddComponent(entity, new TargetInRange());
-                }
+                CommandBuffer.AddComponent(m_ThreadIndex, EntityArray[index], DestinationArray[index]);
             }
         }
 
-        private struct RemoveTargetInRangeJob : IJob
-        {
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            public NativeQueue<Entity> RemoveTargetInRangeQueue;
-
-            public void Execute()
-            {
-                while (RemoveTargetInRangeQueue.TryDequeue(out var entity))
-                {
-                    CommandBuffer.RemoveComponent<TargetInRange>(entity);
-                }
-            }
-        }
-
-        private NativeQueue<Entity> m_AddTargetInRangeQueue;
-        private NativeQueue<Entity> m_RemoveTargetInRangeQueue;
+        private ComponentGroup m_Group;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_AddTargetInRangeQueue = new NativeQueue<Entity>(Allocator.Persistent);
-            m_RemoveTargetInRangeQueue = new NativeQueue<Entity>(Allocator.Persistent);
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Target>() },
+                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Dying>() }
+            });
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            var length = m_Group.CalculateLength();
+            var entityArray = new NativeArray<Entity>(length, Allocator.TempJob);
+            var destinationArray = new NativeArray<Destination>(length, Allocator.TempJob);
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-            inputDeps = new ProcessJob
+            inputDeps = new ConsolidateTargetDestinationJob
             {
-                AddTargetInRangeQueue = m_AddTargetInRangeQueue.ToConcurrent(),
-                RemoveTargetInRangeQueue = m_RemoveTargetInRangeQueue.ToConcurrent(),
-                TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
-                TargetInRangeFromEntity = GetComponentDataFromEntity<TargetInRange>(true)
+                EntityArray = entityArray,
+                DestinationArray = destinationArray,
+                TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this, inputDeps);
 
-            var addTargetInRangeDeps = new AddTargetInRangeJob
+            inputDeps = new AddTargetDestinationJob
             {
-                AddTargetInRangeQueue = m_AddTargetInRangeQueue,
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer()
-            }.Schedule(inputDeps);
-
-            var removeTargetInRangeDeps = new RemoveTargetInRangeJob
-            {
-                RemoveTargetInRangeQueue = m_RemoveTargetInRangeQueue,
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer()
-            }.Schedule(inputDeps);
-
-            inputDeps = JobHandle.CombineDependencies(addTargetInRangeDeps, removeTargetInRangeDeps);
+                EntityArray = entityArray,
+                DestinationArray = destinationArray,
+                CommandBuffer = commandBufferSystem.CreateCommandBuffer().ToConcurrent(),
+            }.Schedule(length, 64, inputDeps);
 
             commandBufferSystem.AddJobHandleForProducer(inputDeps);
 
             return inputDeps;
-        }
-
-        protected override void OnDestroyManager()
-        {
-            base.OnDestroyManager();
-
-            if (m_AddTargetInRangeQueue.IsCreated)
-            {
-                m_AddTargetInRangeQueue.Dispose();
-            }
-
-            if (m_RemoveTargetInRangeQueue.IsCreated)
-            {
-                m_RemoveTargetInRangeQueue.Dispose();
-            }
         }
     }
 }

@@ -48,7 +48,6 @@ namespace Game.Systems
             base.OnCreateManager();
 
             m_Group = Entities.WithAll<Target>().ToComponentGroup();
-
             m_RemoveQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
@@ -56,7 +55,7 @@ namespace Game.Systems
         {
             Entities.With(m_Group).ForEach((Entity entity, ref Target target) =>
             {
-                if (EntityManager.Exists(target.Value)) return;
+                if (EntityManager.Exists(target.Value) && !EntityManager.HasComponent<Destroy>(target.Value)) return;
 
                 PostUpdateCommands.RemoveComponent<Target>(entity);
             });
