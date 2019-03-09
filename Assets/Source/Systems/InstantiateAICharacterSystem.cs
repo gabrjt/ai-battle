@@ -45,7 +45,8 @@ namespace Game.Systems
                 ComponentType.ReadWrite<AttackDamage>(),
                 ComponentType.ReadWrite<AttackSpeed>(),
                 ComponentType.ReadWrite<Health>(),
-                ComponentType.ReadWrite<MaxHealth>()
+                ComponentType.ReadWrite<MaxHealth>(),
+                ComponentType.ReadWrite<HealthRegeneration>()
             );
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
@@ -106,6 +107,7 @@ namespace Game.Systems
                 var attackDamage = 0;
                 var attackSpeed = 0f;
                 var maxHealth = 0;
+                var healthRegeneration = 0f;
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
 
@@ -119,6 +121,7 @@ namespace Game.Systems
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
+                        healthRegeneration = m_Random.NextFloat(1, 3);
                         break;
 
                     case ViewType.OrcWolfRider:
@@ -129,6 +132,7 @@ namespace Game.Systems
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
+                        healthRegeneration = m_Random.NextFloat(1, 3);
                         break;
 
                     case ViewType.Skeleton:
@@ -139,6 +143,7 @@ namespace Game.Systems
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
+                        healthRegeneration = m_Random.NextFloat(1, 3);
                         break;
                 }
 
@@ -150,6 +155,7 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = attackSpeed });
                 PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });
                 PostUpdateCommands.SetComponent(entity, new Health { Value = maxHealth });
+                PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = healthRegeneration });
             }
 
             entityArray.Dispose();
