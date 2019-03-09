@@ -16,20 +16,20 @@ namespace Game.Systems
             m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<MovementSpeed>() },
-                None = new[] { ComponentType.ReadWrite<Velocity>(), ComponentType.ReadOnly<Dying>() }
+                None = new[] { ComponentType.ReadWrite<Motion>(), ComponentType.ReadOnly<Dying>() }
             });
 
             m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadWrite<Velocity>() },
+                All = new[] { ComponentType.ReadWrite<Motion>() },
                 None = new[] { ComponentType.ReadOnly<Destination>() }
             });
         }
 
         protected override void OnUpdate()
         {
-            EntityManager.AddComponent(m_AddGroup, ComponentType.ReadWrite<Velocity>());
-            EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<Velocity>());
+            EntityManager.AddComponent(m_AddGroup, ComponentType.ReadWrite<Motion>());
+            EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<Motion>());
         }
     }
 }

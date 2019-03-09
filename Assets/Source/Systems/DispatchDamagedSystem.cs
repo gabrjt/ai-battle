@@ -53,7 +53,7 @@ namespace Game.Systems
             }
         }
 
-        private ComponentGroup m_AttackingGroup;
+        private ComponentGroup m_Group;
         private EntityArchetype m_Archetype;
         private NativeQueue<Damaged> m_DamagedQueue;
 
@@ -61,16 +61,17 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_AttackingGroup = Entities.WithAll<DamagedDispatched>().WithNone<AttackDuration>().ToComponentGroup();
+            m_Group = Entities.WithAll<DamagedDispatched>().WithNone<AttackDuration>().ToComponentGroup();
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Damaged>());
             m_DamagedQueue = new NativeQueue<Damaged>(Allocator.Persistent);
         }
 
         protected override void OnUpdate()
         {
-            EntityManager.RemoveComponent(m_AttackingGroup, ComponentType.ReadWrite<DamagedDispatched>());
-
-            var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
+            if (m_Group.CalculateLength() > 0)
+            {
+                EntityManager.RemoveComponent(m_Group, ComponentType.ReadWrite<DamagedDispatched>());
+            }
 
             var inputDeps = new ProcessDamagedJob
             {
@@ -80,7 +81,7 @@ namespace Game.Systems
             inputDeps = new DispatchDamagedJob
             {
                 DamagedQueue = m_DamagedQueue,
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
+                CommandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer(),
                 Archetype = m_Archetype
             }.Schedule(inputDeps);
 

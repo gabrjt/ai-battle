@@ -6,25 +6,17 @@ namespace Game.Systems
     [UpdateInGroup(typeof(GameLogicGroup))]
     public class DestroyAllCharactersSystem : ComponentSystem
     {
-        private ComponentGroup m_Group;
-
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
-
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Destroy>(), ComponentType.ReadWrite<Disabled>() }
-            });
 
             RequireSingletonForUpdate<DestroyAllCharacters>();
         }
 
         protected override void OnUpdate()
         {
-            EntityManager.AddComponent(m_Group, ComponentType.ReadWrite<Destroy>());
-            EntityManager.AddComponent(m_Group, ComponentType.ReadWrite<Disabled>());
+            EntityManager.AddComponent(Entities.WithAll<Character>().WithNone<Destroy>().ToComponentGroup(), ComponentType.ReadWrite<Destroy>());
+            EntityManager.AddComponent(Entities.WithAll<Character>().WithNone<Disabled>().ToComponentGroup(), ComponentType.ReadWrite<Disabled>());
         }
     }
 }

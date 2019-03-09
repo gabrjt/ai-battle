@@ -62,9 +62,9 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var length = m_Group.CalculateLength();
-            var entityArray = new NativeArray<Entity>(length, Allocator.TempJob);
-            var destinationArray = new NativeArray<Destination>(length, Allocator.TempJob);
+            var groupLength = m_Group.CalculateLength();
+            var entityArray = new NativeArray<Entity>(groupLength, Allocator.TempJob);
+            var destinationArray = new NativeArray<Destination>(groupLength, Allocator.TempJob);
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
             inputDeps = new ConsolidateTargetDestinationJob
@@ -79,7 +79,7 @@ namespace Game.Systems
                 EntityArray = entityArray,
                 DestinationArray = destinationArray,
                 CommandBuffer = commandBufferSystem.CreateCommandBuffer().ToConcurrent(),
-            }.Schedule(length, 64, inputDeps);
+            }.Schedule(groupLength, 64, inputDeps);
 
             commandBufferSystem.AddJobHandleForProducer(inputDeps);
 

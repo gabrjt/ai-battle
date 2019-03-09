@@ -52,8 +52,12 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<AttackDuration>());
-            EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<Attacking>());
+            var removeAttackingGroupLength = m_RemoveAttackingGroup.CalculateLength();
+            if (removeAttackingGroupLength > 0)
+            {
+                EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<AttackDuration>());
+                EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<Attacking>());
+            }
 
             EntityManager.AddComponent(m_AddAttackingGroup, ComponentType.ReadWrite<Attacking>());
 
@@ -62,7 +66,6 @@ namespace Game.Systems
             {
                 var entityArray = new NativeArray<Entity>(addAttackDurationGroupLength, Allocator.TempJob);
                 var attackDurationArray = new NativeArray<AttackDuration>(addAttackDurationGroupLength, Allocator.TempJob);
-                var commandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
 
                 var addAttackingDurationDeps = new ConsolidateAttackDurationJob
                 {
@@ -74,7 +77,7 @@ namespace Game.Systems
                 {
                     EntityArray = entityArray,
                     AttackDurationArray = attackDurationArray,
-                    CommandBuffer = commandBuffer.ToConcurrent()
+                    CommandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().ToConcurrent()
                 }.Schedule(addAttackDurationGroupLength, 64, addAttackingDurationDeps);
 
                 addAttackingDurationDeps.Complete();

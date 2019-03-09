@@ -14,7 +14,7 @@ namespace Game.Systems
     public class ProcessTargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Velocity, Destination>
+        private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Motion, Destination>
         {
             public NativeQueue<Entity>.Concurrent AddTargetInRangeQueue;
             public NativeQueue<Entity>.Concurrent RemoveTargetInRangeQueue;
@@ -25,7 +25,7 @@ namespace Game.Systems
                 [ReadOnly] ref Target target,
                 [ReadOnly] ref Translation translation,
                 [ReadOnly] ref AttackDistance attackDistance,
-                ref Velocity velocity,
+                ref Motion motion,
                 ref Destination destination)
             {
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
@@ -44,7 +44,7 @@ namespace Game.Systems
                 else
                 {
                     destination.Value = translation.Value;
-                    velocity.Value = float3.zero;
+                    motion.Value = float3.zero;
 
                     if (!TargetInRangeFromEntity.Exists(entity))
                     {

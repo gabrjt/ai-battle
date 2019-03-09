@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-
     [UpdateInGroup(typeof(GameLogicGroup))]
     public class ProcessAttackSystem : JobComponentSystem
     {

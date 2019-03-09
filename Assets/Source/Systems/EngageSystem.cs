@@ -161,40 +161,43 @@ namespace Game.Systems
             }
 
             var count = m_Group.CalculateLength();
-            var entityArray = new NativeArray<Entity>(count, Allocator.TempJob);
-            var targetEntityArray = new NativeArray<Entity>(count, Allocator.TempJob);
-            var engagedArray = new NativeArray<@bool>(count, Allocator.TempJob);
-            var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
-            var commandBuffer = commandBufferSystem.CreateCommandBuffer();
-
-            inputDeps = new ConsolidateNodesJob
+            if (count > 0)
             {
-                NodeMap = m_NodeMap.ToConcurrent(),
-                TranslationMap = m_TranslationMap.ToConcurrent(),
-                NodeSize = NodeSize
-            }.Schedule(this, inputDeps);
+                var entityArray = new NativeArray<Entity>(count, Allocator.TempJob);
+                var targetEntityArray = new NativeArray<Entity>(count, Allocator.TempJob);
+                var engagedArray = new NativeArray<@bool>(count, Allocator.TempJob);
+                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
+                var commandBuffer = commandBufferSystem.CreateCommandBuffer();
 
-            inputDeps = new EngageNearestTargetJob
-            {
-                NodeMap = m_NodeMap,
-                TranslationMap = m_TranslationMap,
-                EntityArray = entityArray,
-                TargetArray = targetEntityArray,
-                EngagedArray = engagedArray,
-                NodeSize = NodeSize
-            }.Schedule(this, inputDeps);
+                inputDeps = new ConsolidateNodesJob
+                {
+                    NodeMap = m_NodeMap.ToConcurrent(),
+                    TranslationMap = m_TranslationMap.ToConcurrent(),
+                    NodeSize = NodeSize
+                }.Schedule(this, inputDeps);
 
-            inputDeps = new AddTargetJob
-            {
-                CommandBuffer = commandBuffer.ToConcurrent(),
-                EntityArray = entityArray,
-                TargetArray = targetEntityArray,
-                EngagedArray = engagedArray,
-                TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
-                TargetFromEntity = GetComponentDataFromEntity<Target>(),
-            }.Schedule(count, 64, inputDeps);
+                inputDeps = new EngageNearestTargetJob
+                {
+                    NodeMap = m_NodeMap,
+                    TranslationMap = m_TranslationMap,
+                    EntityArray = entityArray,
+                    TargetArray = targetEntityArray,
+                    EngagedArray = engagedArray,
+                    NodeSize = NodeSize
+                }.Schedule(this, inputDeps);
 
-            commandBufferSystem.AddJobHandleForProducer(inputDeps);
+                inputDeps = new AddTargetJob
+                {
+                    CommandBuffer = commandBuffer.ToConcurrent(),
+                    EntityArray = entityArray,
+                    TargetArray = targetEntityArray,
+                    EngagedArray = engagedArray,
+                    TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
+                    TargetFromEntity = GetComponentDataFromEntity<Target>(),
+                }.Schedule(count, 64, inputDeps);
+
+                commandBufferSystem.AddJobHandleForProducer(inputDeps);
+            }
 
             return inputDeps;
         }

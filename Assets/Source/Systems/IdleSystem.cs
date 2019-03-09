@@ -56,10 +56,16 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<IdleDuration>());
-            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<Idle>());
+            if (m_RemoveIdleGroup.CalculateLength() > 0)
+            {
+                EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<IdleDuration>());
+                EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<Idle>());
+            }
 
-            EntityManager.AddComponent(m_AddIdleGroup, ComponentType.ReadWrite<Idle>());
+            if (m_AddIdleGroup.CalculateLength() > 0)
+            {
+                EntityManager.AddComponent(m_AddIdleGroup, ComponentType.ReadWrite<Idle>());
+            }
 
             var addIdleDurationGroupLength = m_AddIdleDurationGroup.CalculateLength();
             if (addIdleDurationGroupLength > 0)

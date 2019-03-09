@@ -5,9 +5,6 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 
-
-
-
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]

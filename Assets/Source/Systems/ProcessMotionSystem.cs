@@ -10,11 +10,11 @@ namespace Game.Systems
     public class ProcessMotionSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentData<MovementDirection, MovementSpeed, Velocity>
+        private struct ProcessJob : IJobProcessComponentData<MovementDirection, MovementSpeed, Motion>
         {
-            public void Execute([ReadOnly] ref MovementDirection movementDirection, [ReadOnly] ref MovementSpeed movementSpeed, ref Velocity velocity)
+            public void Execute([ReadOnly] ref MovementDirection movementDirection, [ReadOnly] ref MovementSpeed movementSpeed, ref Motion motion)
             {
-                velocity.Value = movementDirection.Value * movementSpeed.Value;
+                motion.Value = movementDirection.Value * movementSpeed.Value;
             }
         }
 
