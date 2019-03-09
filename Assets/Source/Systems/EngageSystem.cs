@@ -15,7 +15,7 @@ namespace Game.Systems
     {
         [BurstCompile]
         [ExcludeComponent(typeof(Dying))]
-        private struct MakeNodesJob : IJobProcessComponentDataWithEntity<Translation>
+        private struct ConsolidateJob : IJobProcessComponentDataWithEntity<Translation>
         {
             public NativeMultiHashMap<int2, Entity>.Concurrent NodeMap;
             public NativeHashMap<Entity, float3>.Concurrent TranslationMap;
@@ -32,7 +32,7 @@ namespace Game.Systems
 
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
-        private struct EngageJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
+        private struct ProcessJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
             [ReadOnly] public NativeHashMap<Entity, float3> TranslationMap;
@@ -170,14 +170,14 @@ namespace Game.Systems
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
             var commandBuffer = commandBufferSystem.CreateCommandBuffer();
 
-            inputDeps = new MakeNodesJob
+            inputDeps = new ConsolidateJob
             {
                 NodeMap = m_NodeMap.ToConcurrent(),
                 TranslationMap = m_TranslationMap.ToConcurrent(),
                 NodeSize = NodeSize
             }.Schedule(this, inputDeps);
 
-            inputDeps = new EngageJob
+            inputDeps = new ProcessJob
             {
                 NodeMap = m_NodeMap,
                 TranslationMap = m_TranslationMap,

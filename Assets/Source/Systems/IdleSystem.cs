@@ -12,16 +12,16 @@ namespace Game.Systems
     public class IdleSystem : ComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentDataWithEntity<Idle>
+        private struct ProcessJob : IJobProcessComponentDataWithEntity<IdleDuration>
         {
             public NativeQueue<Entity>.Concurrent ProcessedQueue;
             [ReadOnly] public float DeltaTime;
 
-            public void Execute(Entity entity, int index, ref Idle idle)
+            public void Execute(Entity entity, int index, ref IdleDuration idleDuration)
             {
-                idle.Duration -= DeltaTime;
+                idleDuration.Value -= DeltaTime;
 
-                if (idle.Duration > 0) return;
+                if (idleDuration.Value > 0) return;
 
                 ProcessedQueue.Enqueue(entity);
             }
@@ -55,44 +55,19 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            Add();
-            Process();
-            Remove();
-        }
+            EntityManager.AddComponent(m_AddGroup, ComponentType.ReadWrite<Idle>());
 
-        private void Add()
-        {
-            var chunkArray = m_AddGroup.CreateArchetypeChunkArray(Allocator.TempJob);
-            var entityType = GetArchetypeChunkEntityType();
-
-            for (var chunkIndex = 0; chunkIndex < chunkArray.Length; chunkIndex++)
+            Entities.WithAll<Idle>().WithNone<IdleDuration>().ForEach((Entity entity) =>
             {
-                var chunk = chunkArray[chunkIndex];
-                var entityArray = chunk.GetNativeArray(entityType);
+                PostUpdateCommands.AddComponent(entity, new IdleDuration { Value = m_Random.NextFloat(1, 5) });
+            });
 
-                for (var entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
-                {
-                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Idle
-                    {
-                        Duration = m_Random.NextFloat(1, 5)
-                    });
-                }
-            }
-
-            chunkArray.Dispose();
-        }
-
-        private void Process()
-        {
             new ProcessJob
             {
                 ProcessedQueue = m_ProcessedQueue.ToConcurrent(),
                 DeltaTime = Time.deltaTime
             }.Schedule(this).Complete();
-        }
 
-        private void Remove()
-        {
             var removeCount = m_RemoveGroup.CalculateLength();
             var removeGroupArray = m_RemoveGroup.ToEntityArray(Allocator.TempJob);
             var removeArray = new NativeArray<Entity>(removeCount + m_ProcessedQueue.Count, Allocator.TempJob);
