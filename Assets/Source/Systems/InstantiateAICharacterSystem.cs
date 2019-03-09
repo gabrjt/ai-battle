@@ -79,6 +79,7 @@ namespace Game.Systems
                 for (var entityIndex = 0; entityIndex < maxDestroyCount; entityIndex++)
                 {
                     PostUpdateCommands.AddComponent(entityArray[entityIndex], new Destroy());
+                    PostUpdateCommands.AddComponent(entityArray[entityIndex], new Disabled());
                 }
 
                 entityArray.Dispose();

@@ -12,13 +12,17 @@ namespace Game.Systems
     public class DisengageSystem : ComponentSystem
     {
         [BurstCompile]
+        //[ExcludeComponent(typeof(Destroy))]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, EngageSqrRadius>
         {
             public NativeQueue<Entity>.Concurrent RemoveQueue;
+
+            //[ReadOnly] public ComponentDataFromEntity<Destroy> DestroyFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
+                //if (!DestroyFromEntity.Exists(target.Value) && math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
                 if (math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
 
                 RemoveQueue.Enqueue(entity);
@@ -67,6 +71,7 @@ namespace Game.Systems
             var inputDeps = new ProcessJob
             {
                 RemoveQueue = m_RemoveQueue.ToConcurrent(),
+                //DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this);
 

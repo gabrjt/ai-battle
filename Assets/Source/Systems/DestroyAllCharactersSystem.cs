@@ -24,6 +24,7 @@ namespace Game.Systems
         protected override void OnUpdate()
         {
             EntityManager.AddComponent(m_Group, ComponentType.ReadWrite<Destroy>());
+            EntityManager.AddComponent(m_Group, ComponentType.ReadWrite<Disabled>());
         }
     }
 }

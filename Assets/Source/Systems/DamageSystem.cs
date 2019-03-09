@@ -11,7 +11,7 @@ namespace Game.Systems
         {
             ForEach((ref Damaged damaged) =>
             {
-                Debug.Log($"{damaged.This} attacked {damaged.Other} with {damaged.Value} damage");
+                //Debug.Log($"{damaged.This} attacked {damaged.Other} with {damaged.Value} damage");
             });
         }
     }
