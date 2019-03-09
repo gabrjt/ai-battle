@@ -9,5 +9,5 @@ namespace Game.Components
         public float Value;
     }
 
-    public class AttackDurationProxy : ComponentDataProxy<AttackDuration> { }
+    public class AttackDurationProxy : ComponentDataProxy<AttackAnimationDuration> { }
 }

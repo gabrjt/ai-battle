@@ -41,7 +41,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
                 ComponentType.ReadWrite<AttackDistance>(),
-                ComponentType.ReadWrite<AttackDuration>(),
+                ComponentType.ReadWrite<AttackAnimationDuration>(),
                 ComponentType.ReadWrite<AttackDamage>(),
                 ComponentType.ReadWrite<AttackSpeed>(),
                 ComponentType.ReadWrite<Health>(),
@@ -101,7 +101,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
                 var movementSpeed = 0f;
                 var engageSqrRadius = 0f;
-                var attackDuration = 0f;
+                var attackAnimationDuration = 0f;
                 var attackDamage = 0;
                 var attackSpeed = 0f;
                 var maxHealth = 0;
@@ -114,7 +114,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Knight());
                         movementSpeed = m_Random.NextFloat(1, 3);
                         engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackDuration = 1;
+                        attackAnimationDuration = 1;
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
@@ -124,7 +124,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
                         movementSpeed = m_Random.NextFloat(1, 3);
                         engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackDuration = 1.333f;
+                        attackAnimationDuration = 1.333f;
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
@@ -134,7 +134,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
                         movementSpeed = m_Random.NextFloat(1, 3);
                         engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackDuration = 2;
+                        attackAnimationDuration = 2;
                         attackDamage = m_Random.NextInt(10, 30);
                         attackSpeed = m_Random.NextFloat(1, 3);
                         maxHealth = m_Random.NextInt(100, 200);
@@ -144,7 +144,7 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = movementSpeed });
                 PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = engageSqrRadius });
                 PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
-                PostUpdateCommands.SetComponent(entity, new AttackDuration { Value = attackDuration });
+                PostUpdateCommands.SetComponent(entity, new AttackAnimationDuration { Value = attackAnimationDuration });
                 PostUpdateCommands.SetComponent(entity, new AttackDamage { Value = attackDamage });
                 PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = attackSpeed });
                 PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });

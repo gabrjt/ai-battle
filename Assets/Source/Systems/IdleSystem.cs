@@ -1,10 +1,10 @@
 ﻿using Game.Components;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
-using Random = Unity.Mathematics.Random;
+using Unity.Mathematics;
 
 namespace Game.Systems
 {
@@ -12,86 +12,77 @@ namespace Game.Systems
     public class IdleSystem : ComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentDataWithEntity<IdleDuration>
+        [ExcludeComponent(typeof(IdleDuration))]
+        private struct ConsolidateIdleDurationJob : IJobProcessComponentDataWithEntity<Idle>
         {
-            public NativeQueue<Entity>.Concurrent ProcessedQueue;
-            [ReadOnly] public float DeltaTime;
+            [NativeDisableParallelForRestriction] public NativeArray<Entity> EntityArray;
+            [NativeDisableParallelForRestriction] public NativeArray<IdleDuration> IdleDurationArray;
+            [ReadOnly] public Random Random;
 
-            public void Execute(Entity entity, int index, ref IdleDuration idleDuration)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Idle idle)
             {
-                idleDuration.Value -= DeltaTime;
-
-                if (idleDuration.Value > 0) return;
-
-                ProcessedQueue.Enqueue(entity);
+                EntityArray[index] = entity;
+                IdleDurationArray[index] = new IdleDuration { Value = Random.NextFloat(15, 60) };
             }
         }
 
-        private ComponentGroup m_AddGroup;
-        private ComponentGroup m_ProcessGroup;
-        private ComponentGroup m_RemoveGroup;
-        private NativeQueue<Entity> m_ProcessedQueue;
+        private struct AddIdleDurationJob : IJobParallelFor
+        {
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<IdleDuration> IdleDurationArray;
+            [ReadOnly] public EntityCommandBuffer.Concurrent CommandBuffer;
+            [NativeSetThreadIndex] private readonly int m_ThreadIndex;
+
+            public void Execute(int index)
+            {
+                CommandBuffer.AddComponent(m_ThreadIndex, EntityArray[index], IdleDurationArray[index]);
+            }
+        }
+
+        private ComponentGroup m_RemoveIdleGroup;
+        private ComponentGroup m_AddIdleGroup;
+        private ComponentGroup m_AddIdleDurationGroup;
         private Random m_Random;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Idle>(), ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<Dying>() }
-            });
-
-            m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadWrite<Idle>() },
-                Any = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<Target>() }
-            });
-
-            m_ProcessedQueue = new NativeQueue<Entity>(Allocator.Persistent);
-            m_Random = new Random(0xABCDEF);
+            m_RemoveIdleGroup = Entities.WithAll<Idle>().WithAny<Destination, Target, Dying>().ToComponentGroup();
+            m_AddIdleGroup = Entities.WithAll<Character>().WithNone<Idle, Destination, Target, Dying>().ToComponentGroup();
+            m_AddIdleDurationGroup = Entities.WithAll<Idle>().WithNone<IdleDuration>().ToComponentGroup();
+            m_Random = new Random((uint)System.Environment.TickCount);
         }
 
         protected override void OnUpdate()
         {
-            EntityManager.AddComponent(m_AddGroup, ComponentType.ReadWrite<Idle>());
+            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<Idle>());
+            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<IdleDuration>());
 
-            Entities.WithAll<Idle>().WithNone<IdleDuration>().ForEach((Entity entity) =>
+            EntityManager.AddComponent(m_AddIdleGroup, ComponentType.ReadWrite<Idle>());
+
+            var shouldAddIdleDurationGroupLength = m_AddIdleDurationGroup.CalculateLength();
+            if (shouldAddIdleDurationGroupLength > 0)
             {
-                PostUpdateCommands.AddComponent(entity, new IdleDuration { Value = m_Random.NextFloat(1, 5) });
-            });
+                var entityArray = new NativeArray<Entity>(shouldAddIdleDurationGroupLength, Allocator.TempJob);
+                var idleDurationArray = new NativeArray<IdleDuration>(shouldAddIdleDurationGroupLength, Allocator.TempJob);
+                var commandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
 
-            new ProcessJob
-            {
-                ProcessedQueue = m_ProcessedQueue.ToConcurrent(),
-                DeltaTime = Time.deltaTime
-            }.Schedule(this).Complete();
+                var addIdleDurationDeps = new ConsolidateIdleDurationJob
+                {
+                    EntityArray = entityArray,
+                    IdleDurationArray = idleDurationArray,
+                    Random = m_Random
+                }.Schedule(this);
 
-            var removeCount = m_RemoveGroup.CalculateLength();
-            var removeGroupArray = m_RemoveGroup.ToEntityArray(Allocator.TempJob);
-            var removeArray = new NativeArray<Entity>(removeCount + m_ProcessedQueue.Count, Allocator.TempJob);
+                addIdleDurationDeps = new AddIdleDurationJob
+                {
+                    EntityArray = entityArray,
+                    IdleDurationArray = idleDurationArray,
+                    CommandBuffer = commandBuffer.ToConcurrent()
+                }.Schedule(shouldAddIdleDurationGroupLength, 64, addIdleDurationDeps);
 
-            NativeArray<Entity>.Copy(removeGroupArray, removeArray, removeCount);
-
-            while (m_ProcessedQueue.TryDequeue(out var entity))
-            {
-                removeArray[removeCount++] = entity;
-            }
-
-            EntityManager.RemoveComponent(removeArray, ComponentType.ReadWrite<Idle>());
-
-            removeArray.Dispose();
-            removeGroupArray.Dispose();
-        }
-
-        protected override void OnDestroyManager()
-        {
-            base.OnDestroyManager();
-
-            if (m_ProcessedQueue.IsCreated)
-            {
-                m_ProcessedQueue.Dispose();
+                addIdleDurationDeps.Complete();
             }
         }
     }
