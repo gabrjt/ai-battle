@@ -56,8 +56,8 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<Idle>());
             EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<IdleDuration>());
+            EntityManager.RemoveComponent(m_RemoveIdleGroup, ComponentType.ReadWrite<Idle>());
 
             EntityManager.AddComponent(m_AddIdleGroup, ComponentType.ReadWrite<Idle>());
 
