@@ -12,7 +12,7 @@ namespace Game.Systems
     public class MoveSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct MoveJob : IJobProcessComponentData<Velocity, Translation>
+        private struct ProcessJob : IJobProcessComponentData<Velocity, Translation>
         {
             [ReadOnly] public float DeltaTime;
 
@@ -24,7 +24,7 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            return new MoveJob
+            return new ProcessJob
             {
                 DeltaTime = Time.deltaTime
             }.Schedule(this, inputDeps);
