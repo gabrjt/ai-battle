@@ -61,11 +61,11 @@ namespace Game.Systems
 
             EntityManager.AddComponent(m_AddIdleGroup, ComponentType.ReadWrite<Idle>());
 
-            var shouldAddIdleDurationGroupLength = m_AddIdleDurationGroup.CalculateLength();
-            if (shouldAddIdleDurationGroupLength > 0)
+            var addIdleDurationGroupLength = m_AddIdleDurationGroup.CalculateLength();
+            if (addIdleDurationGroupLength > 0)
             {
-                var entityArray = new NativeArray<Entity>(shouldAddIdleDurationGroupLength, Allocator.TempJob);
-                var idleDurationArray = new NativeArray<IdleDuration>(shouldAddIdleDurationGroupLength, Allocator.TempJob);
+                var entityArray = new NativeArray<Entity>(addIdleDurationGroupLength, Allocator.TempJob);
+                var idleDurationArray = new NativeArray<IdleDuration>(addIdleDurationGroupLength, Allocator.TempJob);
                 var commandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
 
                 var addIdleDurationDeps = new ConsolidateIdleDurationJob
@@ -80,7 +80,7 @@ namespace Game.Systems
                     EntityArray = entityArray,
                     IdleDurationArray = idleDurationArray,
                     CommandBuffer = commandBuffer.ToConcurrent()
-                }.Schedule(shouldAddIdleDurationGroupLength, 64, addIdleDurationDeps);
+                }.Schedule(addIdleDurationGroupLength, 64, addIdleDurationDeps);
 
                 addIdleDurationDeps.Complete();
             }
