@@ -14,7 +14,7 @@ namespace Game.Systems
 
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Event>() }
+                All = new[] { ComponentType.ReadWrite<Event>() }
             });
         }
 

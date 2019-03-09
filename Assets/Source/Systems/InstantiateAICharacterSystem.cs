@@ -21,7 +21,7 @@ namespace Game.Systems
         private EntityArchetype m_DestroyAllCharactersArchetype;
         private const int m_MaxDestroyCount = 1024;
         private Random m_Random;
-        internal int m_TotalCount = 0xFFF;
+        internal int m_TotalCount = 0xF;
         internal int m_LastTotalCount;
 
         protected override void OnCreateManager()
@@ -31,7 +31,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadOnly<Destroy>() }
+                None = new[] { ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>() }
             });
 
             m_Archetype = EntityManager.CreateArchetype(

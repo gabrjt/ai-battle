@@ -15,7 +15,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Character>() },
-                None = new[] { ComponentType.ReadWrite<Destroy>() }
+                None = new[] { ComponentType.ReadWrite<Destroy>(), ComponentType.ReadWrite<Disabled>() }
             });
 
             RequireSingletonForUpdate<DestroyAllCharacters>();
