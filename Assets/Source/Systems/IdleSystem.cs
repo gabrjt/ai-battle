@@ -22,7 +22,7 @@ namespace Game.Systems
             public void Execute(Entity entity, int index, [ReadOnly] ref Idle idle)
             {
                 EntityArray[index] = entity;
-                IdleDurationArray[index] = new IdleDuration { Value = Random.NextFloat(15, 60) };
+                IdleDurationArray[index] = new IdleDuration { Value = Random.NextFloat(1, 10) };
             }
         }
 

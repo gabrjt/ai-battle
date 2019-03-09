@@ -3,24 +3,23 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine;
+using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    public class ProcessIdleSystem : JobComponentSystem
+    public class ReachedDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct ProcessJob : IJobProcessComponentDataWithEntity<IdleDuration>
+        [ExcludeComponent(typeof(Target))]
+        private struct ProcessJob : IJobProcessComponentDataWithEntity<Translation, Destination>
         {
             public NativeQueue<Entity>.Concurrent RemoveQueue;
-            [ReadOnly] public float DeltaTime;
 
-            public void Execute(Entity entity, int index, ref IdleDuration idleDuration)
+            public void Execute(Entity entity, int index, [ReadOnly] ref Translation translation, [ReadOnly] ref Destination destination)
             {
-                idleDuration.Value -= DeltaTime;
-
-                if (idleDuration.Value > 0) return;
+                if (math.distancesq(translation.Value, destination.Value) > 0.01f) return;
 
                 RemoveQueue.Enqueue(entity);
             }
@@ -30,32 +29,22 @@ namespace Game.Systems
         {
             public NativeQueue<Entity> RemoveQueue;
             [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            [ReadOnly] public EntityArchetype Archetype;
 
             public void Execute()
             {
                 while (RemoveQueue.TryDequeue(out var entity))
                 {
-                    CommandBuffer.RemoveComponent<Idle>(entity);
-                    CommandBuffer.RemoveComponent<IdleDuration>(entity);
-
-                    var idleDurationExpired = CommandBuffer.CreateEntity(Archetype);
-                    CommandBuffer.SetComponent(idleDurationExpired, new IdleDurationExpired
-                    {
-                        This = entity
-                    });
+                    CommandBuffer.RemoveComponent<Destination>(entity);
                 }
             }
         }
 
         private NativeQueue<Entity> m_RemoveQueue;
-        private EntityArchetype m_Archetype;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<IdleDurationExpired>());
             m_RemoveQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
@@ -65,15 +54,13 @@ namespace Game.Systems
 
             inputDeps = new ProcessJob
             {
-                RemoveQueue = m_RemoveQueue.ToConcurrent(),
-                DeltaTime = Time.deltaTime
+                RemoveQueue = m_RemoveQueue.ToConcurrent()
             }.Schedule(this, inputDeps);
 
             inputDeps = new RemoveJob
             {
                 RemoveQueue = m_RemoveQueue,
-                CommandBuffer = commandBufferSystem.CreateCommandBuffer(),
-                Archetype = m_Archetype
+                CommandBuffer = commandBufferSystem.CreateCommandBuffer()
             }.Schedule(inputDeps);
 
             commandBufferSystem.AddJobHandleForProducer(inputDeps);
