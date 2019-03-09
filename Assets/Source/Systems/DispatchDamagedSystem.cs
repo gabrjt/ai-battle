@@ -54,7 +54,6 @@ namespace Game.Systems
         }
 
         private ComponentGroup m_AttackingGroup;
-        //private ComponentGroup m_DestroyedGroup;
         private EntityArchetype m_Archetype;
         private NativeQueue<Damaged> m_DamagedQueue;
 
@@ -63,7 +62,6 @@ namespace Game.Systems
             base.OnCreateManager();
 
             m_AttackingGroup = Entities.WithAll<DamagedDispatched>().WithNone<AttackDuration>().ToComponentGroup();
-            //m_DestroyedGroup = Entities.WithAll<DamagedDispatched, Destroy, Disabled>().ToComponentGroup();
             m_Archetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Event>(), ComponentType.ReadWrite<Damaged>());
             m_DamagedQueue = new NativeQueue<Damaged>(Allocator.Persistent);
         }
@@ -71,7 +69,6 @@ namespace Game.Systems
         protected override void OnUpdate()
         {
             EntityManager.RemoveComponent(m_AttackingGroup, ComponentType.ReadWrite<DamagedDispatched>());
-            //EntityManager.RemoveComponent(m_DestroyedGroup, ComponentType.ReadWrite<DamagedDispatched>());
 
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
