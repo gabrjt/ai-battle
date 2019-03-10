@@ -4,7 +4,6 @@ using Unity.Entities;
 
 namespace Game.Systems
 {
-    [DisableAutoCreation]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public class PoolableObjectCountSystem : ComponentSystem
     {
@@ -24,14 +23,14 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            //var destroySystem = World.GetExistingManager<DestroyGameObjectSystem>();
-            //var count = destroyGameObjectSystem.m_HealthBarPool.Count;
+            var viewPoolSystem = World.GetExistingManager<ViewPoolSystem>();
+            var count = viewPoolSystem.m_KnightPool.Count + viewPoolSystem.m_OrcWolfRiderPool.Count + viewPoolSystem.m_SkeletonPool.Count;
 
             ForEach((TextMeshProUGUI poolableObjectCountText, ref PoolableObjectCount poolableObjectCount) =>
             {
-                //poolableObjectCount.Value = count;
-                //poolableObjectCountText.text = $"{count:#0} Poolable Objects";
-            });
+                poolableObjectCount.Value = count;
+                poolableObjectCountText.text = $"{count:#0} Poolable Objects";
+            }, m_Group);
         }
     }
 }

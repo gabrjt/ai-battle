@@ -36,8 +36,10 @@ namespace Game.Systems
 
             m_Archetype = EntityManager.CreateArchetype(
                 ComponentType.ReadWrite<Character>(),
+                ComponentType.ReadWrite<LocalToWorld>(),
                 ComponentType.ReadWrite<Translation>(),
                 ComponentType.ReadWrite<Rotation>(),
+                ComponentType.ReadWrite<Child>(),
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
                 ComponentType.ReadWrite<AttackDistance>(),
@@ -129,7 +131,6 @@ namespace Game.Systems
                         health.Value = maxHealth.Value;
                         healthRegeneration.Value = m_Random.NextFloat(1, 3);
                         viewInfo.Type = ViewType.Knight;
-                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
 
                     case ViewType.OrcWolfRider:
@@ -143,7 +144,6 @@ namespace Game.Systems
                         health.Value = maxHealth.Value;
                         healthRegeneration.Value = m_Random.NextFloat(1, 3);
                         viewInfo.Type = ViewType.OrcWolfRider;
-                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
 
                     case ViewType.Skeleton:
@@ -157,7 +157,6 @@ namespace Game.Systems
                         health.Value = maxHealth.Value;
                         healthRegeneration.Value = m_Random.NextFloat(1, 3);
                         viewInfo.Type = ViewType.Skeleton;
-                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
                 }
 
@@ -171,7 +170,9 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, healthRegeneration);
                 PostUpdateCommands.SetComponent(entity, viewInfo);
                 PostUpdateCommands.SetSharedComponent(entity, maxSqrViewDistanceFromCamera);
+#if UNITY_EDITOR
                 EntityManager.SetName(entity, $"{viewInfo.Type} AI {entity}");
+#endif
             }
 
             entityArray.Dispose();

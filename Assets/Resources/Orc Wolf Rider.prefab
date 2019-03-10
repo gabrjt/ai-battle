@@ -1002,9 +1002,14 @@ GameObject:
   - component: {fileID: 413006}
   - component: {fileID: 9575048}
   - component: {fileID: 908523734442982387}
+  - component: {fileID: 6122300188947459055}
+  - component: {fileID: 3918653873421045638}
+  - component: {fileID: 928589061104623748}
   - component: {fileID: 2026824271796115880}
   - component: {fileID: 1113068133071631845}
   - component: {fileID: 8429577650837392919}
+  - component: {fileID: 4335351358780542700}
+  - component: {fileID: 6742490501582613814}
   m_Layer: 0
   m_Name: Orc Wolf Rider
   m_TagString: Untagged
@@ -1059,6 +1064,64 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bf10cdea1344482e91a4f2b58506b77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6122300188947459055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6851b6711fc654d54b6566c5eae03737, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedData:
+    Value:
+      c0:
+        x: 0
+        y: 0
+        z: 0
+        w: 0
+      c1:
+        x: 0
+        y: 0
+        z: 0
+        w: 0
+      c2:
+        x: 0
+        y: 0
+        z: 0
+        w: 0
+      c3:
+        x: 0
+        y: 0
+        z: 0
+        w: 1
+--- !u!114 &3918653873421045638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f45258a2afd45afabd0d78ae4fcf414, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &928589061104623748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f922032aad1e4f109e892944af196e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &2026824271796115880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1109,9 +1172,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SerializedData:
     Value:
-      x: 1
-      y: 1
-      z: 1
+      x: 0
+      y: 0
+      z: 0
+--- !u!114 &4335351358780542700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 613011abf1044634ca3abc0b94a1bade, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6742490501582613814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57cb24a75ba384d40bef0941c9b9b711, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &153408
 GameObject:
   m_ObjectHideFlags: 0

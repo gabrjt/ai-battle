@@ -7,5 +7,5 @@ namespace Game.Components
     [Serializable]
     public struct Knight : IComponentData { }
 
-    public class KnightProxy : MonoBehaviour { }
+    public class KnightProxy : ComponentDataProxy<Knight> { }
 }

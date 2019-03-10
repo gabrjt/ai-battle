@@ -1,5 +1,6 @@
 ﻿using Game.Components;
 using Game.Enums;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -51,12 +52,13 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            InstatianteViews(ViewType.Knight, m_KnightPrefab, m_KnightGroup.CalculateLength(), m_KnightGroup.ToEntityArray(Allocator.TempJob));
-            InstatianteViews(ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, m_OrcWolfRiderGroup.CalculateLength(), m_OrcWolfRiderGroup.ToEntityArray(Allocator.TempJob));
-            InstatianteViews(ViewType.Skeleton, m_SkeletonPrefab, m_SkeletonGroup.CalculateLength(), m_SkeletonGroup.ToEntityArray(Allocator.TempJob));
+            var viewPoolSystem = World.GetExistingManager<ViewPoolSystem>();
+            InstatianteViews(viewPoolSystem.m_KnightPool, ViewType.Knight, m_KnightPrefab, m_KnightGroup.CalculateLength(), m_KnightGroup.ToEntityArray(Allocator.TempJob));
+            InstatianteViews(viewPoolSystem.m_OrcWolfRiderPool, ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, m_OrcWolfRiderGroup.CalculateLength(), m_OrcWolfRiderGroup.ToEntityArray(Allocator.TempJob));
+            InstatianteViews(viewPoolSystem.m_SkeletonPool, ViewType.Skeleton, m_SkeletonPrefab, m_SkeletonGroup.CalculateLength(), m_SkeletonGroup.ToEntityArray(Allocator.TempJob));
         }
 
-        private void InstatianteViews(ViewType type, GameObject prefab, int length, NativeArray<Entity> entityArray)
+        private void InstatianteViews(Queue<GameObject> pool, ViewType type, GameObject prefab, int length, NativeArray<Entity> entityArray)
         {
             var translationArray = new NativeArray<Translation>(length, Allocator.TempJob);
             var rotationArray = new NativeArray<Rotation>(length, Allocator.TempJob);
@@ -73,14 +75,22 @@ namespace Game.Systems
             for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
             {
                 var entity = entityArray[entityIndex];
-                var viewGameObjectEntity = Object.Instantiate(prefab, translationArray[entityIndex].Value, rotationArray[entityIndex].Value).GetComponent<GameObjectEntity>();
-                var viewEntity = viewGameObjectEntity.Entity;
+                var viewGameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab);
+                viewGameObject.transform.position = translationArray[entityIndex].Value;
+                viewGameObject.transform.rotation = rotationArray[entityIndex].Value;
+                viewGameObject.SetActive(true);
+                var viewEntity = viewGameObject.GetComponent<GameObjectEntity>().Entity;
 
                 EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
+                EntityManager.GetBuffer<Child>(entity).Add(new Child { Value = viewEntity });
+
                 EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
+                EntityManager.AddComponentData(viewEntity, new LocalToParent());
                 var name = $"{type} View {viewEntity}";
+#if UNITY_EDITOR
                 EntityManager.SetName(viewEntity, name);
-                viewGameObjectEntity.name = name;
+#endif
+                viewGameObject.name = name;
             }
 
             entityArray.Dispose();

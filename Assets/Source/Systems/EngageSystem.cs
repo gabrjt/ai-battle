@@ -13,6 +13,7 @@ namespace Game.Systems
     public class EngageSystem : JobComponentSystem
     {
         [BurstCompile]
+        [RequireComponentTag(typeof(Character))]
         [ExcludeComponent(typeof(Dying))]
         private struct ConsolidateNodesJob : IJobProcessComponentDataWithEntity<Translation>
         {
