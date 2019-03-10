@@ -6,7 +6,7 @@ using Unity.Transforms;
 
 namespace Game.Comparers
 {
-    public struct EntityDistanceComparer : IComparer<Entity>
+    public struct EntityDistanceFromTranslationComparer : IComparer<Entity>
     {
         public float3 Translation;
 

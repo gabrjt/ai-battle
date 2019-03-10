@@ -1,4 +1,5 @@
 ﻿using Game.Components;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -8,6 +9,7 @@ namespace Game.Systems
     [UpdateInGroup(typeof(GameLogicGroup))]
     public class ViewVisibleSystem : ComponentSystem
     {
+        private ComponentGroup m_CameraGroup;
         private ComponentGroup m_VisibleGroup;
         private ComponentGroup m_InvisbleGroup;
 
@@ -15,6 +17,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
+            m_CameraGroup = Entities.WithAll<CameraArm, Translation>().ToComponentGroup();
             m_VisibleGroup = Entities.WithAll<Translation, ViewInfo, ViewVisible>().ToComponentGroup();
             m_InvisbleGroup = Entities.WithAll<Translation, ViewInfo>().WithNone<ViewVisible>().ToComponentGroup();
 
@@ -27,13 +30,11 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var cameraTranslation = float3.zero;
             var maxSqrViewDistanceFromCamera = GetSingleton<MaxSqrViewDistanceFromCamera>().Value;
 
-            ForEach((ref CameraArm cameraArm, ref Translation translation) =>
-            {
-                cameraTranslation = translation.Value;
-            });
+            var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
+            var cameraTranslation = cameraTranslationArray[0].Value;
+            cameraTranslationArray.Dispose();
 
             Entities.With(m_VisibleGroup).ForEach((Entity entity, ref Translation translation) =>
             {

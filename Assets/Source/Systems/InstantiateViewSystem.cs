@@ -6,7 +6,6 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -19,29 +18,16 @@ namespace Game.Systems
         [BurstCompile]
         private struct SortJob : IJob
         {
-            public EntityDistanceComparer Comparer;
-            public NativeArray<Entity> EntityArray;
+            public NativeArray<Entity> KnightArray;
+            public NativeArray<Entity> OrcWolfRiderArray;
+            public NativeArray<Entity> SkeletonArray;
+            [ReadOnly] public EntityDistanceFromTranslationComparer Comparer;
 
             public void Execute()
             {
-                EntityArray.Sort(Comparer);
-            }
-        }
-
-        [BurstCompile]
-        private struct ProcessJob : IJobParallelFor
-        {
-            [ReadOnly] public NativeSlice<Entity> EntityArray;
-            [NativeDisableParallelForRestriction] public NativeArray<Translation> TranslationArray;
-            [NativeDisableParallelForRestriction] public NativeArray<Rotation> RotationArray;
-            [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
-            [ReadOnly] public ComponentDataFromEntity<Rotation> RotationFromEntity;
-
-            public void Execute(int index)
-            {
-                var entity = EntityArray[index];
-                TranslationArray[index] = TranslationFromEntity[entity];
-                RotationArray[index] = RotationFromEntity[entity];
+                KnightArray.Sort(Comparer);
+                OrcWolfRiderArray.Sort(Comparer);
+                SkeletonArray.Sort(Comparer);
             }
         }
 
@@ -52,7 +38,8 @@ namespace Game.Systems
         private ComponentGroup m_OrcWolfRiderGroup;
         private ComponentGroup m_SkeletonGroup;
         private ComponentGroup m_VisibleGroup;
-        private EntityDistanceComparer m_Comparer;
+        private ComponentGroup m_CameraGroup;
+        private EntityDistanceFromTranslationComparer m_Comparer;
         internal int m_MaxViewCount = 300;
 
         protected override void OnCreateManager()
@@ -66,7 +53,8 @@ namespace Game.Systems
             m_OrcWolfRiderGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, OrcWolfRider>().WithNone<ViewReference>().ToComponentGroup();
             m_SkeletonGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, Skeleton>().WithNone<ViewReference>().ToComponentGroup();
             m_VisibleGroup = Entities.WithAll<ViewReference, ViewVisible>().ToComponentGroup();
-            m_Comparer = new EntityDistanceComparer();
+            m_CameraGroup = Entities.WithAll<CameraArm, Translation>().ToComponentGroup();
+            m_Comparer = new EntityDistanceFromTranslationComparer();
 
             RequireSingletonForUpdate<CameraArm>();
         }
@@ -77,99 +65,97 @@ namespace Game.Systems
 
             if (visibleGroupLength > m_MaxViewCount) return;
 
-            var cameraTranslation = float3.zero;
-            Entities.WithAll<CameraArm, Translation>().ForEach((ref Translation translation) =>
-            {
-                cameraTranslation = translation.Value;
-            });
-            m_Comparer.Translation = cameraTranslation;
+            var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
+            m_Comparer.Translation = cameraTranslationArray[0].Value;
+            cameraTranslationArray.Dispose();
 
             var viewPoolSystem = World.GetExistingManager<ViewPoolSystem>();
-            var maxViewTypeCount = (m_MaxViewCount - visibleGroupLength) / 3;
 
             var knightGroupLength = m_KnightGroup.CalculateLength();
-            if (knightGroupLength > 0)
-            {
-                Instantiate(viewPoolSystem.m_KnightPool, ViewType.Knight, m_KnightPrefab, m_KnightGroup, maxViewTypeCount, knightGroupLength);
-            }
-
+            var knightArray = m_KnightGroup.ToEntityArray(Allocator.TempJob);
             var orcWolfRiderGroupLength = m_OrcWolfRiderGroup.CalculateLength();
-            if (orcWolfRiderGroupLength > 0)
-            {
-                Instantiate(viewPoolSystem.m_OrcWolfRiderPool, ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, m_OrcWolfRiderGroup, maxViewTypeCount, orcWolfRiderGroupLength);
-            }
-
+            var orcWolfRiderArray = m_OrcWolfRiderGroup.ToEntityArray(Allocator.TempJob);
             var skeletonGroupLength = m_SkeletonGroup.CalculateLength();
-            if (skeletonGroupLength > 0)
-            {
-                Instantiate(viewPoolSystem.m_SkeletonPool, ViewType.Skeleton, m_SkeletonPrefab, m_SkeletonGroup, maxViewTypeCount, skeletonGroupLength);
-            }
-        }
-
-        private void Instantiate(Queue<GameObject> pool, ViewType type, GameObject prefab, ComponentGroup group, int maxViewTypeCount, int groupLength)
-        {
-            var length = math.select(groupLength, maxViewTypeCount, groupLength > maxViewTypeCount);
-            var entityArray = group.ToEntityArray(Allocator.TempJob);
+            var skeletonArray = m_SkeletonGroup.ToEntityArray(Allocator.TempJob);
             m_Comparer.TranslationFromEntity = GetComponentDataFromEntity<Translation>(true);
 
             new SortJob
             {
-                EntityArray = entityArray,
+                KnightArray = knightArray,
+                OrcWolfRiderArray = orcWolfRiderArray,
+                SkeletonArray = skeletonArray,
                 Comparer = m_Comparer
             }.Schedule().Complete();
 
-            InstatianteViews(pool, type, prefab, length, new NativeSlice<Entity>(entityArray, 0, length));
-            entityArray.Dispose();
-        }
-
-        private void InstatianteViews(Queue<GameObject> pool, ViewType type, GameObject prefab, int length, NativeSlice<Entity> entityArray)
-        {
-            var translationArray = new NativeArray<Translation>(length, Allocator.TempJob);
-            var rotationArray = new NativeArray<Rotation>(length, Allocator.TempJob);
-
-            new ProcessJob
+            var hasKnight = knightGroupLength > 0;
+            var hasOrcWolfRider = orcWolfRiderGroupLength > 0;
+            var hasSkeleton = skeletonGroupLength > 0;
+            var knightIndex = 0;
+            var orcWolfRiderIndex = 0;
+            var skeletonIndex = 0;
+            var lastCount = visibleGroupLength;
+            var totalGroupLength = knightGroupLength + orcWolfRiderGroupLength + skeletonGroupLength;
+            do
             {
-                EntityArray = entityArray,
-                TranslationArray = translationArray,
-                RotationArray = rotationArray,
-                TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
-                RotationFromEntity = GetComponentDataFromEntity<Rotation>(true),
-            }.Schedule(length, 64).Complete();
+                lastCount = visibleGroupLength;
 
-            for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
-            {
-                var entity = entityArray[entityIndex];
-                var translation = translationArray[entityIndex].Value;
-                var rotation = rotationArray[entityIndex].Value;
-                var gameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab, translation, rotation);
-                gameObject.transform.position = translation;
-                gameObject.transform.rotation = rotation;
-                var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-                foreach (var meshRenderer in meshRenderers)
+                if (hasKnight && knightIndex < knightGroupLength && visibleGroupLength < m_MaxViewCount)
                 {
-                    meshRenderer.enabled = true;
+                    var entity = knightArray[knightIndex];
+                    Instantiate(viewPoolSystem.m_KnightPool, ViewType.Knight, m_KnightPrefab, entity, EntityManager.GetComponentData<Translation>(entity), EntityManager.GetComponentData<Rotation>(entity));
+                    ++knightIndex;
+                    ++visibleGroupLength;
                 }
 
-                gameObject.GetComponent<CopyTransformToGameObjectProxy>().enabled = true;
-                gameObject.GetComponentInChildren<Animator>().enabled = true;
-                gameObject.SetActive(true);
-                var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
+                if (hasOrcWolfRider && orcWolfRiderIndex < orcWolfRiderGroupLength && visibleGroupLength < m_MaxViewCount)
+                {
+                    var entity = orcWolfRiderArray[orcWolfRiderIndex];
+                    Instantiate(viewPoolSystem.m_OrcWolfRiderPool, ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, entity, EntityManager.GetComponentData<Translation>(entity), EntityManager.GetComponentData<Rotation>(entity));
+                    ++orcWolfRiderIndex;
+                    ++visibleGroupLength;
+                }
 
-                EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
+                if (hasSkeleton && skeletonIndex < skeletonGroupLength && visibleGroupLength < m_MaxViewCount)
+                {
+                    var entity = skeletonArray[skeletonIndex];
+                    Instantiate(viewPoolSystem.m_SkeletonPool, ViewType.Skeleton, m_SkeletonPrefab, entity, EntityManager.GetComponentData<Translation>(entity), EntityManager.GetComponentData<Rotation>(entity));
+                    ++skeletonIndex;
+                    ++visibleGroupLength;
+                }
+            } while (lastCount != visibleGroupLength && visibleGroupLength < m_MaxViewCount && knightIndex + orcWolfRiderIndex + skeletonIndex < totalGroupLength);
 
-                EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
-                EntityManager.AddComponentData(viewEntity, new LocalToParent());
+            knightArray.Dispose();
+            orcWolfRiderArray.Dispose();
+            skeletonArray.Dispose();
+        }
 
-                var name = $"{type} View {viewEntity}";
-#if UNITY_EDITOR
-                EntityManager.SetName(viewEntity, name);
-#endif
-                gameObject.name = name;
+        private void Instantiate(Queue<GameObject> pool, ViewType type, GameObject prefab, Entity entity, Translation translation, Rotation rotation)
+        {
+            var gameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab);
+            gameObject.transform.position = translation.Value;
+            gameObject.transform.rotation = rotation.Value;
+            var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+            foreach (var meshRenderer in meshRenderers)
+            {
+                meshRenderer.enabled = true;
             }
 
-            translationArray.Dispose();
-            rotationArray.Dispose();
+            gameObject.GetComponent<CopyTransformToGameObjectProxy>().enabled = true;
+            gameObject.GetComponentInChildren<Animator>().enabled = true;
+            gameObject.SetActive(true);
+            var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
+
+            EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
+
+            EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
+            EntityManager.AddComponentData(viewEntity, new LocalToParent());
+
+            var name = $"{type} View {viewEntity}";
+#if UNITY_EDITOR
+            EntityManager.SetName(viewEntity, name);
+#endif
+            gameObject.name = name;
         }
     }
 }

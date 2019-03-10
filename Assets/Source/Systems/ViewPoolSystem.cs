@@ -123,7 +123,7 @@ namespace Game.Systems
         private void ApplyToPool(Entity entity, Entity viewEntity)
         {
             var gameObject = EntityManager.GetComponentObject<Transform>(viewEntity).gameObject;
-            //DisableComponents(gameObject);
+            DisableComponents(gameObject);
             PostUpdateCommands.RemoveComponent<CopyTransformToGameObject>(viewEntity);
             PostUpdateCommands.RemoveComponent<LocalToParent>(viewEntity);
             PostUpdateCommands.RemoveComponent<Parent>(viewEntity);
