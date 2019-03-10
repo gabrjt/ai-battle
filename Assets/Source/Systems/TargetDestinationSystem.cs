@@ -10,10 +10,11 @@ using Unity.Transforms;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
+    [UpdateAfter(typeof(DisengageSystem))]
     public class TargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        [ExcludeComponent(typeof(Destination), typeof(Dying))]
+        [ExcludeComponent(typeof(Destination), typeof(Dying), typeof(Destroy))]
         private struct ConsolidateTargetDestinationJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance>
         {
             [NativeDisableParallelForRestriction] public NativeArray<Entity> EntityArray;
@@ -25,6 +26,8 @@ namespace Game.Systems
                [ReadOnly] ref Translation translation,
                [ReadOnly] ref AttackDistance attackDistance)
             {
+                if (!TranslationFromEntity.Exists(target.Value)) return;
+
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
                 var distance = math.distance(translation.Value, targetTranslation);
                 var direction = math.normalizesafe(targetTranslation - translation.Value);

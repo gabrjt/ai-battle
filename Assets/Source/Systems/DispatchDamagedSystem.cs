@@ -7,6 +7,7 @@ using Unity.Jobs;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
+    [UpdateBefore(typeof(DamageSystem))]
     public class DispatchDamagedSystem : ComponentSystem
     {
         private struct DamagedDispatched : ISystemStateComponentData { }
@@ -35,24 +36,6 @@ namespace Game.Systems
             }
         }
 
-        private struct DispatchDamagedJob : IJob
-        {
-            public NativeQueue<Damaged> DamagedQueue;
-            [ReadOnly] public EntityCommandBuffer CommandBuffer;
-            [ReadOnly] public EntityArchetype Archetype;
-
-            public void Execute()
-            {
-                while (DamagedQueue.TryDequeue(out var component))
-                {
-                    var damaged = CommandBuffer.CreateEntity(Archetype);
-                    CommandBuffer.SetComponent(damaged, component);
-
-                    CommandBuffer.AddComponent(component.This, new DamagedDispatched());
-                }
-            }
-        }
-
         private ComponentGroup m_Group;
         private EntityArchetype m_Archetype;
         private NativeQueue<Damaged> m_DamagedQueue;
@@ -73,19 +56,20 @@ namespace Game.Systems
                 EntityManager.RemoveComponent(m_Group, ComponentType.ReadWrite<DamagedDispatched>());
             }
 
-            var inputDeps = new ProcessDamagedJob
+            new ProcessDamagedJob
             {
                 DamagedQueue = m_DamagedQueue.ToConcurrent()
-            }.Schedule(this);
+            }.Schedule(this).Complete();
 
-            inputDeps = new DispatchDamagedJob
+            while (m_DamagedQueue.TryDequeue(out var component))
             {
-                DamagedQueue = m_DamagedQueue,
-                CommandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer(),
-                Archetype = m_Archetype
-            }.Schedule(inputDeps);
+                if (!(EntityManager.Exists(component.This) && EntityManager.Exists(component.Other))) continue;
 
-            inputDeps.Complete();
+                var damaged = PostUpdateCommands.CreateEntity(m_Archetype);
+                PostUpdateCommands.SetComponent(damaged, component);
+
+                PostUpdateCommands.AddComponent(component.This, new DamagedDispatched());
+            }
         }
 
         protected override void OnDestroyManager()

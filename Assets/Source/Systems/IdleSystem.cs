@@ -72,23 +72,25 @@ namespace Game.Systems
             {
                 var entityArray = new NativeArray<Entity>(addIdleDurationGroupLength, Allocator.TempJob);
                 var idleDurationArray = new NativeArray<IdleDuration>(addIdleDurationGroupLength, Allocator.TempJob);
-                var commandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
+                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-                var addIdleDurationDeps = new ConsolidateIdleDurationJob
+                var inputDeps = new ConsolidateIdleDurationJob
                 {
                     EntityArray = entityArray,
                     IdleDurationArray = idleDurationArray,
                     Random = m_Random
                 }.Schedule(this);
 
-                addIdleDurationDeps = new AddIdleDurationJob
+                inputDeps = new AddIdleDurationJob
                 {
                     EntityArray = entityArray,
                     IdleDurationArray = idleDurationArray,
-                    CommandBuffer = commandBuffer.ToConcurrent()
-                }.Schedule(addIdleDurationGroupLength, 64, addIdleDurationDeps);
+                    CommandBuffer = commandBufferSystem.CreateCommandBuffer().ToConcurrent()
+                }.Schedule(addIdleDurationGroupLength, 64, inputDeps);
 
-                addIdleDurationDeps.Complete();
+                commandBufferSystem.AddJobHandleForProducer(inputDeps);
+
+                inputDeps.Complete();
             }
         }
     }

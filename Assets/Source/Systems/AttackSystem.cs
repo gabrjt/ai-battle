@@ -66,21 +66,24 @@ namespace Game.Systems
             {
                 var entityArray = new NativeArray<Entity>(addAttackDurationGroupLength, Allocator.TempJob);
                 var attackDurationArray = new NativeArray<AttackDuration>(addAttackDurationGroupLength, Allocator.TempJob);
+                var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-                var addAttackingDurationDeps = new ConsolidateAttackDurationJob
+                var inputDeps = new ConsolidateAttackDurationJob
                 {
                     EntityArray = entityArray,
                     AttackDurationArray = attackDurationArray,
                 }.Schedule(this);
 
-                addAttackingDurationDeps = new AddAttackDurationJob
+                inputDeps = new AddAttackDurationJob
                 {
                     EntityArray = entityArray,
                     AttackDurationArray = attackDurationArray,
-                    CommandBuffer = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().ToConcurrent()
-                }.Schedule(addAttackDurationGroupLength, 64, addAttackingDurationDeps);
+                    CommandBuffer = commandBufferSystem.CreateCommandBuffer().ToConcurrent()
+                }.Schedule(addAttackDurationGroupLength, 64, inputDeps);
 
-                addAttackingDurationDeps.Complete();
+                commandBufferSystem.AddJobHandleForProducer(inputDeps);
+
+                inputDeps.Complete();
             }
         }
     }
