@@ -60,12 +60,14 @@ public class SpectatorCamera : MonoBehaviour
         var targetFound = false;
 
         var entities = m_EntityManager.GetAllEntities();
-        var targets = entities.Where(entity => m_EntityManager.HasComponent<Character>(entity) && !m_EntityManager.HasComponent<Dying>(entity) && m_EntityManager.HasComponent<Transform>(entity)).ToArray();
+        var targets = entities.Where(entity => m_EntityManager.HasComponent<Character>(entity) &&
+            m_EntityManager.HasComponent<ViewReference>(entity) &&
+            !m_EntityManager.HasComponent<Dying>(entity)).ToArray();
 
         if (targets.Length > 0)
         {
             m_TargetEntity = targets[m_Random.NextInt(0, targets.Length)];
-            m_Target = m_EntityManager.GetComponentObject<Transform>(m_TargetEntity);
+            m_Target = m_EntityManager.GetComponentObject<Transform>(m_EntityManager.GetComponentData<ViewReference>(m_TargetEntity).Value);
             targetFound = true;
         }
         else
@@ -81,7 +83,7 @@ public class SpectatorCamera : MonoBehaviour
 
     private void Update()
     {
-        if (!m_Target || m_EntityManager.HasComponent<Destroy>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1))
+        if (!m_Target || !m_EntityManager.Exists(m_TargetEntity) || m_EntityManager.HasComponent<Destroy>(m_TargetEntity) || Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1))
         {
             FindRandomTarget();
         }

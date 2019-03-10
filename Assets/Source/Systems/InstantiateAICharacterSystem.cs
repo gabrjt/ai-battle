@@ -44,10 +44,12 @@ namespace Game.Systems
                 ComponentType.ReadWrite<AttackAnimationDuration>(),
                 ComponentType.ReadWrite<AttackDamage>(),
                 ComponentType.ReadWrite<AttackSpeed>(),
-                ComponentType.ReadWrite<Health>(),
                 ComponentType.ReadWrite<MaxHealth>(),
-                ComponentType.ReadWrite<HealthRegeneration>()
-            );
+                ComponentType.ReadWrite<Health>(),
+                ComponentType.ReadWrite<HealthRegeneration>(),
+                ComponentType.ReadWrite<ViewInfo>(),
+                ComponentType.ReadWrite<ViewVisible>(),
+                ComponentType.ReadWrite<MaxSqrViewDistanceFromCamera>()); // TODO: ViewVisibleSystem
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
             m_Random = new Random(0xABCDEF);
@@ -101,13 +103,16 @@ namespace Game.Systems
             {
                 var type = (ViewType)m_Random.NextInt(Enum.GetValues(typeof(ViewType)).Length);
                 var entity = entityArray[entityIndex];
-                var movementSpeed = 0f;
-                var engageSqrRadius = 0f;
-                var attackAnimationDuration = 0f;
-                var attackDamage = 0;
-                var attackSpeed = 0f;
-                var maxHealth = 0;
-                var healthRegeneration = 0f;
+                var movementSpeed = new MovementSpeed();
+                var engageSqrRadius = new EngageSqrRadius();
+                var attackAnimationDuration = new AttackAnimationDuration();
+                var attackDamage = new AttackDamage();
+                var attackSpeed = new AttackSpeed();
+                var maxHealth = new MaxHealth();
+                var health = new Health();
+                var healthRegeneration = new HealthRegeneration();
+                var viewInfo = new ViewInfo();
+                var maxSqrViewDistanceFromCamera = new MaxSqrViewDistanceFromCamera { Value = 10000 };
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
 
@@ -115,47 +120,58 @@ namespace Game.Systems
                 {
                     case ViewType.Knight:
                         PostUpdateCommands.AddComponent(entity, new Knight());
-                        movementSpeed = m_Random.NextFloat(1, 3);
-                        engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackAnimationDuration = 1;
-                        attackDamage = m_Random.NextInt(10, 30);
-                        attackSpeed = m_Random.NextFloat(1, 3);
-                        maxHealth = m_Random.NextInt(100, 200);
-                        healthRegeneration = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
+                        attackAnimationDuration.Value = 1;
+                        attackDamage.Value = m_Random.NextInt(10, 30);
+                        attackSpeed.Value = m_Random.NextFloat(1, 3);
+                        maxHealth.Value = m_Random.NextInt(100, 200);
+                        health.Value = maxHealth.Value;
+                        healthRegeneration.Value = m_Random.NextFloat(1, 3);
+                        viewInfo.Type = ViewType.Knight;
+                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
 
                     case ViewType.OrcWolfRider:
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
-                        movementSpeed = m_Random.NextFloat(1, 3);
-                        engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackAnimationDuration = 1.333f;
-                        attackDamage = m_Random.NextInt(10, 30);
-                        attackSpeed = m_Random.NextFloat(1, 3);
-                        maxHealth = m_Random.NextInt(100, 200);
-                        healthRegeneration = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
+                        attackAnimationDuration.Value = 1;
+                        attackDamage.Value = m_Random.NextInt(10, 30);
+                        attackSpeed.Value = m_Random.NextFloat(1, 3);
+                        maxHealth.Value = m_Random.NextInt(100, 200);
+                        health.Value = maxHealth.Value;
+                        healthRegeneration.Value = m_Random.NextFloat(1, 3);
+                        viewInfo.Type = ViewType.OrcWolfRider;
+                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
 
                     case ViewType.Skeleton:
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
-                        movementSpeed = m_Random.NextFloat(1, 3);
-                        engageSqrRadius = m_Random.NextFloat(400, 2500);
-                        attackAnimationDuration = 2;
-                        attackDamage = m_Random.NextInt(10, 30);
-                        attackSpeed = m_Random.NextFloat(1, 3);
-                        maxHealth = m_Random.NextInt(100, 200);
-                        healthRegeneration = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
+                        attackAnimationDuration.Value = 1;
+                        attackDamage.Value = m_Random.NextInt(10, 30);
+                        attackSpeed.Value = m_Random.NextFloat(1, 3);
+                        maxHealth.Value = m_Random.NextInt(100, 200);
+                        health.Value = maxHealth.Value;
+                        healthRegeneration.Value = m_Random.NextFloat(1, 3);
+                        viewInfo.Type = ViewType.Skeleton;
+                        EntityManager.SetName(entity, $"{viewInfo.Type} {entity}");
                         break;
                 }
 
-                PostUpdateCommands.SetComponent(entity, new MovementSpeed { Value = movementSpeed });
-                PostUpdateCommands.SetComponent(entity, new EngageSqrRadius { Value = engageSqrRadius });
-                PostUpdateCommands.SetComponent(entity, new AttackDistance { Min = 1.2f, Max = 1.5f });
-                PostUpdateCommands.SetComponent(entity, new AttackAnimationDuration { Value = attackAnimationDuration });
-                PostUpdateCommands.SetComponent(entity, new AttackDamage { Value = attackDamage });
-                PostUpdateCommands.SetComponent(entity, new AttackSpeed { Value = attackSpeed });
-                PostUpdateCommands.SetComponent(entity, new MaxHealth { Value = maxHealth });
-                PostUpdateCommands.SetComponent(entity, new Health { Value = maxHealth });
-                PostUpdateCommands.SetComponent(entity, new HealthRegeneration { Value = healthRegeneration });
+                PostUpdateCommands.SetComponent(entity, movementSpeed);
+                PostUpdateCommands.SetComponent(entity, engageSqrRadius);
+                PostUpdateCommands.SetComponent(entity, attackAnimationDuration);
+                PostUpdateCommands.SetComponent(entity, attackDamage);
+                PostUpdateCommands.SetComponent(entity, attackSpeed);
+                PostUpdateCommands.SetComponent(entity, maxHealth);
+                PostUpdateCommands.SetComponent(entity, health);
+                PostUpdateCommands.SetComponent(entity, healthRegeneration);
+                PostUpdateCommands.SetComponent(entity, viewInfo);
+                PostUpdateCommands.SetSharedComponent(entity, maxSqrViewDistanceFromCamera);
+                EntityManager.SetName(entity, $"{viewInfo.Type} AI {entity}");
             }
 
             entityArray.Dispose();
