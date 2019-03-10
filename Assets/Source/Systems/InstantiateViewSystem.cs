@@ -1,10 +1,12 @@
-﻿using Game.Components;
+﻿using Game.Comparers;
+using Game.Components;
 using Game.Enums;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -15,9 +17,21 @@ namespace Game.Systems
     public class InstantiateViewSystem : ComponentSystem
     {
         [BurstCompile]
+        private struct SortJob : IJob
+        {
+            public EntityDistanceComparer Comparer;
+            public NativeArray<Entity> EntityArray;
+
+            public void Execute()
+            {
+                EntityArray.Sort(Comparer);
+            }
+        }
+
+        [BurstCompile]
         private struct ProcessJob : IJobParallelFor
         {
-            [ReadOnly] public NativeArray<Entity> EntityArray;
+            [ReadOnly] public NativeSlice<Entity> EntityArray;
             [NativeDisableParallelForRestriction] public NativeArray<Translation> TranslationArray;
             [NativeDisableParallelForRestriction] public NativeArray<Rotation> RotationArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
@@ -37,6 +51,9 @@ namespace Game.Systems
         private ComponentGroup m_KnightGroup;
         private ComponentGroup m_OrcWolfRiderGroup;
         private ComponentGroup m_SkeletonGroup;
+        private ComponentGroup m_VisibleGroup;
+        private EntityDistanceComparer m_Comparer;
+        internal int m_MaxViewCount = 300;
 
         protected override void OnCreateManager()
         {
@@ -48,17 +65,64 @@ namespace Game.Systems
             m_KnightGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, Knight>().WithNone<ViewReference>().ToComponentGroup();
             m_OrcWolfRiderGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, OrcWolfRider>().WithNone<ViewReference>().ToComponentGroup();
             m_SkeletonGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, Skeleton>().WithNone<ViewReference>().ToComponentGroup();
+            m_VisibleGroup = Entities.WithAll<ViewReference, ViewVisible>().ToComponentGroup();
+            m_Comparer = new EntityDistanceComparer();
+
+            RequireSingletonForUpdate<CameraArm>();
         }
 
         protected override void OnUpdate()
         {
+            var visibleGroupLength = m_VisibleGroup.CalculateLength();
+
+            if (visibleGroupLength > m_MaxViewCount) return;
+
+            var cameraTranslation = float3.zero;
+            Entities.WithAll<CameraArm, Translation>().ForEach((ref Translation translation) =>
+            {
+                cameraTranslation = translation.Value;
+            });
+            m_Comparer.Translation = cameraTranslation;
+
             var viewPoolSystem = World.GetExistingManager<ViewPoolSystem>();
-            InstatianteViews(viewPoolSystem.m_KnightPool, ViewType.Knight, m_KnightPrefab, m_KnightGroup.CalculateLength(), m_KnightGroup.ToEntityArray(Allocator.TempJob));
-            InstatianteViews(viewPoolSystem.m_OrcWolfRiderPool, ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, m_OrcWolfRiderGroup.CalculateLength(), m_OrcWolfRiderGroup.ToEntityArray(Allocator.TempJob));
-            InstatianteViews(viewPoolSystem.m_SkeletonPool, ViewType.Skeleton, m_SkeletonPrefab, m_SkeletonGroup.CalculateLength(), m_SkeletonGroup.ToEntityArray(Allocator.TempJob));
+            var maxViewTypeCount = (m_MaxViewCount - visibleGroupLength) / 3;
+
+            var knightGroupLength = m_KnightGroup.CalculateLength();
+            if (knightGroupLength > 0)
+            {
+                Instantiate(viewPoolSystem.m_KnightPool, ViewType.Knight, m_KnightPrefab, m_KnightGroup, maxViewTypeCount, knightGroupLength);
+            }
+
+            var orcWolfRiderGroupLength = m_OrcWolfRiderGroup.CalculateLength();
+            if (orcWolfRiderGroupLength > 0)
+            {
+                Instantiate(viewPoolSystem.m_OrcWolfRiderPool, ViewType.OrcWolfRider, m_OrcWolfRiderPrefab, m_OrcWolfRiderGroup, maxViewTypeCount, orcWolfRiderGroupLength);
+            }
+
+            var skeletonGroupLength = m_SkeletonGroup.CalculateLength();
+            if (skeletonGroupLength > 0)
+            {
+                Instantiate(viewPoolSystem.m_SkeletonPool, ViewType.Skeleton, m_SkeletonPrefab, m_SkeletonGroup, maxViewTypeCount, skeletonGroupLength);
+            }
         }
 
-        private void InstatianteViews(Queue<GameObject> pool, ViewType type, GameObject prefab, int length, NativeArray<Entity> entityArray)
+        private void Instantiate(Queue<GameObject> pool, ViewType type, GameObject prefab, ComponentGroup group, int maxViewTypeCount, int groupLength)
+        {
+            var length = math.select(groupLength, maxViewTypeCount, groupLength > maxViewTypeCount);
+            var entityArray = group.ToEntityArray(Allocator.TempJob);
+            m_Comparer.TranslationFromEntity = GetComponentDataFromEntity<Translation>(true);
+
+            new SortJob
+            {
+                EntityArray = entityArray,
+                Comparer = m_Comparer
+            }.Schedule().Complete();
+
+            InstatianteViews(pool, type, prefab, length, new NativeSlice<Entity>(entityArray, 0, length));
+            entityArray.Dispose();
+        }
+
+        private void InstatianteViews(Queue<GameObject> pool, ViewType type, GameObject prefab, int length, NativeSlice<Entity> entityArray)
         {
             var translationArray = new NativeArray<Translation>(length, Allocator.TempJob);
             var rotationArray = new NativeArray<Rotation>(length, Allocator.TempJob);
@@ -87,6 +151,7 @@ namespace Game.Systems
                     meshRenderer.enabled = true;
                 }
 
+                gameObject.GetComponent<CopyTransformToGameObjectProxy>().enabled = true;
                 gameObject.GetComponentInChildren<Animator>().enabled = true;
                 gameObject.SetActive(true);
                 var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
@@ -95,6 +160,7 @@ namespace Game.Systems
 
                 EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
                 EntityManager.AddComponentData(viewEntity, new LocalToParent());
+
                 var name = $"{type} View {viewEntity}";
 #if UNITY_EDITOR
                 EntityManager.SetName(viewEntity, name);
@@ -102,7 +168,6 @@ namespace Game.Systems
                 gameObject.name = name;
             }
 
-            entityArray.Dispose();
             translationArray.Dispose();
             rotationArray.Dispose();
         }

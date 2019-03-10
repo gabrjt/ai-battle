@@ -115,24 +115,32 @@ namespace Game.Systems
         private void AddToPool(Queue<GameObject> pool, Entity viewEntity)
         {
             var gameObject = EntityManager.GetComponentObject<Transform>(viewEntity).gameObject;
-            var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-            foreach (var meshRenderer in meshRenderers)
-            {
-                meshRenderer.enabled = false;
-            }
-
-            gameObject.GetComponentInChildren<Animator>().enabled = false;
+            DisableComponents(gameObject);
             gameObject.SetActive(false);
             pool.Enqueue(gameObject);
         }
 
         private void ApplyToPool(Entity entity, Entity viewEntity)
         {
+            var gameObject = EntityManager.GetComponentObject<Transform>(viewEntity).gameObject;
+            //DisableComponents(gameObject);
+            PostUpdateCommands.RemoveComponent<CopyTransformToGameObject>(viewEntity);
             PostUpdateCommands.RemoveComponent<LocalToParent>(viewEntity);
             PostUpdateCommands.RemoveComponent<Parent>(viewEntity);
+            PostUpdateCommands.SetComponent(viewEntity, new Translation { Value = gameObject.transform.position });
+            PostUpdateCommands.SetComponent(viewEntity, new Rotation { Value = gameObject.transform.rotation });
 
             PostUpdateCommands.RemoveComponent<ViewReference>(entity);
+        }
+
+        private static void DisableComponents(GameObject gameObject)
+        {
+            gameObject.GetComponentInChildren<Animator>().enabled = false;
+            var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+            foreach (var meshRenderer in meshRenderers)
+            {
+                meshRenderer.enabled = false;
+            }
         }
     }
 }

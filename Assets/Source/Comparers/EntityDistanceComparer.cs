@@ -6,17 +6,17 @@ using Unity.Transforms;
 
 namespace Game.Comparers
 {
-    public class EntityDistanceComparer : IComparer<Entity>
+    public struct EntityDistanceComparer : IComparer<Entity>
     {
         public float3 Translation;
 
         [ReadOnly]
-        public ComponentDataFromEntity<Translation> PositionFromEntity;
+        public ComponentDataFromEntity<Translation> TranslationFromEntity;
 
         public int Compare(Entity lhs, Entity rhs)
         {
-            var lhsSqrDistance = math.distancesq(PositionFromEntity[lhs].Value, Translation);
-            var rhsSqrDistance = math.distancesq(PositionFromEntity[rhs].Value, Translation);
+            var lhsSqrDistance = math.distancesq(TranslationFromEntity[lhs].Value, Translation);
+            var rhsSqrDistance = math.distancesq(TranslationFromEntity[rhs].Value, Translation);
 
             return lhsSqrDistance.CompareTo(rhsSqrDistance);
         }
