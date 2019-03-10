@@ -14,28 +14,22 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadWrite<CharacterCount>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
-            });
-
-            m_CharacterGroup = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadOnly<Character>() }
-            });
+            m_Group = Entities.WithAll<CharacterCount, TextMeshProUGUI>().ToComponentGroup();
+            m_CharacterGroup = Entities.WithAll<Character>().ToComponentGroup();
 
             RequireSingletonForUpdate<CharacterCount>();
         }
 
         protected override void OnUpdate()
         {
-            var count = m_CharacterGroup.CalculateLength();
+            var characterCount = GetSingleton<CharacterCount>();
+            characterCount.Value = m_CharacterGroup.CalculateLength();
+            SetSingleton(characterCount);
 
-            ForEach((TextMeshProUGUI characterCountText, ref CharacterCount characterCount) =>
+            Entities.With(m_Group).ForEach((TextMeshProUGUI characterCountText) =>
             {
-                characterCount.Value = count;
-                characterCountText.text = $"{count:#0} Characters";
-            }, m_Group);
+                characterCountText.text = $"{characterCount.Value:#0}";
+            });
         }
     }
 }

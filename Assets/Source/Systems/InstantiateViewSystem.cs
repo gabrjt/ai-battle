@@ -53,10 +53,10 @@ namespace Game.Systems
             m_OrcWolfRiderGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, OrcWolfRider>().WithNone<ViewReference>().ToComponentGroup();
             m_SkeletonGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, Skeleton>().WithNone<ViewReference>().ToComponentGroup();
             m_VisibleGroup = Entities.WithAll<ViewReference, ViewVisible>().ToComponentGroup();
-            m_CameraGroup = Entities.WithAll<CameraArm, Translation>().ToComponentGroup();
+            m_CameraGroup = Entities.WithAll<Components.CameraArm, Translation>().ToComponentGroup();
             m_Comparer = new EntityDistanceFromTranslationComparer();
 
-            RequireSingletonForUpdate<CameraArm>();
+            RequireSingletonForUpdate<Components.CameraArm>();
         }
 
         protected override void OnUpdate()

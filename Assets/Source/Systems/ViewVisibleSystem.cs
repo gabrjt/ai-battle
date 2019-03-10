@@ -77,6 +77,7 @@ namespace Game.Systems
         private ComponentGroup m_CameraGroup;
         private ComponentGroup m_VisibleGroup;
         private ComponentGroup m_NotVisbleGroup;
+        internal float m_MaxViewLODSqrDistance;
 
         protected override void OnCreateManager()
         {
@@ -84,7 +85,7 @@ namespace Game.Systems
 
             m_CameraGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<CameraArm>(), ComponentType.ReadOnly<Translation>() }
+                All = new[] { ComponentType.ReadOnly<Components.CameraArm>(), ComponentType.ReadOnly<Translation>() }
             });
 
             m_VisibleGroup = GetComponentGroup(new EntityArchetypeQuery
@@ -98,16 +99,18 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadWrite<ViewVisible>() }
             });
 
-            var maxSqrViewDistanceFromCameraEntity = EntityManager.CreateEntity(ComponentType.ReadWrite<MaxSqrViewDistanceFromCamera>());
-            EntityManager.SetComponentData(maxSqrViewDistanceFromCameraEntity, new MaxSqrViewDistanceFromCamera { Value = 10000 });
-
-            RequireSingletonForUpdate<CameraArm>();
-            RequireSingletonForUpdate<MaxSqrViewDistanceFromCamera>();
+            RequireSingletonForUpdate<Components.CameraArm>();
+            RequireSingletonForUpdate<MaxViewLODSqrDistance>();
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var maxSqrViewDistanceFromCamera = GetSingleton<MaxSqrViewDistanceFromCamera>().Value;
+            var maxViewLODSqrDistance = GetSingleton<MaxViewLODSqrDistance>();
+            if (m_MaxViewLODSqrDistance != maxViewLODSqrDistance.Value)
+            {
+                maxViewLODSqrDistance.Value = m_MaxViewLODSqrDistance;
+                SetSingleton(maxViewLODSqrDistance);
+            }
 
             var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
             var cameraTranslation = cameraTranslationArray[0].Value;
@@ -130,7 +133,7 @@ namespace Game.Systems
                     RemoveVisibleArray = removeVisibleArray,
                     TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                     CameraTranslation = cameraTranslation,
-                    MaxSqrViewDistanceFromCamera = maxSqrViewDistanceFromCamera
+                    MaxSqrViewDistanceFromCamera = m_MaxViewLODSqrDistance
                 }.Schedule(visibleArray.Length, 64, inputDeps);
 
                 removeVisibleDeps = new RemoveVisibleJob
@@ -152,7 +155,7 @@ namespace Game.Systems
                     AddVisibleArray = addVisibleArray,
                     TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                     CameraTranslation = cameraTranslation,
-                    MaxSqrViewDistanceFromCamera = maxSqrViewDistanceFromCamera
+                    MaxSqrViewDistanceFromCamera = m_MaxViewLODSqrDistance
                 }.Schedule(notVisibleArray.Length, 64, inputDeps);
 
                 addVisibleDeps = new AddVisibleJob

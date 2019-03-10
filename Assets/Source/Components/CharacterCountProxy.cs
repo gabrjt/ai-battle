@@ -6,6 +6,7 @@ namespace Game.Components
     [Serializable]
     public struct CharacterCount : IComponentData
     {
+        public int MaxValue;
         public int Value;
     }
 

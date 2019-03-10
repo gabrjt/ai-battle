@@ -13,24 +13,25 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = GetComponentGroup(new EntityArchetypeQuery
-            {
-                All = new[] { ComponentType.ReadWrite<PoolableObjectCount>(), ComponentType.ReadWrite<TextMeshProUGUI>() }
-            });
+            m_Group = Entities.WithAll<PoolableObjectCount, TextMeshProUGUI>().ToComponentGroup();
 
             RequireSingletonForUpdate<PoolableObjectCount>();
         }
 
         protected override void OnUpdate()
         {
+            var poolableObjectCount = GetSingleton<PoolableObjectCount>();
             var viewPoolSystem = World.GetExistingManager<ViewPoolSystem>();
             var count = viewPoolSystem.m_KnightPool.Count + viewPoolSystem.m_OrcWolfRiderPool.Count + viewPoolSystem.m_SkeletonPool.Count;
 
-            ForEach((TextMeshProUGUI poolableObjectCountText, ref PoolableObjectCount poolableObjectCount) =>
+            poolableObjectCount.Value = count;
+            SetSingleton(poolableObjectCount);
+
+            Entities.With(m_Group).ForEach((TextMeshProUGUI poolableObjectCountText) =>
             {
                 poolableObjectCount.Value = count;
                 poolableObjectCountText.text = $"{count:#0} Poolable Objects";
-            }, m_Group);
+            });
         }
     }
 }

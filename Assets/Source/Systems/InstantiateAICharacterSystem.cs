@@ -20,9 +20,8 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
         private EntityArchetype m_DestroyAllCharactersArchetype;
         private const int m_MaxDestroyCount = 1024;
+        internal int m_MaxCount;
         private Random m_Random;
-        internal int m_TotalCount = 0xF;
-        internal int m_LastTotalCount;
 
         protected override void OnCreateManager()
         {
@@ -53,13 +52,20 @@ namespace Game.Systems
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
             m_Random = new Random(0xABCDEF);
-            m_LastTotalCount = m_TotalCount;
+
+            RequireSingletonForUpdate<CharacterCount>();
         }
 
         protected override void OnUpdate()
         {
+            var characterCount = GetSingleton<CharacterCount>();
+            if (m_MaxCount != characterCount.MaxValue)
+            {
+                characterCount.MaxValue = m_MaxCount;
+            SetSingleton(characterCount);
+            }
             var count = m_Group.CalculateLength();
-            var entityCount = m_TotalCount - count;
+            var entityCount = m_MaxCount - count;
 
             DestroyExceedingCharacters(count, entityCount);
             InstantiateCharacters(entityCount);
@@ -69,7 +75,7 @@ namespace Game.Systems
         {
             if (entityCount > 0) return;
 
-            if (m_TotalCount == 0 && count > 0)
+            if (m_MaxCount == 0 && count > 0)
             {
                 World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_DestroyAllCharactersArchetype);
             }
@@ -113,7 +119,7 @@ namespace Game.Systems
                 var health = new Health();
                 var healthRegeneration = new HealthRegeneration();
                 var viewInfo = new ViewInfo();
-                var maxSqrViewDistanceFromCamera = new MaxSqrViewDistanceFromCamera { Value = 10000 };
+                var maxSqrViewDistanceFromCamera = new MaxViewLODSqrDistance { Value = 10000 };
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
 
