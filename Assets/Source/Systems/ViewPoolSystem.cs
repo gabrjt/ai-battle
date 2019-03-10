@@ -45,7 +45,14 @@ namespace Game.Systems
             {
                 var entity = entityArray[entityIndex];
                 var gameObject = EntityManager.GetComponentObject<Transform>(entity).gameObject;
+                var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
 
+                foreach (var meshRenderer in meshRenderers)
+                {
+                    meshRenderer.enabled = false;
+                }
+
+                gameObject.GetComponentInChildren<Animator>().enabled = false;
                 gameObject.SetActive(false);
                 pool.Enqueue(gameObject);
             }

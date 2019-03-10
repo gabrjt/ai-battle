@@ -107,6 +107,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
                 var movementSpeed = new MovementSpeed();
                 var engageSqrRadius = new EngageSqrRadius();
+                var attackDistance = new AttackDistance { Min = 1.2f, Max = 1.3f };
                 var attackAnimationDuration = new AttackAnimationDuration();
                 var attackDamage = new AttackDamage();
                 var attackSpeed = new AttackSpeed();
@@ -162,6 +163,7 @@ namespace Game.Systems
 
                 PostUpdateCommands.SetComponent(entity, movementSpeed);
                 PostUpdateCommands.SetComponent(entity, engageSqrRadius);
+                PostUpdateCommands.SetComponent(entity, attackDistance);
                 PostUpdateCommands.SetComponent(entity, attackAnimationDuration);
                 PostUpdateCommands.SetComponent(entity, attackDamage);
                 PostUpdateCommands.SetComponent(entity, attackSpeed);

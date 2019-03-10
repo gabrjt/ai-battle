@@ -75,11 +75,21 @@ namespace Game.Systems
             for (int entityIndex = 0; entityIndex < entityArray.Length; entityIndex++)
             {
                 var entity = entityArray[entityIndex];
-                var viewGameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab);
-                viewGameObject.transform.position = translationArray[entityIndex].Value;
-                viewGameObject.transform.rotation = rotationArray[entityIndex].Value;
-                viewGameObject.SetActive(true);
-                var viewEntity = viewGameObject.GetComponent<GameObjectEntity>().Entity;
+                var translation = translationArray[entityIndex].Value;
+                var rotation = rotationArray[entityIndex].Value;
+                var gameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab, translation, rotation);
+                gameObject.transform.position = translation;
+                gameObject.transform.rotation = rotation;
+                var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+                foreach (var meshRenderer in meshRenderers)
+                {
+                    meshRenderer.enabled = true;
+                }
+
+                gameObject.GetComponentInChildren<Animator>().enabled = true;
+                gameObject.SetActive(true);
+                var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
 
                 EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
                 EntityManager.GetBuffer<Child>(entity).Add(new Child { Value = viewEntity });
@@ -90,7 +100,7 @@ namespace Game.Systems
 #if UNITY_EDITOR
                 EntityManager.SetName(viewEntity, name);
 #endif
-                viewGameObject.name = name;
+                gameObject.name = name;
             }
 
             entityArray.Dispose();
