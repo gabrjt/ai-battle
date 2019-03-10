@@ -92,7 +92,6 @@ namespace Game.Systems
                 var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
 
                 EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
-                EntityManager.GetBuffer<Child>(entity).Add(new Child { Value = viewEntity });
 
                 EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
                 EntityManager.AddComponentData(viewEntity, new LocalToParent());

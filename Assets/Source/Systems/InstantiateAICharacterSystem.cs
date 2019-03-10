@@ -49,9 +49,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<MaxHealth>(),
                 ComponentType.ReadWrite<Health>(),
                 ComponentType.ReadWrite<HealthRegeneration>(),
-                ComponentType.ReadWrite<ViewInfo>(),
-                ComponentType.ReadWrite<ViewVisible>(),
-                ComponentType.ReadWrite<MaxSqrViewDistanceFromCamera>()); // TODO: ViewVisibleSystem
+                ComponentType.ReadWrite<ViewInfo>());
 
             m_DestroyAllCharactersArchetype = EntityManager.CreateArchetype(ComponentType.ReadWrite<Components.Event>(), ComponentType.ReadWrite<DestroyAllCharacters>());
             m_Random = new Random(0xABCDEF);
@@ -171,9 +169,8 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, health);
                 PostUpdateCommands.SetComponent(entity, healthRegeneration);
                 PostUpdateCommands.SetComponent(entity, viewInfo);
-                PostUpdateCommands.SetSharedComponent(entity, maxSqrViewDistanceFromCamera);
 #if UNITY_EDITOR
-                EntityManager.SetName(entity, $"{viewInfo.Type} AI {entity}");
+                EntityManager.SetName(entity, $"{viewInfo.Type} {entity.Index}");// AI {entity}");
 #endif
             }
 
