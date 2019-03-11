@@ -297,4 +297,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_SerializedData:
-    RotationSpeed: 2.5
+    RotationSpeed: 0.2

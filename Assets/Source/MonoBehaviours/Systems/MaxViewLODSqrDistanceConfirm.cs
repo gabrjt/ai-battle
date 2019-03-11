@@ -25,7 +25,7 @@ namespace Game.MonoBehaviours
 
         public void Confirm()
         {
-            var viewVisibleSystem = World.Active.GetExistingManager<ViewVisibleSystem>();
+            var viewVisibleSystem = World.Active.GetExistingManager<VisibleSystem>();
 
             if (int.TryParse(m_InputField.text, out var inputFieldValue) && inputFieldValue >= 0)
             {

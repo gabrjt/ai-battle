@@ -29,7 +29,7 @@ namespace Game.Systems
         {
             Entities.With(m_Group).ForEach((ref SpectatorCamera spectatorCamera, ref Translation translation, ref Rotation rotation) =>
             {
-                if (!EntityManager.Exists(spectatorCamera.Target))
+                if (!EntityManager.Exists(spectatorCamera.Target) || Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1))
                 {
                     var targetArray = m_TargetGroup.ToEntityArray(Unity.Collections.Allocator.TempJob);
                     var target = targetArray[m_Random.NextInt(0, targetArray.Length)];
