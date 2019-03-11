@@ -8,8 +8,8 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(EntityLifecycleGroup))]
-    [UpdateAfter(typeof(InstantiateAICharacterSystem))]
+    [UpdateInGroup(typeof(GameObjectPoolGroup))]
+    [UpdateAfter(typeof(ViewPoolSystem))]
     public class InstantiateViewSystem : ComponentSystem
     {
         private GameObject m_KnightPrefab;
@@ -28,7 +28,7 @@ namespace Game.Systems
             Debug.Assert(m_OrcWolfRiderPrefab = Resources.Load<GameObject>("Orc Wolf Rider"));
             Debug.Assert(m_SkeletonPrefab = Resources.Load<GameObject>("Skeleton"));
 
-            m_Group = Entities.WithAll<Character, ViewInfo>().WithAny<Knight, OrcWolfRider, Skeleton>().WithNone<ViewReference, Destroy, Disabled>().ToComponentGroup();
+            m_Group = Entities.WithAll<Character, ViewInfo, Translation, Rotation>().WithAny<Knight, OrcWolfRider, Skeleton>().WithNone<ViewReference, Destroy, Disabled>().ToComponentGroup();
             m_KnightList = new NativeList<Entity>(Allocator.Persistent);
             m_OrcWolfRiderList = new NativeList<Entity>(Allocator.Persistent);
             m_SkeletonList = new NativeList<Entity>(Allocator.Persistent);
