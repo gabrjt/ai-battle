@@ -46,7 +46,7 @@ namespace Game.Systems
             base.OnCreateManager();
 
             m_RemoveAttackingGroup = Entities.WithAll<Attacking, Dead>().ToComponentGroup();
-            m_AddAttackingGroup = Entities.WithAll<TargetInRange>().WithNone<Attacking, Cooldown, Dead>().ToComponentGroup();
+            m_AddAttackingGroup = Entities.WithAll<TargetInRange, Target>().WithNone<Attacking, Cooldown, Dead>().ToComponentGroup();
             m_AddAttackDurationGroup = Entities.WithAll<Attacking>().WithNone<AttackDuration>().ToComponentGroup();
         }
 

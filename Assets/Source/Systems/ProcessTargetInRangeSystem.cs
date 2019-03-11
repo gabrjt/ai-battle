@@ -11,7 +11,7 @@ namespace Game.Systems
     [UpdateInGroup(typeof(GameLogicGroup))]
     [UpdateAfter(typeof(ProcessMotionSystem))]
     [UpdateBefore(typeof(MoveSystem))]
-    public class ProcessTargetDestinationSystem : JobComponentSystem
+    public class ProcessTargetInRangeSystem : JobComponentSystem
     {
         [BurstCompile]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Motion, Destination>
