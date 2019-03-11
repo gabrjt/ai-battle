@@ -147,7 +147,8 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 9500000, guid: ba24e610e0a338545b447ff44a3cf1cc, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: ba24e610e0a338545b447ff44a3cf1cc, type: 3}
 --- !u!4 &5794948814688074440 stripped
 Transform:
@@ -267,21 +268,6 @@ PrefabInstance:
     - target: {fileID: 153010, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_Name
       value: Knight
-      objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
-        type: 3}
-      propertyPath: m_SerializedData.Value.z
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9575048, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
       propertyPath: m_Avatar
@@ -562,10 +548,26 @@ PrefabInstance:
       propertyPath: m_SerializedData.Value.c2.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8429577650837392919, guid: 80afb8f52d27bae4f8ff4cf083945861,
+        type: 3}
+      propertyPath: m_SerializedData.Value.z
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2234129494868116802, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
     - {fileID: 7161827561134592478, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
     - {fileID: 6742490501582613814, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
+    - {fileID: 13712474, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 80afb8f52d27bae4f8ff4cf083945861, type: 3}
 --- !u!4 &9051549992706955896 stripped
 Transform:
