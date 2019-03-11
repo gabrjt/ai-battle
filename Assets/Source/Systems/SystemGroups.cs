@@ -10,4 +10,8 @@ namespace Game.Systems
     [UpdateAfter(typeof(EntityLifecycleGroup))]
     [UpdateBefore(typeof(TransformSystemGroup))]
     public class GameLogicGroup : ComponentSystemGroup { }
+
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(TransformSystemGroup))]
+    public class GameObjectPoolGroup : ComponentSystemGroup { }
 }

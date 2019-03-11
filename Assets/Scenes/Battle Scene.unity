@@ -298,26 +298,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
       propertyPath: m_RootOrder
       value: 3
       objectReference: {fileID: 0}
@@ -331,46 +311,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 582, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
-      propertyPath: m_Pivot.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 630, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
@@ -495,11 +435,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Spectator Camera
       objectReference: {fileID: 0}
-    - target: {fileID: 6477010449096463977, guid: 247319bc50cd7304a9d7ec7db4a169f3,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6477010449096463979, guid: 247319bc50cd7304a9d7ec7db4a169f3,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -555,14 +490,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7285569007158556521, guid: 247319bc50cd7304a9d7ec7db4a169f3,
-        type: 3}
-      propertyPath: m_SerializedData.RotationSpeed
-      value: 0.25
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6477010449096463976, guid: 247319bc50cd7304a9d7ec7db4a169f3, type: 3}
-    - {fileID: 4691814416578482554, guid: 247319bc50cd7304a9d7ec7db4a169f3, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 247319bc50cd7304a9d7ec7db4a169f3, type: 3}
 --- !u!1001 &35517831151958483
 PrefabInstance:

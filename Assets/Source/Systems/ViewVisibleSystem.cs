@@ -89,7 +89,8 @@ namespace Game.Systems
 
             m_VisibleGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<ViewInfo>(), ComponentType.ReadWrite<ViewVisible>() }
+                All = new[] { ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<ViewInfo>(), ComponentType.ReadWrite<ViewVisible>() },
+                None = new[] { ComponentType.ReadOnly<Dead>() }
             });
 
             m_NotVisbleGroup = GetComponentGroup(new EntityArchetypeQuery

@@ -7,13 +7,15 @@ using UnityEngine;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(EntityLifecycleGroup))]
-    [UpdateBefore(typeof(InstantiateViewSystem))]
+    [UpdateInGroup(typeof(GameObjectPoolGroup))]
     public class ViewPoolSystem : ComponentSystem
     {
         internal Queue<GameObject> m_KnightPool;
         internal Queue<GameObject> m_OrcWolfRiderPool;
         internal Queue<GameObject> m_SkeletonPool;
+        private List<GameObject> m_KnightList;
+        private List<GameObject> m_OrcWolfRiderList;
+        private List<GameObject> m_SkeletonList;
         private ComponentGroup m_ViewGroup;
         private ComponentGroup m_InvisibleGroup;
 
@@ -24,6 +26,9 @@ namespace Game.Systems
             m_KnightPool = new Queue<GameObject>();
             m_OrcWolfRiderPool = new Queue<GameObject>();
             m_SkeletonPool = new Queue<GameObject>();
+            m_KnightList = new List<GameObject>();
+            m_OrcWolfRiderList = new List<GameObject>();
+            m_SkeletonList = new List<GameObject>();
             m_ViewGroup = Entities.WithAll<View>().WithAny<Knight, OrcWolfRider, Skeleton>().WithNone<Parent>().ToComponentGroup();
             m_InvisibleGroup = Entities.WithAll<ViewReference>().WithAny<Knight, OrcWolfRider, Skeleton>().WithNone<ViewVisible>().ToComponentGroup();
         }
@@ -59,17 +64,18 @@ namespace Game.Systems
             }
 
             viewChunkArray.Dispose();
-
             AddToPool(m_KnightPool, knightList);
             AddToPool(m_OrcWolfRiderPool, orcWolfRiderList);
             AddToPool(m_SkeletonPool, skeletonList);
-
             knightList.Dispose();
             orcWolfRiderList.Dispose();
             skeletonList.Dispose();
 
             var invisibleChunkArray = m_InvisibleGroup.CreateArchetypeChunkArray(Allocator.TempJob);
             entityType = GetArchetypeChunkEntityType();
+            knightType = GetArchetypeChunkComponentType<Knight>(true);
+            orcWolfRiderType = GetArchetypeChunkComponentType<OrcWolfRider>(true);
+            skeletonType = GetArchetypeChunkComponentType<Skeleton>(true);
             var viewReferenceType = GetArchetypeChunkComponentType<ViewReference>();
 
             for (var chunkIndex = 0; chunkIndex < invisibleChunkArray.Length; chunkIndex++)
@@ -82,26 +88,47 @@ namespace Game.Systems
                 {
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        ApplyToPool(entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
+                        ApplyToPool(m_KnightList, entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
                     }
                 }
                 else if (chunk.Has(orcWolfRiderType))
                 {
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        ApplyToPool(entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
+                        ApplyToPool(m_OrcWolfRiderList, entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
                     }
                 }
                 if (chunk.Has(skeletonType))
                 {
                     for (int entityIndex = 0; entityIndex < chunk.Count; entityIndex++)
                     {
-                        ApplyToPool(entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
+                        ApplyToPool(m_SkeletonList, entityArray[entityIndex], viewReferenceArray[entityIndex].Value);
                     }
                 }
             }
 
             invisibleChunkArray.Dispose();
+
+            foreach (var gameObject in m_KnightList)
+            {
+                gameObject.SetActive(false);
+                m_KnightPool.Enqueue(gameObject);
+            }
+            m_KnightList.Clear();
+
+            foreach (var gameObject in m_OrcWolfRiderList)
+            {
+                gameObject.SetActive(false);
+                m_OrcWolfRiderPool.Enqueue(gameObject);
+            }
+            m_OrcWolfRiderList.Clear();
+
+            foreach (var gameObject in m_SkeletonList)
+            {
+                gameObject.SetActive(false);
+                m_SkeletonPool.Enqueue(gameObject);
+            }
+            m_SkeletonList.Clear();
         }
 
         private void AddToPool(Queue<GameObject> pool, NativeArray<Entity> viewEntityArray)
@@ -115,32 +142,16 @@ namespace Game.Systems
         private void AddToPool(Queue<GameObject> pool, Entity viewEntity)
         {
             var gameObject = EntityManager.GetComponentObject<Transform>(viewEntity).gameObject;
-            DisableComponents(gameObject);
             gameObject.SetActive(false);
             pool.Enqueue(gameObject);
         }
 
-        private void ApplyToPool(Entity entity, Entity viewEntity)
+        private void ApplyToPool(List<GameObject> gameObjectList, Entity entity, Entity viewEntity)
         {
             var gameObject = EntityManager.GetComponentObject<Transform>(viewEntity).gameObject;
-            DisableComponents(gameObject);
-            PostUpdateCommands.RemoveComponent<CopyTransformToGameObject>(viewEntity);
-            PostUpdateCommands.RemoveComponent<LocalToParent>(viewEntity);
-            PostUpdateCommands.RemoveComponent<Parent>(viewEntity);
-            PostUpdateCommands.SetComponent(viewEntity, new Translation { Value = gameObject.transform.position });
-            PostUpdateCommands.SetComponent(viewEntity, new Rotation { Value = gameObject.transform.rotation });
+            gameObjectList.Add(gameObject);
 
             PostUpdateCommands.RemoveComponent<ViewReference>(entity);
-        }
-
-        private static void DisableComponents(GameObject gameObject)
-        {
-            gameObject.GetComponentInChildren<Animator>().enabled = false;
-            var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-            foreach (var meshRenderer in meshRenderers)
-            {
-                meshRenderer.enabled = false;
-            }
         }
     }
 }

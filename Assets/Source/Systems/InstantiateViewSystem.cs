@@ -135,28 +135,17 @@ namespace Game.Systems
             var gameObject = pool.Count > 0 ? pool.Dequeue() : Object.Instantiate(prefab);
             gameObject.transform.position = translation.Value;
             gameObject.transform.rotation = rotation.Value;
-            var meshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-            foreach (var meshRenderer in meshRenderers)
-            {
-                meshRenderer.enabled = true;
-            }
-
-            gameObject.GetComponent<CopyTransformToGameObjectProxy>().enabled = true;
-            gameObject.GetComponentInChildren<Animator>().enabled = true;
             gameObject.SetActive(true);
             var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
+            var name = $"{type} View {viewEntity}";
+            gameObject.name = name;
 
             EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });
-
             EntityManager.AddComponentData(viewEntity, new Parent { Value = entity });
             EntityManager.AddComponentData(viewEntity, new LocalToParent());
-
-            var name = $"{type} View {viewEntity}";
 #if UNITY_EDITOR
             EntityManager.SetName(viewEntity, name);
 #endif
-            gameObject.name = name;
         }
     }
 }
