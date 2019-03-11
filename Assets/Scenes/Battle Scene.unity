@@ -550,6 +550,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7285569007158556521, guid: 247319bc50cd7304a9d7ec7db4a169f3,
+        type: 3}
+      propertyPath: m_SerializedData.RotationSpeed
+      value: 0.25
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 6477010449096463976, guid: 247319bc50cd7304a9d7ec7db4a169f3, type: 3}
     - {fileID: 4691814416578482554, guid: 247319bc50cd7304a9d7ec7db4a169f3, type: 3}
