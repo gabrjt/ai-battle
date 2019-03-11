@@ -113,7 +113,6 @@ namespace Game.Systems
                 var health = new Health();
                 var healthRegeneration = new HealthRegeneration();
                 var viewInfo = new ViewInfo();
-                var maxSqrViewDistanceFromCamera = new MaxViewLODSqrDistance { Value = 10000 };
 
                 PostUpdateCommands.SetComponent(entity, new Translation { Value = terrain.GetRandomPosition() });
 
