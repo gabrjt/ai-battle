@@ -169,7 +169,7 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, healthRegeneration);
                 PostUpdateCommands.SetComponent(entity, viewInfo);
 #if UNITY_EDITOR
-                EntityManager.SetName(entity, $"{viewInfo.Type} {entity.Index}");// AI {entity}");
+                EntityManager.SetName(entity, $"{viewInfo.Type} AI {entity}");
 #endif
             }
 

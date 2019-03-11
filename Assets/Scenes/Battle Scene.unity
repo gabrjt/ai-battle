@@ -421,6 +421,11 @@ PrefabInstance:
       propertyPath: m_isInputParsingRequired
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3451804511600478730, guid: f2d3291adca97a24193adc547d27ee44,
+        type: 3}
+      propertyPath: m_SerializedData.MaxValue
+      value: 100
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2d3291adca97a24193adc547d27ee44, type: 3}
 --- !u!1001 &1045469970
@@ -507,7 +512,7 @@ PrefabInstance:
     - target: {fileID: 35517830524462117, guid: ef368e4093157c44a85d7de2f6e233ef,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -125
+      value: -250
       objectReference: {fileID: 0}
     - target: {fileID: 35517830524462117, guid: ef368e4093157c44a85d7de2f6e233ef,
         type: 3}
@@ -517,7 +522,7 @@ PrefabInstance:
     - target: {fileID: 35517830524462117, guid: ef368e4093157c44a85d7de2f6e233ef,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -125
+      value: -250
       objectReference: {fileID: 0}
     - target: {fileID: 35517830524462117, guid: ef368e4093157c44a85d7de2f6e233ef,
         type: 3}
