@@ -9,19 +9,21 @@ namespace Game.Systems
     [UpdateAfter(typeof(IdleSystem))]
     public class DestinationSystem : ComponentSystem
     {
-        private ComponentGroup m_IdleDurationExpiredGroup;
+        private ComponentGroup m_AddGroup;
+        private ComponentGroup m_RemoveGroup;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
-            m_IdleDurationExpiredGroup = Entities.WithAll<Components.Event, IdleDurationExpired>().ToComponentGroup();
+            m_AddGroup = Entities.WithAll<Components.Event, IdleDurationExpired>().ToComponentGroup();
+            m_RemoveGroup = Entities.WithAll<Destination, Dead>().ToComponentGroup();
         }
 
         protected override void OnUpdate()
         {
             var terrain = Terrain.activeTerrain;
-            Entities.With(m_IdleDurationExpiredGroup).ForEach((ref IdleDurationExpired idleDurationExpired) =>
+            Entities.With(m_AddGroup).ForEach((ref IdleDurationExpired idleDurationExpired) =>
             {
                 var entity = idleDurationExpired.This;
 
@@ -29,6 +31,11 @@ namespace Game.Systems
 
                 PostUpdateCommands.AddComponent(entity, new Destination { Value = terrain.GetRandomPosition() });
             });
+
+            if (m_RemoveGroup.CalculateLength() > 0)
+            {
+                EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<Destination>());
+            }
         }
     }
 }

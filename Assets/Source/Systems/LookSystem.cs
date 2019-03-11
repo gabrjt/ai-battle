@@ -13,7 +13,7 @@ namespace Game.Systems
     public class LookSystem : JobComponentSystem
     {
         [BurstCompile]
-        [ExcludeComponent(typeof(Target))]
+        [ExcludeComponent(typeof(Target), typeof(Dead))]
         private struct LookToDestinationJob : IJobProcessComponentData<Destination, Translation, Rotation>
         {
             [ReadOnly] public float DeltaTime;
@@ -25,6 +25,7 @@ namespace Game.Systems
         }
 
         [BurstCompile]
+        [ExcludeComponent(typeof(Dead))]
         private struct LookToTargetJob : IJobProcessComponentData<Target, Translation, Rotation>
         {
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;

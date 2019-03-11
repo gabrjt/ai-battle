@@ -12,16 +12,16 @@ namespace Game.Systems
     public class DisengageSystem : JobComponentSystem
     {
         [BurstCompile]
+        [ExcludeComponent(typeof(Dead))]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, EngageSqrRadius>
         {
             public NativeQueue<Entity>.Concurrent RemoveQueue;
-
-            [ReadOnly] public ComponentDataFromEntity<Destroy> DestroyFromEntity;
+            [ReadOnly] public ComponentDataFromEntity<Dead> DeadFromEntity;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
             {
-                if (!DestroyFromEntity.Exists(target.Value) &&
+                if (!DeadFromEntity.Exists(target.Value) &&
                     TranslationFromEntity.Exists(target.Value) &&
                     math.distancesq(translation.Value, TranslationFromEntity[target.Value].Value) <= engageSqrRadius.Value) return;
 
@@ -44,23 +44,31 @@ namespace Game.Systems
             }
         }
 
+        private ComponentGroup m_DeadGroup;
         private NativeQueue<Entity> m_RemoveQueue;
 
         protected override void OnCreateManager()
         {
             base.OnCreateManager();
 
+            m_DeadGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<Dead>(), ComponentType.ReadWrite<Target>() }
+            });
+
             m_RemoveQueue = new NativeQueue<Entity>(Allocator.Persistent);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            EntityManager.RemoveComponent(m_DeadGroup, ComponentType.ReadWrite<Target>());
+
             var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
             inputDeps = new ProcessJob
             {
                 RemoveQueue = m_RemoveQueue.ToConcurrent(),
-                DestroyFromEntity = GetComponentDataFromEntity<Destroy>(true),
+                DeadFromEntity = GetComponentDataFromEntity<Dead>(true),
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true)
             }.Schedule(this);
 
