@@ -20,9 +20,7 @@ namespace Game.MonoBehaviours
 
         private void Start()
         {
-            var viewVisibleSystem = World.Active.GetExistingManager<ViewVisibleSystem>();
-            viewVisibleSystem.m_MaxViewLODSqrDistance = m_MaxViewLODSqrDistance.Value.Value;
-            m_InputField.text = viewVisibleSystem.m_MaxViewLODSqrDistance.ToString();
+            m_InputField.text = m_MaxViewLODSqrDistance.Value.Value.ToString();
         }
 
         public void Confirm()
@@ -33,11 +31,13 @@ namespace Game.MonoBehaviours
             {
                 var count = math.min(inputFieldValue, m_MaxValue);
                 m_InputField.text = count.ToString();
-                viewVisibleSystem.m_MaxViewLODSqrDistance = count;
+                var maxViewLODSqrDistance = m_MaxViewLODSqrDistance.Value;
+                maxViewLODSqrDistance.Value = count;
+                m_MaxViewLODSqrDistance.Value = maxViewLODSqrDistance;
             }
             else
             {
-                m_InputField.text = viewVisibleSystem.m_MaxViewLODSqrDistance.ToString();
+                m_InputField.text = m_MaxViewLODSqrDistance.Value.Value.ToString();
             }
         }
     }

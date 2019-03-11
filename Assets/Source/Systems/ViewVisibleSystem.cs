@@ -77,7 +77,6 @@ namespace Game.Systems
         private ComponentGroup m_CameraGroup;
         private ComponentGroup m_VisibleGroup;
         private ComponentGroup m_NotVisbleGroup;
-        internal float m_MaxViewLODSqrDistance;
 
         protected override void OnCreateManager()
         {
@@ -105,14 +104,9 @@ namespace Game.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var maxViewLODSqrDistance = GetSingleton<MaxViewLODSqrDistance>();
-            if (m_MaxViewLODSqrDistance != maxViewLODSqrDistance.Value)
-            {
-                maxViewLODSqrDistance.Value = m_MaxViewLODSqrDistance;
-                SetSingleton(maxViewLODSqrDistance);
-            }
+            var maxViewLODSqrDistance = GetSingleton<MaxViewLODSqrDistance>().Value;
 
-            if (m_MaxViewLODSqrDistance == 0) return inputDeps;
+            if (maxViewLODSqrDistance == 0) return inputDeps;
 
             var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
             var cameraTranslation = cameraTranslationArray[0].Value;
@@ -135,7 +129,7 @@ namespace Game.Systems
                     RemoveVisibleArray = removeVisibleArray,
                     TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                     CameraTranslation = cameraTranslation,
-                    MaxSqrViewDistanceFromCamera = m_MaxViewLODSqrDistance
+                    MaxSqrViewDistanceFromCamera = maxViewLODSqrDistance
                 }.Schedule(visibleArray.Length, 64, inputDeps);
 
                 removeVisibleDeps = new RemoveVisibleJob
@@ -157,7 +151,7 @@ namespace Game.Systems
                     AddVisibleArray = addVisibleArray,
                     TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                     CameraTranslation = cameraTranslation,
-                    MaxSqrViewDistanceFromCamera = m_MaxViewLODSqrDistance
+                    MaxSqrViewDistanceFromCamera = maxViewLODSqrDistance
                 }.Schedule(notVisibleArray.Length, 64, inputDeps);
 
                 addVisibleDeps = new AddVisibleJob

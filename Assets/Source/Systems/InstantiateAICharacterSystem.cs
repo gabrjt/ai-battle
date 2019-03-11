@@ -20,7 +20,6 @@ namespace Game.Systems
         private EntityArchetype m_Archetype;
         private EntityArchetype m_DestroyAllCharactersArchetype;
         private const int m_MaxDestroyCount = 1024;
-        internal int m_MaxCount;
         private Random m_Random;
 
         protected override void OnCreateManager()
@@ -58,24 +57,19 @@ namespace Game.Systems
 
         protected override void OnUpdate()
         {
-            var characterCount = GetSingleton<CharacterCount>();
-            if (m_MaxCount != characterCount.MaxValue)
-            {
-                characterCount.MaxValue = m_MaxCount;
-            SetSingleton(characterCount);
-            }
+            var maxCharacterCount = GetSingleton<CharacterCount>().MaxValue;
             var count = m_Group.CalculateLength();
-            var entityCount = m_MaxCount - count;
+            var entityCount = maxCharacterCount - count;
 
-            DestroyExceedingCharacters(count, entityCount);
+            DestroyExceedingCharacters(count, maxCharacterCount, entityCount);
             InstantiateCharacters(entityCount);
         }
 
-        private void DestroyExceedingCharacters(int count, int entityCount)
+        private void DestroyExceedingCharacters(int count, int maxCount, int entityCount)
         {
             if (entityCount > 0) return;
 
-            if (m_MaxCount == 0 && count > 0)
+            if (maxCount == 0 && count > 0)
             {
                 World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>().CreateCommandBuffer().CreateEntity(m_DestroyAllCharactersArchetype);
             }

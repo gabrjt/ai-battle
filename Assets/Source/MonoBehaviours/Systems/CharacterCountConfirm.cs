@@ -9,20 +9,14 @@ namespace Game.MonoBehaviours
 {
     public class CharacterCountConfirm : MonoBehaviour
     {
-        [SerializeField]
-        private TMP_InputField m_InputField;
-
-        [SerializeField]
-        private CharacterCountProxy m_CharacterCount;
-
-        [SerializeField]
-        private int m_MaxValue = 0xFFFF;
+        [SerializeField] private TMP_InputField m_InputField;
+        [SerializeField] private CharacterCountProxy m_CharacterCount;
+        [SerializeField] private int m_MaxValue = 0xFFFF;
 
         private void Start()
         {
             var instantiateAICharacterSystem = World.Active.GetExistingManager<InstantiateAICharacterSystem>();
-            instantiateAICharacterSystem.m_MaxCount = m_CharacterCount.Value.MaxValue;
-            m_InputField.text = instantiateAICharacterSystem.m_MaxCount.ToString();
+            m_InputField.text = m_CharacterCount.Value.MaxValue.ToString();
         }
 
         public void Confirm()
@@ -31,13 +25,15 @@ namespace Game.MonoBehaviours
 
             if (int.TryParse(m_InputField.text, out var inputFieldValue) && inputFieldValue >= 0)
             {
-                var count = math.min(inputFieldValue, m_MaxValue);
-                m_InputField.text = count.ToString();
-                instantiateAICharacterSystem.m_MaxCount = count;
+                var maxCount = math.min(inputFieldValue, m_MaxValue);
+                m_InputField.text = maxCount.ToString();
+                var characterMaxCount = m_CharacterCount.Value;
+                characterMaxCount.MaxValue = maxCount;
+                m_CharacterCount.Value = characterMaxCount;
             }
             else
             {
-                m_InputField.text = instantiateAICharacterSystem.m_MaxCount.ToString();
+                m_InputField.text = m_CharacterCount.Value.MaxValue.ToString();
             }
         }
     }
