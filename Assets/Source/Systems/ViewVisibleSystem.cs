@@ -85,7 +85,7 @@ namespace Game.Systems
 
             m_CameraGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<Components.CameraArm>(), ComponentType.ReadOnly<Translation>() }
+                All = new[] { ComponentType.ReadOnly<CameraArm>(), ComponentType.ReadOnly<Translation>() }
             });
 
             m_VisibleGroup = GetComponentGroup(new EntityArchetypeQuery
@@ -99,7 +99,7 @@ namespace Game.Systems
                 None = new[] { ComponentType.ReadWrite<ViewVisible>() }
             });
 
-            RequireSingletonForUpdate<Components.CameraArm>();
+            RequireSingletonForUpdate<CameraArm>();
             RequireSingletonForUpdate<MaxViewLODSqrDistance>();
         }
 
@@ -111,6 +111,8 @@ namespace Game.Systems
                 maxViewLODSqrDistance.Value = m_MaxViewLODSqrDistance;
                 SetSingleton(maxViewLODSqrDistance);
             }
+
+            if (m_MaxViewLODSqrDistance == 0) return inputDeps;
 
             var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
             var cameraTranslation = cameraTranslationArray[0].Value;

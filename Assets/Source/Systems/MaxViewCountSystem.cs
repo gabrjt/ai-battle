@@ -5,7 +5,7 @@ using Unity.Entities;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public class MaxViewLODSqrDistanceSystem : ComponentSystem
+    public class MaxViewCountSystem : ComponentSystem
     {
         private ComponentGroup m_Group;
 
@@ -13,16 +13,16 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = Entities.WithAll<MaxViewLODSqrDistance, TextMeshProUGUI>().ToComponentGroup();
+            m_Group = Entities.WithAll<MaxViewCount, TextMeshProUGUI>().ToComponentGroup();
 
-            RequireSingletonForUpdate<MaxViewLODSqrDistance>();
+            RequireSingletonForUpdate<MaxViewCount>();
         }
 
         protected override void OnUpdate()
         {
             Entities.With(m_Group).ForEach((TextMeshProUGUI text) =>
             {
-                text.text = $"{GetSingleton<MaxViewLODSqrDistance>().Value:#0}";
+                text.text = $"{GetSingleton<MaxViewCount>().Value:#0}";
             });
         }
     }

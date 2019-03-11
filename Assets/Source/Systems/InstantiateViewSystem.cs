@@ -53,17 +53,25 @@ namespace Game.Systems
             m_OrcWolfRiderGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, OrcWolfRider>().WithNone<ViewReference>().ToComponentGroup();
             m_SkeletonGroup = Entities.WithAll<ViewInfo, ViewVisible, Translation, Rotation, Skeleton>().WithNone<ViewReference>().ToComponentGroup();
             m_VisibleGroup = Entities.WithAll<ViewReference, ViewVisible>().ToComponentGroup();
-            m_CameraGroup = Entities.WithAll<Components.CameraArm, Translation>().ToComponentGroup();
+            m_CameraGroup = Entities.WithAll<CameraArm, Translation>().ToComponentGroup();
             m_Comparer = new EntityDistanceFromTranslationComparer();
 
-            RequireSingletonForUpdate<Components.CameraArm>();
+            RequireSingletonForUpdate<CameraArm>();
+            RequireSingletonForUpdate<MaxViewCount>();
         }
 
         protected override void OnUpdate()
         {
+            var maxViewCount = GetSingleton<MaxViewCount>();
+            if (m_MaxViewCount != maxViewCount.Value)
+            {
+                maxViewCount.Value = m_MaxViewCount;
+                SetSingleton(maxViewCount);
+            }
+
             var visibleGroupLength = m_VisibleGroup.CalculateLength();
 
-            if (visibleGroupLength > m_MaxViewCount) return;
+            if (m_MaxViewCount == 0 || visibleGroupLength > m_MaxViewCount) return;
 
             var cameraTranslationArray = m_CameraGroup.ToComponentDataArray<Translation>(Allocator.TempJob);
             m_Comparer.Translation = cameraTranslationArray[0].Value;
