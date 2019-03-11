@@ -11,6 +11,7 @@ namespace Game.Systems
     public class KillSystem : JobComponentSystem
     {
         [BurstCompile]
+        [ExcludeComponent(typeof(Dead))]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Health>
         {
             public NativeQueue<Entity>.Concurrent DeadQueue;
@@ -23,7 +24,7 @@ namespace Game.Systems
             }
         }
 
-        private struct AddDestroyJob : IJob
+        private struct AddDeadJob : IJob
         {
             public NativeQueue<Entity> DeadQueue;
             [ReadOnly] public EntityCommandBuffer CommandBuffer;
@@ -32,8 +33,7 @@ namespace Game.Systems
             {
                 while (DeadQueue.TryDequeue(out var entity))
                 {
-                    CommandBuffer.AddComponent(entity, new Destroy());
-                    CommandBuffer.AddComponent(entity, new Disabled());
+                    CommandBuffer.AddComponent(entity, new Dead());
                 }
             }
         }
@@ -56,7 +56,7 @@ namespace Game.Systems
                 DeadQueue = m_DeadQueue.ToConcurrent()
             }.Schedule(this, inputDeps);
 
-            inputDeps = new AddDestroyJob
+            inputDeps = new AddDeadJob
             {
                 DeadQueue = m_DeadQueue,
                 CommandBuffer = commandBufferSystem.CreateCommandBuffer()

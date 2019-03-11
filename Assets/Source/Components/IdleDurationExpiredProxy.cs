@@ -8,4 +8,6 @@ namespace Game.Components
     {
         public Entity This;
     }
+
+    public class IdleDurationExpiredProxy : ComponentDataProxy<IdleDurationExpired> { }
 }

@@ -48,8 +48,8 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_RemoveIdleGroup = Entities.WithAll<Idle>().WithAny<Destination, Target, Dying>().ToComponentGroup();
-            m_AddIdleGroup = Entities.WithAll<Character>().WithNone<Idle, Destination, Target, Dying>().ToComponentGroup();
+            m_RemoveIdleGroup = Entities.WithAll<Idle>().WithAny<Destination, Target, Dead>().ToComponentGroup();
+            m_AddIdleGroup = Entities.WithAll<Character>().WithNone<Idle, Destination, Target, Dead>().ToComponentGroup();
             m_AddIdleDurationGroup = Entities.WithAll<Idle>().WithNone<IdleDuration>().ToComponentGroup();
             m_Random = new Random((uint)System.Environment.TickCount);
         }

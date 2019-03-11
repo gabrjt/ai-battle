@@ -14,7 +14,7 @@ namespace Game.Systems
     {
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
-        [ExcludeComponent(typeof(Dying))]
+        [ExcludeComponent(typeof(Dead))]
         private struct ConsolidateNodesJob : IJobProcessComponentDataWithEntity<Translation>
         {
             public NativeMultiHashMap<int2, Entity>.Concurrent NodeMap;
@@ -32,6 +32,7 @@ namespace Game.Systems
 
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
+        [ExcludeComponent(typeof(Dead))]
         private struct EngageNearestTargetJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
@@ -123,13 +124,13 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new ComponentType[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Translation>(), ComponentType.ReadOnly<EngageSqrRadius>() },
-                None = new ComponentType[] { ComponentType.ReadOnly<Dying>() }
+                None = new ComponentType[] { ComponentType.ReadOnly<Dead>() }
             });
 
             m_TargetGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new ComponentType[] { ComponentType.ReadOnly<Character>(), ComponentType.ReadOnly<Translation>() },
-                None = new ComponentType[] { ComponentType.ReadOnly<Dying>() }
+                None = new ComponentType[] { ComponentType.ReadOnly<Dead>() }
             });
 
             RequireForUpdate(m_Group);

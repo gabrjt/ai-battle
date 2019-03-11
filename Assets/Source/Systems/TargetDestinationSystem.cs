@@ -14,7 +14,7 @@ namespace Game.Systems
     public class TargetDestinationSystem : JobComponentSystem
     {
         [BurstCompile]
-        [ExcludeComponent(typeof(Destination), typeof(Dying), typeof(Destroy))]
+        [ExcludeComponent(typeof(Destination), typeof(Dead), typeof(Destroy))]
         private struct ConsolidateTargetDestinationJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance>
         {
             [NativeDisableParallelForRestriction] public NativeArray<Entity> EntityArray;
@@ -59,7 +59,7 @@ namespace Game.Systems
             m_Group = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Target>() },
-                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Dying>(), ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>() }
+                None = new[] { ComponentType.ReadWrite<Destination>(), ComponentType.ReadOnly<Dead>(), ComponentType.ReadOnly<Destroy>(), ComponentType.ReadOnly<Disabled>() }
             });
         }
 

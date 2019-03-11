@@ -19,7 +19,7 @@ namespace Game.Systems
             base.OnCreateManager();
 
             m_Group = Entities.WithAll<CameraArm, SpectatorCamera, Translation, Rotation>().ToComponentGroup();
-            m_TargetGroup = Entities.WithAll<Translation>().WithNone<Dying, Destroy, Disabled>().ToComponentGroup();
+            m_TargetGroup = Entities.WithAll<Translation>().WithNone<Dead, Destroy, Disabled>().ToComponentGroup();
             m_Random = new Random((uint)System.Environment.TickCount);
 
             RequireSingletonForUpdate<SpectatorCamera>();
