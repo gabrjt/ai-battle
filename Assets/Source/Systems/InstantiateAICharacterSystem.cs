@@ -41,6 +41,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<RotationSpeed>(),
                 ComponentType.ReadWrite<WalkSpeedModifier>(),
+                ComponentType.ReadWrite<ChargeSpeedModifier>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
                 ComponentType.ReadWrite<AttackDistance>(),
                 ComponentType.ReadWrite<AttackAnimationDuration>(),
@@ -108,6 +109,7 @@ namespace Game.Systems
                 var movementSpeed = new MovementSpeed();
                 var rotationSpeed = new RotationSpeed();
                 var walkSpeedModifier = new WalkSpeedModifier();
+                var chargeSpeedModifier = new ChargeSpeedModifier();
                 var engageSqrRadius = new EngageSqrRadius();
                 var attackDistance = new AttackDistance { Min = 1.5f, Max = 2 };
                 var attackAnimationDuration = new AttackAnimationDuration();
@@ -127,6 +129,7 @@ namespace Game.Systems
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
+                        chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
@@ -142,6 +145,7 @@ namespace Game.Systems
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
+                        chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
@@ -157,6 +161,7 @@ namespace Game.Systems
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
+                        chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
@@ -171,6 +176,7 @@ namespace Game.Systems
                 PostUpdateCommands.SetComponent(entity, movementSpeed);
                 PostUpdateCommands.SetComponent(entity, rotationSpeed);
                 PostUpdateCommands.SetComponent(entity, walkSpeedModifier);
+                PostUpdateCommands.SetComponent(entity, chargeSpeedModifier);
                 PostUpdateCommands.SetComponent(entity, engageSqrRadius);
                 PostUpdateCommands.SetComponent(entity, attackDistance);
                 PostUpdateCommands.SetComponent(entity, attackAnimationDuration);

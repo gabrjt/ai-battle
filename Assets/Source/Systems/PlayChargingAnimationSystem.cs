@@ -12,12 +12,12 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = Entities.WithAll<ViewReference, Target, Destination>().WithNone<Attacking, TargetInRange, FacingTarget, Dead>().ToComponentGroup();
+            m_Group = Entities.WithAll<ViewReference, Charging>().WithNone<Attacking, TargetInRange, FacingTarget, Dead>().ToComponentGroup();
         }
 
         protected override void OnUpdate()
         {
-            Entities.With(m_Group).ForEach((ref ViewReference viewReference, ref AttackSpeed attackSpeed) =>
+            Entities.With(m_Group).ForEach((ref ViewReference viewReference) =>
             {
                 var animator = EntityManager.GetComponentObject<Animator>(viewReference.Value);
                 animator.speed = 1;

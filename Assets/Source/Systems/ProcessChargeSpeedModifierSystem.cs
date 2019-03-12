@@ -8,15 +8,15 @@ namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
     [UpdateAfter(typeof(ProcessMotionSystem))]
-    public class ProcessWalkSpeedModifierSystem : JobComponentSystem
+    public class ProcessChargeSpeedModifierSystem : JobComponentSystem
     {
         [BurstCompile]
-        [RequireComponentTag(typeof(Walking))]
-        private struct ProcessJob : IJobProcessComponentData<WalkSpeedModifier, Motion>
+        [RequireComponentTag(typeof(Charging))]
+        private struct ProcessJob : IJobProcessComponentData<ChargeSpeedModifier, Motion>
         {
-            public void Execute([ReadOnly] ref WalkSpeedModifier walkSpeedModifier, ref Motion motion)
+            public void Execute([ReadOnly] ref ChargeSpeedModifier chargeSpeedModifier, ref Motion motion)
             {
-                motion.Value *= walkSpeedModifier.Value;
+                motion.Value *= chargeSpeedModifier.Value;
             }
         }
 
