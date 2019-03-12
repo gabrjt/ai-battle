@@ -51,7 +51,7 @@ namespace Game.Systems
             });
             m_AddAttackingGroup = GetComponentGroup(new EntityArchetypeQuery
             {
-                All = new[] { ComponentType.ReadOnly<TargetInRange>(), ComponentType.ReadOnly<Target>() },
+                All = new[] { ComponentType.ReadOnly<TargetInRange>(), ComponentType.ReadOnly<FacingTarget>(), ComponentType.ReadOnly<Target>() },
                 None = new[] { ComponentType.ReadWrite<Attacking>(), ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Dead>() }
             });
             m_AddAttackDurationGroup = GetComponentGroup(new EntityArchetypeQuery

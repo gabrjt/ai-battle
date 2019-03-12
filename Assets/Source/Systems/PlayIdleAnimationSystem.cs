@@ -12,7 +12,15 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = Entities.WithAll<ViewReference, Idle>().WithNone<Dead>().ToComponentGroup();
+            m_Group = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<ViewReference>(), ComponentType.ReadOnly<Idle>() },
+                None = new[] { ComponentType.ReadOnly<Dead>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<ViewReference>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<TargetInRange>() },
+                None = new[] { ComponentType.ReadOnly<FacingTarget>() }
+            });
         }
 
         protected override void OnUpdate()
