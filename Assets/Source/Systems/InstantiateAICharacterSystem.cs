@@ -147,7 +147,7 @@ namespace Game.Systems
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
                         chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
-                        attackAnimationDuration.Value = 1;
+                        attackAnimationDuration.Value = 1.333f;
                         attackDamage.Value = m_Random.NextInt(10, 30);
                         attackSpeed.Value = m_Random.NextFloat(1, 3);
                         maxHealth.Value = m_Random.NextInt(100, 200);
@@ -163,7 +163,7 @@ namespace Game.Systems
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
                         chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
-                        attackAnimationDuration.Value = 1;
+                        attackAnimationDuration.Value = 2.4f;
                         attackDamage.Value = m_Random.NextInt(10, 30);
                         attackSpeed.Value = m_Random.NextFloat(1, 3);
                         maxHealth.Value = m_Random.NextInt(100, 200);
