@@ -14,28 +14,30 @@ namespace Game.Systems
     {
         [BurstCompile]
         [ExcludeComponent(typeof(Target), typeof(Dead))]
-        private struct LookToDestinationJob : IJobProcessComponentData<Destination, Translation, Rotation>
+        private struct LookToDestinationJob : IJobProcessComponentData<Destination, Translation, RotationSpeed, Rotation>
         {
             [ReadOnly] public float DeltaTime;
 
-            public void Execute([ReadOnly] ref Destination destination, [ReadOnly] ref Translation translation, ref Rotation rotation)
+            public void Execute([ReadOnly] ref Destination destination, [ReadOnly] ref Translation translation, [ReadOnly] ref RotationSpeed rotationSpeed, ref Rotation rotation)
             {
-                rotation.Value = math.slerp(rotation.Value, quaternion.LookRotationSafe(math.normalizesafe(destination.Value - translation.Value), math.up()), DeltaTime);
+                rotation.Value = math.slerp(rotation.Value, quaternion.LookRotationSafe(math.normalizesafe(destination.Value - translation.Value), math.up()),
+                    rotationSpeed.Value * DeltaTime);
             }
         }
 
         [BurstCompile]
         [ExcludeComponent(typeof(Dead))]
-        private struct LookToTargetJob : IJobProcessComponentData<Target, Translation, Rotation>
+        private struct LookToTargetJob : IJobProcessComponentData<Target, Translation, RotationSpeed, Rotation>
         {
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [ReadOnly] public float DeltaTime;
 
-            public void Execute([ReadOnly] ref Target target, [ReadOnly] ref Translation translation, ref Rotation rotation)
+            public void Execute([ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref RotationSpeed rotationSpeed, ref Rotation rotation)
             {
                 if (!TranslationFromEntity.Exists(target.Value)) return;
 
-                rotation.Value = math.slerp(rotation.Value, quaternion.LookRotationSafe(math.normalizesafe(TranslationFromEntity[target.Value].Value - translation.Value), math.up()), DeltaTime);
+                rotation.Value = math.slerp(rotation.Value, quaternion.LookRotationSafe(math.normalizesafe(TranslationFromEntity[target.Value].Value - translation.Value), math.up()),
+                    rotationSpeed.Value * DeltaTime);
             }
         }
 
