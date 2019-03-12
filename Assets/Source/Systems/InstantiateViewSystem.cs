@@ -94,7 +94,7 @@ namespace Game.Systems
             gameObject.transform.rotation = EntityManager.GetComponentData<Rotation>(entity).Value;
             gameObject.SetActive(true);
             var viewEntity = gameObject.GetComponent<GameObjectEntity>().Entity;
-            var name = $"{type} View {viewEntity}";
+            var name = $"{type} View {viewEntity} => Character {entity}";
             gameObject.name = name;
 
             EntityManager.AddComponentData(entity, new ViewReference { Value = viewEntity });

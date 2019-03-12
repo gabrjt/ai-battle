@@ -21,7 +21,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_AddGroup = Entities.WithAll<CameraArm, SpectatorCamera, Translation, Rotation>().WithNone<CameraTarget>().ToComponentGroup();
+            m_AddGroup = Entities.WithAll<CameraArm, SpectatorCamera, Translation, Rotation>().ToComponentGroup();
             m_TargetGroup = Entities.WithAll<Character, Translation>().WithNone<Dead, Destroy, Disabled>().ToComponentGroup();
             m_Group = Entities.WithAll<SpectatorCamera, Transform, Rotation, CameraTarget>().ToComponentGroup();
             m_RemoveGroup = Entities.WithAll<CameraTarget>().ToComponentGroup();
