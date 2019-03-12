@@ -8,7 +8,7 @@ using Unity.Jobs;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    public class AttackSystem : ComponentSystem
+    public class AttackSystem : JobComponentSystem
     {
         [BurstCompile]
         [ExcludeComponent(typeof(AttackDuration))]
@@ -45,15 +45,25 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_RemoveAttackingGroup = Entities.WithAll<Attacking, Dead>().ToComponentGroup();
-            m_AddAttackingGroup = Entities.WithAll<TargetInRange, Target>().WithNone<Attacking, Cooldown, Dead>().ToComponentGroup();
-            m_AddAttackDurationGroup = Entities.WithAll<Attacking>().WithNone<AttackDuration>().ToComponentGroup();
+            m_RemoveAttackingGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadWrite<Attacking>(), ComponentType.ReadOnly<Dead>() }
+            });
+            m_AddAttackingGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadOnly<TargetInRange>(), ComponentType.ReadOnly<Target>() },
+                None = new[] { ComponentType.ReadWrite<Attacking>(), ComponentType.ReadOnly<Cooldown>(), ComponentType.ReadOnly<Dead>() }
+            });
+            m_AddAttackDurationGroup = GetComponentGroup(new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadWrite<Attacking>() },
+                None = new[] { ComponentType.ReadOnly<AttackDuration>() }
+            });
         }
 
-        protected override void OnUpdate()
+        protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var removeAttackingGroupLength = m_RemoveAttackingGroup.CalculateLength();
-            if (removeAttackingGroupLength > 0)
+            if (m_RemoveAttackingGroup.CalculateLength() > 0)
             {
                 EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<AttackDuration>());
                 EntityManager.RemoveComponent(m_RemoveAttackingGroup, ComponentType.ReadWrite<Attacking>());
@@ -68,7 +78,7 @@ namespace Game.Systems
                 var attackDurationArray = new NativeArray<AttackDuration>(addAttackDurationGroupLength, Allocator.TempJob);
                 var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
 
-                var inputDeps = new ConsolidateAttackDurationJob
+                inputDeps = new ConsolidateAttackDurationJob
                 {
                     EntityArray = entityArray,
                     AttackDurationArray = attackDurationArray,
@@ -82,9 +92,9 @@ namespace Game.Systems
                 }.Schedule(addAttackDurationGroupLength, 64, inputDeps);
 
                 commandBufferSystem.AddJobHandleForProducer(inputDeps);
-
-                inputDeps.Complete();
             }
+
+            return inputDeps;
         }
     }
 }
