@@ -7,7 +7,8 @@ using Random = Unity.Mathematics.Random;
 
 namespace Game.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(TransformSystemGroup))]
     public class SpectatorCameraSystem : ComponentSystem
     {
         private ComponentGroup m_AddGroup;
@@ -38,7 +39,7 @@ namespace Game.Systems
                 EntityManager.RemoveComponent(m_RemoveGroup, ComponentType.ReadWrite<CameraTarget>());
             }
 
-            if (!hasCameraTarget || Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1))
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(1) || !hasCameraTarget)
             {
                 Entities.With(m_AddGroup).ForEach((Entity entity, ref SpectatorCamera spectatorCamera, ref Translation translation, ref Rotation rotation) =>
                 {
@@ -46,8 +47,14 @@ namespace Game.Systems
 
                     var targetArray = m_TargetGroup.ToEntityArray(Unity.Collections.Allocator.TempJob);
                     var target = targetArray[m_Random.NextInt(0, targetArray.Length)];
-
-                    PostUpdateCommands.AddComponent(entity, new CameraTarget { Value = target });
+                    if (!hasCameraTarget)
+                    {
+                        PostUpdateCommands.AddComponent(entity, new CameraTarget { Value = target });
+                    }
+                    else
+                    {
+                        PostUpdateCommands.SetComponent(entity, new CameraTarget { Value = target });
+                    }
                     targetArray.Dispose();
                 });
             }
