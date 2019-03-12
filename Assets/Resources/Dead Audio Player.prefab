@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7490929776323332834}
   - component: {fileID: 3391415861377209054}
-  - component: {fileID: 4488195579584775136}
+  - component: {fileID: 7124553334885261661}
   m_Layer: 0
-  m_Name: Dead Sound
+  m_Name: Dead Audio Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -128,7 +128,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &4488195579584775136
+--- !u!114 &7124553334885261661
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -137,7 +137,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 4183508159830928907}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: 411c4f376978da540ab3492eac2e2cb2, type: 3}
+  m_Script: {fileID: 11500000, guid: d9fdee8f8a438994b825dcf9920c0051, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

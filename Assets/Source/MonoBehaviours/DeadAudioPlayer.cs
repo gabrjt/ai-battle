@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(AudioSource))]
-    public class PlayDeadSound : MonoBehaviour
+    public class DeadAudioPlayer : MonoBehaviour
     {
         private AudioSource m_AudioSource;
 

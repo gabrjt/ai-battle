@@ -5,7 +5,7 @@ using Random = Unity.Mathematics.Random;
 namespace Game.MonoBehaviours
 {
     [RequireComponent(typeof(AudioSource))]
-    public class PlayAttackSound : MonoBehaviour
+    public class AttackAudioPlayer : MonoBehaviour
     {
         private AudioSource[] m_AudioSourceArray;
 
@@ -23,16 +23,16 @@ namespace Game.MonoBehaviours
             return m_AudioSourceArray[m_Random.NextInt(m_AudioSourceArray.Length)];
         }
 
-        public void PlayAtPoint(float3 point)
+        public void PlayAtPoint(float3 point, float damage)
         {
             var isPlaying = true;
             AudioSource audioSource = null;
 
-            while (isPlaying)
+            do
             {
                 audioSource = GetRandomAudio();
-                isPlaying = audioSource.isPlaying;
-            }
+                audioSource.volume = 1 + 0.01f * damage;
+            } while (audioSource.isPlaying);
 
             AudioSource.PlayClipAtPoint(audioSource.clip, point);
         }

@@ -192,7 +192,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &3068998908927614026
+--- !u!114 &7413569380520491317
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -201,8 +201,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6260809437104273925}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_GeneratorAsset: {fileID: 0}
-  m_Script: {fileID: 11500000, guid: c87f8ee803d144348983c0e0217e385c, type: 3}
+  m_Script: {fileID: 11500000, guid: 4bbf3adb5c444704fb7f1cd4005ce935, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &7848669702294918158
@@ -215,7 +214,7 @@ PrefabInstance:
     - target: {fileID: 4183508159830928907, guid: 79bad5ae19c45eb42875b5d92fb24295,
         type: 3}
       propertyPath: m_Name
-      value: Attack Sound
+      value: Attack Audio Player
       objectReference: {fileID: 0}
     - target: {fileID: 7490929776323332834, guid: 79bad5ae19c45eb42875b5d92fb24295,
         type: 3}
@@ -280,6 +279,7 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 3545496326514102158, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
     - {fileID: 4488195579584775136, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
+    - {fileID: 7124553334885261661, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 79bad5ae19c45eb42875b5d92fb24295, type: 3}
 --- !u!1 &6260809437104273925 stripped
 GameObject:
