@@ -29,16 +29,6 @@ namespace Game.Systems
                 ref Motion motion,
                 ref Destination destination)
             {
-                /*
-                if (!TranslationFromEntity.Exists(target.Value))
-                {
-                    RemoveTargetInRangeQueue.Enqueue(entity);
-                    destination.Value = translation.Value;
-                    motion.Value = float3.zero;
-                    return;
-                }
-                */
-
                 var targetTranslation = TranslationFromEntity[target.Value].Value;
                 var distance = math.distance(translation.Value, targetTranslation);
 
