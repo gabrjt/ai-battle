@@ -19,7 +19,7 @@ namespace Game.Systems
             }, new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<ViewReference>(), ComponentType.ReadOnly<Target>(), ComponentType.ReadOnly<TargetInRange>() },
-                None = new[] { ComponentType.ReadOnly<FacingTarget>() }
+                None = new[] { ComponentType.ReadOnly<Attacking>() }
             });
         }
 

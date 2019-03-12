@@ -12,7 +12,7 @@ namespace Game.Systems
         {
             base.OnCreateManager();
 
-            m_Group = Entities.WithAll<ViewReference, Charging>().WithNone<Attacking, TargetInRange, FacingTarget, Dead>().ToComponentGroup();
+            m_Group = Entities.WithAll<ViewReference, Charging>().ToComponentGroup();
         }
 
         protected override void OnUpdate()

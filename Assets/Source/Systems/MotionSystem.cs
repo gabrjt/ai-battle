@@ -16,13 +16,16 @@ namespace Game.Systems
             m_AddGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadOnly<Destination>(), ComponentType.ReadOnly<MovementSpeed>() },
-                None = new[] { ComponentType.ReadWrite<Motion>(), ComponentType.ReadOnly<Dead>() }
+                None = new[] { ComponentType.ReadWrite<Motion>(), ComponentType.ReadOnly<TargetInRange>(), ComponentType.ReadOnly<Dead>() }
             });
 
             m_RemoveGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadWrite<Motion>() },
                 None = new[] { ComponentType.ReadOnly<Destination>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadWrite<Motion>(), ComponentType.ReadOnly<TargetInRange>() }
             });
         }
 
