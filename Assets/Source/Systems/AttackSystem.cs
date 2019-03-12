@@ -48,6 +48,9 @@ namespace Game.Systems
             m_RemoveAttackingGroup = GetComponentGroup(new EntityArchetypeQuery
             {
                 All = new[] { ComponentType.ReadWrite<Attacking>(), ComponentType.ReadOnly<Dead>() }
+            }, new EntityArchetypeQuery
+            {
+                All = new[] { ComponentType.ReadWrite<Attacking>(), ComponentType.ReadOnly<Idle>() }
             });
             m_AddAttackingGroup = GetComponentGroup(new EntityArchetypeQuery
             {

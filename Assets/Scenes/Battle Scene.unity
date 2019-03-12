@@ -424,7 +424,7 @@ PrefabInstance:
     - target: {fileID: 3451804511600478730, guid: f2d3291adca97a24193adc547d27ee44,
         type: 3}
       propertyPath: m_SerializedData.MaxValue
-      value: 1
+      value: 1000
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f2d3291adca97a24193adc547d27ee44, type: 3}

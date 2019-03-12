@@ -24,6 +24,8 @@ namespace Game.Systems
 
             public void Execute(Entity entity, int index, [ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref Rotation rotation)
             {
+                if (!TranslationFromEntity.Exists(target.Value)) return;
+
                 var dot = math.dot(math.forward(rotation.Value), math.normalizesafe(TranslationFromEntity[target.Value].Value - translation.Value));
                 var hasFacingTarget = FacingTargetFromEntity.Exists(entity);
 
