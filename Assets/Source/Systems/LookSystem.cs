@@ -27,17 +27,21 @@ namespace Game.Systems
 
         [BurstCompile]
         [ExcludeComponent(typeof(Dead))]
-        private struct LookToTargetJob : IJobProcessComponentData<Target, Translation, RotationSpeed, Rotation>
+        private struct LookToTargetJob : IJobProcessComponentData<Target, Translation, RotationSpeed, RotationSpeedModifier, Rotation>
         {
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [ReadOnly] public float DeltaTime;
 
-            public void Execute([ReadOnly] ref Target target, [ReadOnly] ref Translation translation, [ReadOnly] ref RotationSpeed rotationSpeed, ref Rotation rotation)
+            public void Execute([ReadOnly] ref Target target,
+                [ReadOnly] ref Translation translation,
+                [ReadOnly] ref RotationSpeed rotationSpeed,
+                [ReadOnly] ref RotationSpeedModifier rotationSpeedModifier,
+                ref Rotation rotation)
             {
                 if (!TranslationFromEntity.Exists(target.Value)) return;
 
                 rotation.Value = math.slerp(rotation.Value, quaternion.LookRotationSafe(math.normalizesafe(TranslationFromEntity[target.Value].Value - translation.Value), math.up()),
-                    rotationSpeed.Value * DeltaTime);
+                    rotationSpeed.Value * rotationSpeedModifier.Value * DeltaTime);
             }
         }
 

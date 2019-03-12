@@ -40,6 +40,7 @@ namespace Game.Systems
                 ComponentType.ReadWrite<Child>(),
                 ComponentType.ReadWrite<MovementSpeed>(),
                 ComponentType.ReadWrite<RotationSpeed>(),
+                ComponentType.ReadWrite<RotationSpeedModifier>(),
                 ComponentType.ReadWrite<WalkSpeedModifier>(),
                 ComponentType.ReadWrite<ChargeSpeedModifier>(),
                 ComponentType.ReadWrite<EngageSqrRadius>(),
@@ -108,6 +109,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
                 var movementSpeed = new MovementSpeed();
                 var rotationSpeed = new RotationSpeed();
+                var rotationSpeedModifier = new RotationSpeedModifier();
                 var walkSpeedModifier = new WalkSpeedModifier();
                 var chargeSpeedModifier = new ChargeSpeedModifier();
                 var engageSqrRadius = new EngageSqrRadius();
@@ -128,6 +130,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Knight());
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
+                        rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
                         chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
@@ -144,6 +147,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
+                        rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
                         chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
@@ -160,6 +164,7 @@ namespace Game.Systems
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
+                        rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);
                         walkSpeedModifier.Value = m_Random.NextFloat(0.9f, 1.25f);
                         chargeSpeedModifier.Value = m_Random.NextFloat(2, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
@@ -175,6 +180,7 @@ namespace Game.Systems
 
                 PostUpdateCommands.SetComponent(entity, movementSpeed);
                 PostUpdateCommands.SetComponent(entity, rotationSpeed);
+                PostUpdateCommands.SetComponent(entity, rotationSpeedModifier);
                 PostUpdateCommands.SetComponent(entity, walkSpeedModifier);
                 PostUpdateCommands.SetComponent(entity, chargeSpeedModifier);
                 PostUpdateCommands.SetComponent(entity, engageSqrRadius);
