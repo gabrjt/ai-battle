@@ -4,7 +4,7 @@ using Unity.Entities;
 namespace Game.Systems
 {
     [UpdateInGroup(typeof(GameLogicGroup))]
-    [UpdateBefore(typeof(ProcessTargetInRangeSystem))]
+    [UpdateBefore(typeof(TargetInRangeSystem))]
     public class CleanTargetInRangeSystem : ComponentSystem
     {
         private ComponentGroup m_Group;

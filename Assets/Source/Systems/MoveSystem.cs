@@ -1,9 +1,9 @@
-﻿using Unity.Burst;
+﻿using Game.Components;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Transforms;
-using UnityEngine;
 
 namespace Game.Systems
 {
@@ -11,11 +11,12 @@ namespace Game.Systems
     public class MoveSystem : JobComponentSystem
     {
         [BurstCompile]
-        private struct Job : IJobProcessComponentData<Components.Motion, Translation>
+        [ExcludeComponent(typeof(TargetInRange))]
+        private struct Job : IJobProcessComponentData<Motion, Translation>
         {
             [ReadOnly] public float DeltaTime;
 
-            public void Execute([ReadOnly] ref Components.Motion motion, ref Translation translation)
+            public void Execute([ReadOnly] ref Motion motion, ref Translation translation)
             {
                 translation.Value += motion.Value * DeltaTime;
             }
@@ -25,7 +26,7 @@ namespace Game.Systems
         {
             return new Job
             {
-                DeltaTime = Time.deltaTime
+                DeltaTime = UnityEngine.Time.deltaTime
             }.Schedule(this, inputDeps);
         }
     }

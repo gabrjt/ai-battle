@@ -11,7 +11,7 @@ namespace Game.Systems
     [UpdateInGroup(typeof(GameLogicGroup))]
     [UpdateAfter(typeof(ProcessMotionSystem))]
     [UpdateBefore(typeof(MoveSystem))]
-    public class ProcessTargetInRangeSystem : JobComponentSystem
+    public class TargetInRangeSystem : JobComponentSystem
     {
         [BurstCompile]
         private struct ProcessJob : IJobProcessComponentDataWithEntity<Target, Translation, AttackDistance, Motion, Destination>
@@ -20,6 +20,7 @@ namespace Game.Systems
             public NativeQueue<Entity>.Concurrent RemoveTargetInRangeQueue;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [ReadOnly] public ComponentDataFromEntity<TargetInRange> TargetInRangeFromEntity;
+            [ReadOnly] public float DeltaTime;
 
             public void Execute(Entity entity, int index,
                 [ReadOnly] ref Target target,
@@ -30,6 +31,7 @@ namespace Game.Systems
             {
                 if (!TranslationFromEntity.Exists(target.Value))
                 {
+                    RemoveTargetInRangeQueue.Enqueue(entity);
                     destination.Value = translation.Value;
                     motion.Value = float3.zero;
                     return;
@@ -41,7 +43,7 @@ namespace Game.Systems
                 if (distance < attackDistance.Min || distance > attackDistance.Max)
                 {
                     var direction = math.normalizesafe(targetTranslation - translation.Value);
-                    destination.Value = targetTranslation - direction * attackDistance.Min;
+                    destination.Value = targetTranslation - ((direction * attackDistance.Min) + (motion.Value * DeltaTime));
 
                     if (TargetInRangeFromEntity.Exists(entity))
                     {
@@ -109,7 +111,8 @@ namespace Game.Systems
                 AddTargetInRangeQueue = m_AddTargetInRangeQueue.ToConcurrent(),
                 RemoveTargetInRangeQueue = m_RemoveTargetInRangeQueue.ToConcurrent(),
                 TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
-                TargetInRangeFromEntity = GetComponentDataFromEntity<TargetInRange>(true)
+                TargetInRangeFromEntity = GetComponentDataFromEntity<TargetInRange>(true),
+                DeltaTime = UnityEngine.Time.deltaTime
             }.Schedule(this, inputDeps);
 
             var addTargetInRangeDeps = new AddTargetInRangeJob

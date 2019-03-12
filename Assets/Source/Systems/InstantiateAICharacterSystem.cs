@@ -105,7 +105,7 @@ namespace Game.Systems
                 var entity = entityArray[entityIndex];
                 var movementSpeed = new MovementSpeed();
                 var engageSqrRadius = new EngageSqrRadius();
-                var attackDistance = new AttackDistance { Min = 1.2f, Max = 1.3f };
+                var attackDistance = new AttackDistance { Min = 1.5f, Max = 2 };
                 var attackAnimationDuration = new AttackAnimationDuration();
                 var attackDamage = new AttackDamage();
                 var attackSpeed = new AttackSpeed();
@@ -120,7 +120,7 @@ namespace Game.Systems
                 {
                     case ViewType.Knight:
                         PostUpdateCommands.AddComponent(entity, new Knight());
-                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = 5;//m_Random.NextFloat(1, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
@@ -133,7 +133,7 @@ namespace Game.Systems
 
                     case ViewType.OrcWolfRider:
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
-                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = 5;//m_Random.NextFloat(1, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
@@ -146,7 +146,7 @@ namespace Game.Systems
 
                     case ViewType.Skeleton:
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
-                        movementSpeed.Value = m_Random.NextFloat(1, 3);
+                        movementSpeed.Value = 5;//m_Random.NextFloat(1, 3);
                         engageSqrRadius.Value = m_Random.NextFloat(400, 2500);
                         attackAnimationDuration.Value = 1;
                         attackDamage.Value = m_Random.NextInt(10, 30);
