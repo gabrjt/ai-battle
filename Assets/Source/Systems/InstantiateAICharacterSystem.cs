@@ -128,6 +128,7 @@ namespace Game.Systems
                 {
                     case ViewType.Knight:
                         PostUpdateCommands.AddComponent(entity, new Knight());
+                        PostUpdateCommands.AddComponent(entity, new Faction { Value = FactionType.Alliance });
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);
@@ -145,6 +146,7 @@ namespace Game.Systems
 
                     case ViewType.OrcWolfRider:
                         PostUpdateCommands.AddComponent(entity, new OrcWolfRider());
+                        PostUpdateCommands.AddComponent(entity, new Faction { Value = FactionType.Horde });
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);
@@ -162,6 +164,7 @@ namespace Game.Systems
 
                     case ViewType.Skeleton:
                         PostUpdateCommands.AddComponent(entity, new Skeleton());
+                        PostUpdateCommands.AddComponent(entity, new Faction { Value = FactionType.Legion });
                         movementSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeed.Value = m_Random.NextFloat(1, 3);
                         rotationSpeedModifier.Value = m_Random.NextFloat(1.25f, 2);

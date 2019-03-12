@@ -6,7 +6,6 @@ namespace Game.Components
     [Serializable]
     public struct SpectatorCamera : IComponentData
     {
-        public Entity Target;
         public float RotationSpeed;
     }
 

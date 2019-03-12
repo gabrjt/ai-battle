@@ -33,16 +33,22 @@ namespace Game.Systems
         [BurstCompile]
         [RequireComponentTag(typeof(Character))]
         [ExcludeComponent(typeof(Dead))]
-        private struct EngageNearestTargetJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius>
+        private struct EngageNearestTargetJob : IJobProcessComponentDataWithEntity<Translation, EngageSqrRadius, Faction>
         {
             [ReadOnly] public NativeMultiHashMap<int2, Entity> NodeMap;
             [ReadOnly] public NativeHashMap<Entity, float3> TranslationMap;
             public NativeArray<Entity> EntityArray;
             public NativeArray<Entity> TargetArray;
             public NativeArray<@bool> EngagedArray;
+            public NativeArray<@bool> SetArray;
+            [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
+            [ReadOnly] public ComponentDataFromEntity<Faction> FactionFromEntity;
             [ReadOnly] public float NodeSize;
 
-            public void Execute(Entity entity, int index, [ReadOnly] ref Translation translation, [ReadOnly] ref EngageSqrRadius engageSqrRadius)
+            public void Execute(Entity entity, int index,
+                [ReadOnly] ref Translation translation,
+                [ReadOnly] ref EngageSqrRadius engageSqrRadius,
+                [ReadOnly] ref Faction faction)
             {
                 var radius = math.sqrt(engageSqrRadius.Value);
                 var nodeRadius = (int)math.ceil(radius / NodeSize);
@@ -61,15 +67,25 @@ namespace Game.Systems
                         {
                             do
                             {
-                                if (targetEntity != entity && TranslationMap.TryGetValue(targetEntity, out var targetTranslation))
+                                if (targetEntity != entity && faction.Value != FactionFromEntity[targetEntity].Value && TranslationMap.TryGetValue(targetEntity, out var targetTranslation))
                                 {
                                     var sqrDistance = math.lengthsq(targetTranslation - translation.Value);
 
                                     if (sqrDistance < targetSqrDistance)
                                     {
-                                        TargetArray[index] = targetEntity;
-                                        targetSqrDistance = sqrDistance;
-                                        EngagedArray[index] = true;
+                                        if (TargetFromEntity.Exists(entity))
+                                        {
+                                            TargetFromEntity[entity] = new Target { Value = targetEntity };
+                                            EngagedArray[index] = true;
+                                            SetArray[index] = true;
+                                        }
+                                        else
+                                        {
+                                            TargetArray[index] = targetEntity;
+                                            targetSqrDistance = sqrDistance;
+                                            EngagedArray[index] = true;
+                                            SetArray[index] = false;
+                                        }
                                     }
                                 }
                             }
@@ -86,26 +102,20 @@ namespace Game.Systems
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> EntityArray;
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<Entity> TargetArray;
             [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<@bool> EngagedArray;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<@bool> SetArray;
             [ReadOnly] public ComponentDataFromEntity<Translation> TranslationFromEntity;
             [NativeDisableParallelForRestriction] public ComponentDataFromEntity<Target> TargetFromEntity;
             [NativeSetThreadIndex] private readonly int m_ThreadIndex;
 
             public void Execute(int index)
             {
-                if (EngagedArray[index])
+                if (EngagedArray[index] && !SetArray[index])
                 {
                     var entity = EntityArray[index];
                     var target = TargetArray[index];
                     var targetDestination = TranslationFromEntity[target].Value;
 
-                    if (TargetFromEntity.Exists(entity))
-                    {
-                        TargetFromEntity[entity] = new Target { Value = target };
-                    }
-                    else
-                    {
-                        CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target { Value = target });
-                    }
+                    CommandBuffer.AddComponent(m_ThreadIndex, entity, new Target { Value = target });
                 }
             }
         }
@@ -168,6 +178,7 @@ namespace Game.Systems
                 var entityArray = new NativeArray<Entity>(count, Allocator.TempJob);
                 var targetEntityArray = new NativeArray<Entity>(count, Allocator.TempJob);
                 var engagedArray = new NativeArray<@bool>(count, Allocator.TempJob);
+                var setArray = new NativeArray<@bool>(count, Allocator.TempJob);
                 var commandBufferSystem = World.GetExistingManager<BeginSimulationEntityCommandBufferSystem>();
                 var commandBuffer = commandBufferSystem.CreateCommandBuffer();
 
@@ -185,6 +196,10 @@ namespace Game.Systems
                     EntityArray = entityArray,
                     TargetArray = targetEntityArray,
                     EngagedArray = engagedArray,
+                    SetArray = setArray,
+                    TargetFromEntity = GetComponentDataFromEntity<Target>(),
+                    FactionFromEntity = GetComponentDataFromEntity<Faction>(true),
+
                     NodeSize = NodeSize
                 }.Schedule(this, inputDeps);
 
@@ -194,6 +209,7 @@ namespace Game.Systems
                     EntityArray = entityArray,
                     TargetArray = targetEntityArray,
                     EngagedArray = engagedArray,
+                    SetArray = setArray,
                     TranslationFromEntity = GetComponentDataFromEntity<Translation>(true),
                     TargetFromEntity = GetComponentDataFromEntity<Target>(),
                 }.Schedule(count, 64, inputDeps);
